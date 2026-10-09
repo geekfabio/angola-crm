@@ -1,110 +1,214 @@
-import Avatar from "@/components/_ui/avatar";
+"use client";
+
+import { useMemo } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import ModuleHeader from "@/components/_common/module-header";
 import { ScrollArea } from "@/components/_ui/scroll-area";
-import Sparkline from "@/components/_common/sparkline";
-import SegmentBar from "@/components/_common/segment-bar";
+import HeroFigure from "./charts/hero-figure";
+import StatTile from "./charts/stat-tile";
+import FunnelChart from "./charts/funnel-chart";
+import TrendAreaChart from "./charts/trend-area-chart";
+import RankedBarList, { type RankedItem } from "./charts/ranked-bar-list";
+import AtRiskList from "./charts/at-risk-list";
+import { COMPANIES } from "@/data/companies";
+import { MONTHLY_QUOTA, MONTHLY_TREND, ZONE_FORECAST } from "@/data/forecast";
+import { stageTotal, weightedPipeline } from "@/lib/opportunities";
 import {
-  MANAGER_FORECAST,
-  MONTHLY_QUOTA,
-  MONTHLY_TOTAL,
-  MONTHLY_TREND,
-  ZONE_FORECAST,
-} from "@/data/forecast";
-import { formatMoney, formatPercent } from "@/lib/format";
+  activeVsInactive,
+  averageDealSize,
+  byManager,
+  clientsAtRisk,
+  conversionRate,
+  openOpportunities,
+  pipelineByStage,
+  scaleTrendTo,
+} from "@/lib/dashboard";
+import { compactMoneyParts, formatMoney } from "@/lib/format";
+import { ease } from "@/lib/easings";
+import { useOpportunitiesStore } from "@/stores/opportunities-store";
 
-function quotaPercent(amount: number, quota: number) {
-  return Math.round((amount / quota) * 100);
-}
+const SECTION_VARIANTS = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0 },
+};
+
+const KPI_CONTAINER_VARIANTS = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
+};
 
 export default function Forecast() {
-  const monthlyPercent = quotaPercent(MONTHLY_TOTAL, MONTHLY_QUOTA);
+  const opportunities = useOpportunitiesStore((state) => state.opportunities);
+  const prefersReducedMotion = useReducedMotion();
+
+  const metrics = useMemo(() => {
+    const open = openOpportunities(opportunities);
+    const pipelineTotal = stageTotal(open);
+    const weighted = weightedPipeline(open);
+    const trend = scaleTrendTo(MONTHLY_TREND, pipelineTotal);
+    const trendStart = trend[0];
+    const trendEnd = trend[trend.length - 1];
+    const trendDeltaPercent = trendStart
+      ? Math.round(((trendEnd - trendStart) / trendStart) * 100)
+      : 0;
+    const { active } = activeVsInactive(COMPANIES);
+
+    return {
+      pipelineTotal,
+      weighted,
+      trend,
+      trendDeltaPercent,
+      openCount: open.length,
+      conversion: conversionRate(opportunities),
+      avgDeal: averageDealSize(opportunities),
+      activeClients: active,
+      stages: pipelineByStage(opportunities),
+      managers: byManager(opportunities).map<RankedItem>((manager) => ({
+        key: manager.name,
+        label: manager.name,
+        avatar: manager.avatar,
+        amount: manager.amount,
+        quota: manager.quota,
+      })),
+      zones: ZONE_FORECAST.map<RankedItem>((zone) => ({
+        key: zone.zone,
+        label: zone.zone,
+        amount: zone.amount,
+        quota: zone.quota,
+      })),
+      risk: clientsAtRisk(COMPANIES),
+    };
+  }, [opportunities]);
+
+  const weightedParts = compactMoneyParts(metrics.weighted);
+  const pipelineParts = compactMoneyParts(metrics.pipelineTotal);
+  const avgDealParts = compactMoneyParts(metrics.avgDeal);
+  const quotaPercent = Math.round((metrics.weighted / MONTHLY_QUOTA) * 100);
 
   return (
     <section className="flex min-h-0 min-w-0 flex-1 flex-col">
       <ModuleHeader title="Previsão" />
       <ScrollArea className="min-h-0 flex-1">
-        <div className="flex flex-col gap-6 p-5">
-          <div className="border-border flex flex-col gap-3 rounded-xl border p-5">
-            <span className="caption-style text-subtle">
-              Previsão do mês
-            </span>
-            <div className="flex items-baseline gap-3">
-              <span className="text-[28px] leading-none font-semibold">
-                {formatMoney(MONTHLY_TOTAL)}
-              </span>
-              <Sparkline values={MONTHLY_TREND} className="h-[22px]" />
-            </div>
-            <div className="flex flex-col gap-2">
-              <div className="caption-style text-subtle flex items-center justify-between">
-                <span>Objetivo: {formatMoney(MONTHLY_QUOTA)}</span>
-                <span>{formatPercent(monthlyPercent)}</span>
-              </div>
-              <SegmentBar
-                percent={monthlyPercent}
-                segments={63}
-                className="h-3 w-full border border-white/4 px-px"
-                segmentClassName="h-2"
-                trackClassName="bg-white/8"
-              />
-            </div>
-          </div>
+        <div className="flex flex-col gap-8 p-5">
+          <HeroFigure
+            label="Carteira ponderada do mês"
+            amount={weightedParts.amount}
+            suffix={weightedParts.suffix}
+            quotaPercent={quotaPercent}
+            quotaLabel={`Objetivo: ${formatMoney(MONTHLY_QUOTA)}`}
+            trend={metrics.trend}
+          />
 
-          <div className="flex flex-col gap-3">
+          <motion.div
+            variants={KPI_CONTAINER_VARIANTS}
+            initial="hidden"
+            animate="show"
+            className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+          >
+            <StatTile
+              label="Carteira aberta"
+              value={pipelineParts.amount}
+              decimals={1}
+              suffix={pipelineParts.suffix}
+              trend={metrics.trend}
+              delta={{
+                percent: metrics.trendDeltaPercent,
+                positiveIsGood: true,
+                periodLabel: "nas últimas 14 semanas",
+              }}
+              index={0}
+            />
+            <StatTile
+              label="Oportunidades abertas"
+              value={metrics.openCount}
+              index={1}
+            />
+            <StatTile
+              label="Taxa de conversão"
+              value={metrics.conversion}
+              suffix="%"
+              index={2}
+            />
+            <StatTile
+              label="Ticket médio (ganho)"
+              value={avgDealParts.amount}
+              decimals={1}
+              suffix={avgDealParts.suffix}
+              index={3}
+            />
+          </motion.div>
+
+          <motion.div
+            variants={SECTION_VARIANTS}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.5, ease: ease.power3Out }}
+            className="border-border flex flex-col gap-4 rounded-xl border p-5"
+          >
             <h2 className="eyebrow-style text-faint font-normal">
-              Por gestor
+              Funil de oportunidades
             </h2>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {MANAGER_FORECAST.map((manager) => {
-                const percent = quotaPercent(manager.amount, manager.quota);
-                return (
-                  <div
-                    key={manager.name}
-                    className="border-border flex flex-col gap-3 rounded-lg border p-4"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Avatar src={manager.avatar} alt="" />
-                      <span className="lead-style truncate font-medium">
-                        {manager.name}
-                      </span>
-                    </div>
-                    <span className="block tabular-nums">
-                      {formatMoney(manager.amount)}
-                    </span>
-                    <SegmentBar
-                      percent={percent}
-                      className="h-2.5 w-full border border-white/4 px-px"
-                      trackClassName="bg-white/8"
-                    />
-                  </div>
-                );
-              })}
-            </div>
+            <FunnelChart stages={metrics.stages} />
+          </motion.div>
+
+          <motion.div
+            variants={SECTION_VARIANTS}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.5, ease: ease.power3Out }}
+            className="border-border flex flex-col gap-4 rounded-xl border p-5"
+          >
+            <h2 className="eyebrow-style text-faint font-normal">
+              Tendência da carteira
+            </h2>
+            <TrendAreaChart values={metrics.trend} className="h-[180px] w-full" />
+          </motion.div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <motion.div
+              variants={SECTION_VARIANTS}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.5, ease: ease.power3Out }}
+              className="border-border flex flex-col gap-4 rounded-xl border p-5"
+            >
+              <h2 className="eyebrow-style text-faint font-normal">
+                Por gestor
+              </h2>
+              <RankedBarList items={metrics.managers} />
+            </motion.div>
+
+            <motion.div
+              variants={SECTION_VARIANTS}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.5, ease: ease.power3Out }}
+              className="border-border flex flex-col gap-4 rounded-xl border p-5"
+            >
+              <h2 className="eyebrow-style text-faint font-normal">
+                Por zona
+              </h2>
+              <RankedBarList items={metrics.zones} />
+            </motion.div>
           </div>
 
-          <div className="flex flex-col gap-3">
-            <h2 className="eyebrow-style text-faint font-normal">Por zona</h2>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {ZONE_FORECAST.map((zone) => {
-                const percent = quotaPercent(zone.amount, zone.quota);
-                return (
-                  <div
-                    key={zone.zone}
-                    className="border-border flex flex-col gap-3 rounded-lg border p-4"
-                  >
-                    <span className="lead-style font-medium">{zone.zone}</span>
-                    <span className="block tabular-nums">
-                      {formatMoney(zone.amount)}
-                    </span>
-                    <SegmentBar
-                      percent={percent}
-                      className="h-2.5 w-full border border-white/4 px-px"
-                      trackClassName="bg-white/8"
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <motion.div
+            variants={SECTION_VARIANTS}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.5, ease: ease.power3Out }}
+            className="border-border flex flex-col gap-2 rounded-xl border p-5"
+          >
+            <h2 className="eyebrow-style text-faint font-normal">
+              Clientes em risco
+            </h2>
+            <AtRiskList clients={metrics.risk} />
+          </motion.div>
         </div>
       </ScrollArea>
     </section>

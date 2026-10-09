@@ -50,11 +50,11 @@ Vista de calendário mensal/semanal sobre as mesmas atividades; tarefas com resp
 
 **Pronto quando:** a mesma atividade aparece na lista e no calendário, e a rota do dia é utilizável a 360px.
 
-## Fase 5 — Previsão: Painel de Direção `⬜`
+## Fase 5 — Previsão: Painel de Direção `✅`
 
-`previsao/` troca os números fixos de `data/forecast.ts` por agregações reais de `data/opportunities.ts` (soma por gestor/zona/fase, ponderada por probabilidade). Metas (`quota`) tornam-se editáveis num diálogo, guardadas no store de Previsão.
+`components/forecast/` passou a ler `useOpportunitiesStore` diretamente: figura principal (carteira ponderada), cartões de KPI (carteira aberta, oportunidades abertas, taxa de conversão, ticket médio), funil por fase, gráfico de tendência com tooltip ao passar o rato, e ranking por gestor/zona — tudo derivado em `lib/dashboard.ts` a partir de `data/opportunities.ts`. Entrada em cascata e gráficos desenhados com Motion (`components/forecast/charts/`). As metas (`quota`) continuam a vir de `data/forecast.ts`, ainda não editáveis — fica para quando houver um ecrã de Definições (Fase 12/13).
 
-**Pronto quando:** mudar a fase de uma oportunidade em `/oportunidades` muda o número em `/previsao`.
+**Pronto quando:** mudar a fase de uma oportunidade em `/oportunidades` muda o número em `/previsao`. ✅ Confirmado.
 
 ## Fase 6 — Relatórios: Desempenho e Clientes em Risco `⬜`
 

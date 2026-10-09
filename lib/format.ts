@@ -43,3 +43,14 @@ export function formatDateShort(iso: string) {
 export function formatDateLong(iso: string) {
   return LONG_DATE_FORMATTER.format(new Date(`${iso}T00:00:00Z`));
 }
+
+export function compactMoneyParts(value: number) {
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) {
+    return { amount: Math.round((value / 1_000_000) * 10) / 10, suffix: "M Kz" };
+  }
+  if (abs >= 1_000) {
+    return { amount: Math.round((value / 1_000) * 10) / 10, suffix: "mil Kz" };
+  }
+  return { amount: Math.round(value), suffix: "Kz" };
+}
