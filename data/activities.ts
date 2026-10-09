@@ -1,3 +1,5 @@
+import { COMPANIES, type Zone } from "./companies";
+
 export type ActivityType =
   | "Visita"
   | "Chamada"
@@ -5,6 +7,15 @@ export type ActivityType =
   | "Reunião"
   | "Entrega"
   | "Reclamação";
+
+export const ACTIVITY_TYPES: ActivityType[] = [
+  "Visita",
+  "Chamada",
+  "E-mail",
+  "Reunião",
+  "Entrega",
+  "Reclamação",
+];
 
 export const ACTIVITY_TONES: Record<
   ActivityType,
@@ -21,75 +32,124 @@ export const ACTIVITY_TONES: Record<
 export type Activity = {
   id: string;
   type: ActivityType;
+  companyId: string;
   companyName: string;
+  contactName?: string;
   owner: string;
+  zone: Zone;
   date: string;
   note: string;
 };
 
+function company(id: string) {
+  return COMPANIES.find((item) => item.id === id)!;
+}
+
+function named(
+  id: string,
+  rest: Omit<Activity, "id" | "companyId" | "companyName">,
+): Activity {
+  return { id, companyId: id, companyName: company(id).name, ...rest };
+}
+
 export const ACTIVITIES: Activity[] = [
-  {
-    id: "act-1",
+  named("boa-esperanca", {
     type: "Visita",
-    companyName: "Mercearia Boa Esperança",
     owner: "Sara Neto",
-    date: "2026-10-06",
+    zone: "Luanda",
+    date: "2026-10-09",
     note: "Visita de rotina, confirmado reabastecimento de bebidas.",
-  },
-  {
-    id: "act-2",
+  }),
+  named("nova-vida", {
+    type: "Entrega",
+    owner: "Marcos Domingos",
+    zone: "Luanda",
+    date: "2026-10-09",
+    note: "Entrega mensal confirmada, assinatura recebida no armazém.",
+  }),
+  named("kilamba", {
     type: "Chamada",
-    companyName: "Restaurante Ilha do Cabo",
+    owner: "Lina Wamba",
+    zone: "Luanda",
+    date: "2026-10-09",
+    note: "Confirmação da encomenda do próximo trimestre.",
+  }),
+  named("ilha-cabo", {
+    type: "Chamada",
     owner: "Jaime Teixeira",
+    zone: "Benguela",
     date: "2026-10-05",
     note: "Negociação de condições de pagamento para o próximo trimestre.",
-  },
-  {
-    id: "act-3",
+  }),
+  named("baia-azul", {
     type: "Entrega",
-    companyName: "Hotel Baía Azul",
     owner: "Mariana Capitão",
+    zone: "Huíla",
     date: "2026-10-04",
     note: "Entrega de encomenda mensal de mercearia e bebidas.",
-  },
-  {
-    id: "act-4",
+  }),
+  named("girassol", {
     type: "Reclamação",
-    companyName: "Supermercado Nova Vida",
-    owner: "Marcos Domingos",
+    owner: "Nádia Jamba",
+    zone: "Huambo",
     date: "2026-10-03",
     note: "Produto danificado na última entrega; crédito emitido.",
-  },
-  {
-    id: "act-5",
+  }),
+  named("tchissola", {
     type: "E-mail",
-    companyName: "Padaria Tchissola",
     owner: "Alexandre Santos",
+    zone: "Luanda",
     date: "2026-10-02",
     note: "Envio da lista de preços atualizada para outubro.",
-  },
-  {
-    id: "act-6",
+  }),
+  named("sao-paulo", {
     type: "Reunião",
-    companyName: "Mercearia Kilamba",
-    owner: "Lina Wamba",
+    owner: "Graça Miguel",
+    zone: "Luanda",
     date: "2026-10-01",
     note: "Reunião trimestral de revisão de carteira.",
-  },
-  {
-    id: "act-7",
+  }),
+  named("talatona-plaza", {
     type: "Visita",
-    companyName: "Hotel Talatona Plaza",
     owner: "Catarina Sacramento",
+    zone: "Luanda",
+    contactName: "Catarina Sacramento",
     date: "2026-09-29",
     note: "Apresentação de novos produtos da gama institucional.",
-  },
-  {
-    id: "act-8",
+  }),
+  named("zango", {
     type: "Chamada",
-    companyName: "Revenda Zango",
     owner: "Emília Garcia",
+    zone: "Luanda",
     date: "2026-09-27",
     note: "Confirmação de parceria para distribuição na zona.",
-  },
+  }),
+  named("esperanca", {
+    type: "Visita",
+    owner: "Ricardo Baptista",
+    zone: "Resto do país",
+    date: "2026-09-24",
+    note: "Visita de prospeção, avaliação de capacidade de armazém.",
+  }),
+  named("mussulo-bay", {
+    type: "Reunião",
+    owner: "Nelson Lemos",
+    zone: "Luanda",
+    date: "2026-09-20",
+    note: "Demonstração da gama de bebidas premium à direção.",
+  }),
+  named("lobito", {
+    type: "Entrega",
+    owner: "Olívio Chico",
+    zone: "Benguela",
+    date: "2026-09-15",
+    note: "Primeira entrega institucional, confirmada sem incidentes.",
+  }),
+  named("marisqueira-ilha", {
+    type: "Reclamação",
+    owner: "Avelina Brito",
+    zone: "Resto do país",
+    date: "2026-09-10",
+    note: "Atraso na entrega reportado; reagendada para a semana seguinte.",
+  }),
 ];

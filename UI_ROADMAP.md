@@ -38,17 +38,17 @@ Módulo `FEATURES.md` §2. Pré-requisito de Email/SMS — nenhuma campanha pode
 
 ---
 
-## Fase 3 — Atividades: Registo e Lista `⬜`
+## Fase 3 — Atividades: Registo e Lista `✅`
 
-`FEATURES.md` §4. Toolbar com filtros (tipo, gestor, cliente, janela de datas), `stores/activities-store.ts`, diálogo de novo registo. A lista atual (`components/activities/`) passa a ler do store, não do array estático.
+`FEATURES.md` §4. `stores/activities-store.ts` passou a ser a fonte de verdade (filtros de tipo, gestor, cliente e janela de datas; `lib/activities.ts` com `filterActivities`). `data/activities.ts` ganhou `companyId`, `zone` e dados até à data corrente; diálogo "Novo Registo" (`components/activities/new-activity/`) cria um registo que aparece de imediato na lista.
 
-**Pronto quando:** um registo novo (visita, chamada, e-mail, reunião, entrega, reclamação) aparece na lista e é filtrável.
+**Pronto quando:** um registo novo (visita, chamada, e-mail, reunião, entrega, reclamação) aparece na lista e é filtrável. ✅ Confirmado.
 
-## Fase 4 — Atividades: Calendário e Rota do Dia `⬜`
+## Fase 4 — Atividades: Calendário e Rota do Dia `✅`
 
-Vista de calendário mensal/semanal sobre as mesmas atividades; tarefas com responsável, prazo e lembrete; vista "rota do dia" pensada para mobile (clientes a visitar, agrupados por zona).
+`components/activities/` ganhou separadores (Lista / Calendário / Tarefas / Rota do Dia, `components/activities/header/`). Calendário mensal navegável (`lib/activities.ts` → `buildMonthGrid`) mostra atividades e tarefas por dia. Tarefas com responsável, prazo e lembrete (`data/tasks.ts`, `stores/activities-store.ts`) ganharam quadro Kanban arrastável (Por Fazer / Em Curso / Feita, `components/activities/tasks/`, mesmo padrão de drag-and-drop nativo do Kanban de Oportunidades) e diálogo "Nova Tarefa". Vista "Rota do Dia" (`components/activities/route/`) agrupa as visitas e tarefas de hoje por zona, pensada mobile-first.
 
-**Pronto quando:** a mesma atividade aparece na lista e no calendário, e a rota do dia é utilizável a 360px.
+**Pronto quando:** a mesma atividade aparece na lista e no calendário, e a rota do dia é utilizável a 360px. ✅ Confirmado.
 
 ## Fase 5 — Previsão: Painel de Direção `✅`
 

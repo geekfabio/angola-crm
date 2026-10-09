@@ -1,38 +1,63 @@
-import ModuleHeader from "@/components/_common/module-header";
-import { ScrollArea } from "@/components/_ui/scroll-area";
-import Tag from "@/components/_ui/tag";
-import { ACTIVITIES, ACTIVITY_TONES } from "@/data/activities";
-import { formatDateLong } from "@/lib/format";
+"use client";
+
+import { useMemo } from "react";
+import ActivitiesHeader from "./header/header";
+import ActivitiesToolbar from "./toolbar/toolbar";
+import ActivityList from "./list/activity-list";
+import ActivityCalendar from "./calendar/activity-calendar";
+import TaskBoard from "./tasks/task-board";
+import DailyRoute from "./route/daily-route";
+import NewActivityDialog from "./new-activity/new-activity-dialog";
+import NewTaskDialog from "./new-task/new-task-dialog";
+import { filterActivities } from "@/lib/activities";
+import { filterTasks } from "@/lib/tasks";
+import { useActivitiesStore } from "@/stores/activities-store";
+
+function today() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 export default function Activities() {
+  const activities = useActivitiesStore((state) => state.activities);
+  const tasks = useActivitiesStore((state) => state.tasks);
+  const type = useActivitiesStore((state) => state.type);
+  const owner = useActivitiesStore((state) => state.owner);
+  const companyId = useActivitiesStore((state) => state.companyId);
+  const window_ = useActivitiesStore((state) => state.window);
+  const search = useActivitiesStore((state) => state.search);
+  const view = useActivitiesStore((state) => state.view);
+
+  const todayIso = today();
+
+  const visibleActivities = useMemo(
+    () =>
+      filterActivities(
+        activities,
+        { type, owner, companyId, window: window_, search },
+        todayIso,
+      ),
+    [activities, type, owner, companyId, window_, search, todayIso],
+  );
+
+  const visibleTasks = useMemo(
+    () => filterTasks(tasks, { owner, companyId, search }),
+    [tasks, owner, companyId, search],
+  );
+
   return (
     <section className="flex min-h-0 min-w-0 flex-1 flex-col">
-      <ModuleHeader title="Atividades" count={ACTIVITIES.length} />
-      <ScrollArea className="min-h-0 flex-1">
-        <ul className="divide-y divide-border">
-          {ACTIVITIES.map((activity) => (
-            <li key={activity.id} className="flex flex-col gap-2 px-4 py-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Tag tone={ACTIVITY_TONES[activity.type]}>
-                    {activity.type}
-                  </Tag>
-                  <span className="lead-style font-medium">
-                    {activity.companyName}
-                  </span>
-                </div>
-                <span className="caption-style text-subtle">
-                  {formatDateLong(activity.date)}
-                </span>
-              </div>
-              <p className="p-style text-soft">{activity.note}</p>
-              <span className="caption-style text-subtle">
-                {activity.owner}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </ScrollArea>
+      <ActivitiesHeader count={visibleActivities.length} />
+      <ActivitiesToolbar />
+      {view === "lista" && <ActivityList activities={visibleActivities} />}
+      {view === "calendario" && (
+        <ActivityCalendar activities={visibleActivities} tasks={visibleTasks} />
+      )}
+      {view === "tarefas" && <TaskBoard tasks={visibleTasks} />}
+      {view === "rota" && (
+        <DailyRoute activities={activities} tasks={tasks} />
+      )}
+      <NewActivityDialog />
+      <NewTaskDialog />
     </section>
   );
 }

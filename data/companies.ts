@@ -397,6 +397,16 @@ export const ACTIVITY_WINDOWS = [7, 30, 60, 90] as const;
 
 export type ActivityWindow = (typeof ACTIVITY_WINDOWS)[number];
 
+export const ZONES = [
+  "Luanda",
+  "Benguela",
+  "Huíla",
+  "Huambo",
+  "Resto do país",
+] as const;
+
+export type Zone = (typeof ZONES)[number];
+
 export const TREND_WINDOWS = ["Últimos 7 dias", "Últimos 30 dias", "Últimos 90 dias"];
 
 export type ScoreCard = {
