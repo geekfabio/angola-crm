@@ -30,7 +30,7 @@ export default function ScoreCard({ card }: ScoreCardProps) {
           {card.verdict}
           <span
             role="img"
-            aria-label={`${card.stars} out of 5 stars`}
+            aria-label={`${card.stars} de 5 estrelas`}
             className="flex items-center gap-px rounded-full border border-white/4 bg-white/6 px-[3px] py-[2px] text-line-strong"
           >
             {Array.from({ length: 5 }, (_, index) =>

@@ -55,17 +55,17 @@ export default function CompanyDetail() {
         <SheetHeader>
           <div className="flex items-center gap-2">
             <BuildingIcon aria-hidden className="text-icon size-3.5" />
-            <SheetTitle>Companies Detail</SheetTitle>
+            <SheetTitle>Detalhe do Cliente</SheetTitle>
           </div>
           <SheetDescription className="sr-only">
-            Account summary, pipeline health, activity and score cards
+            Resumo da conta, saúde do funil, atividade e cartões de pontuação
           </SheetDescription>
           <SheetClose asChild>
             <Button
               variant="ghost"
               size="icon-sm"
               className="-mr-1"
-              aria-label="Close details"
+              aria-label="Fechar detalhe"
             >
               <XIcon aria-hidden className="text-foreground size-4" />
             </Button>
@@ -104,13 +104,13 @@ export default function CompanyDetail() {
               </div>
             </div>
 
-            <DetailSection title="Account summary">
+            <DetailSection title="Resumo da conta">
               <div className="lead-style flex flex-wrap items-center gap-x-4 gap-y-3">
                 <Button
                   variant="ghost"
                   size="none"
                   onClick={() => openProfile(owner.name)}
-                  aria-label={`Open ${owner.name} profile`}
+                  aria-label={`Abrir perfil de ${owner.name}`}
                   className="lead-style text-foreground -mx-1.5 gap-1.5 px-1.5 py-1 font-medium"
                 >
                   <Avatar src={owner.avatar} alt="" />
@@ -127,12 +127,12 @@ export default function CompanyDetail() {
               </div>
             </DetailSection>
 
-            <DetailSection title="Pipeline health">
+            <DetailSection title="Saúde do funil">
               <PipelineHealth company={company} />
             </DetailSection>
 
             <DetailSection
-              title="Activity trend"
+              title="Tendência de atividade"
               action={
                 <FilterMenu
                   value={trendWindow}
@@ -146,7 +146,7 @@ export default function CompanyDetail() {
             </DetailSection>
 
             <DetailSection
-              title="Score card"
+              title="Cartão de pontuação"
               className="gap-3 shadow-none"
               action={
                 <FilterMenu
@@ -169,16 +169,16 @@ export default function CompanyDetail() {
 
         <SheetFooter>
           <Button variant="link" size="none" href="#" className="lead-style">
-            Need help? Ask us.
+            Precisa de ajuda? Contacte-nos.
           </Button>
           <div className="flex items-center gap-2">
             <SheetClose asChild>
               <Button variant="subtle" size="sm">
-                Cancel
+                Cancelar
               </Button>
             </SheetClose>
             <Button variant="primary" size="sm" onClick={closeDetail}>
-              Save Update
+              Guardar Alteração
             </Button>
           </div>
         </SheetFooter>

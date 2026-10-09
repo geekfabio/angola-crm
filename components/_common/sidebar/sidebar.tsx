@@ -26,9 +26,9 @@ export default function Sidebar() {
           side="left"
           className="w-[254px] max-w-[85vw] border-sidebar-border bg-sidebar"
         >
-          <SheetTitle className="sr-only">Navigation</SheetTitle>
+          <SheetTitle className="sr-only">Navegação</SheetTitle>
           <SheetDescription className="sr-only">
-            Sales CRM sections and pipelines
+            Secções do CRM da Alimenta Angola
           </SheetDescription>
           <SidebarContent />
         </SheetContent>

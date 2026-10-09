@@ -4,14 +4,18 @@ type TableFooterProps = {
   count: number;
 };
 
-const CALCULATIONS = ["Sum of pipeline", "Avg win probality", "Add Calculation"];
+const CALCULATIONS = [
+  "Soma da carteira",
+  "Probabilidade média",
+  "Adicionar cálculo",
+];
 
 export default function TableFooter({ count }: TableFooterProps) {
   return (
     <div className="caption-style grid shrink-0 grid-cols-2 gap-px border-b border-border bg-background p-px sm:grid-cols-4">
       <div className="flex items-center gap-2 p-3 outline-1 outline-border">
         <span className="text-foreground">{count}</span>
-        <span className="text-muted-foreground">Companies in view</span>
+        <span className="text-muted-foreground">Clientes visíveis</span>
       </div>
       {CALCULATIONS.map((label) => (
         <div

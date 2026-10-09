@@ -1,11 +1,14 @@
 import Sidebar from "@/components/_common/sidebar/sidebar";
-import Companies from "@/components/companies/companies";
 
-export default function Home() {
+export default function AppLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <main className="flex h-dvh max-w-full overflow-hidden">
       <Sidebar />
-      <Companies />
+      {children}
     </main>
   );
 }

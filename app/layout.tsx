@@ -26,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="pt-AO"
       data-scroll-behavior="smooth"
       className={geist.variable}
       suppressHydrationWarning

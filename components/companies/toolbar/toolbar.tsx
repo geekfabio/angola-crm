@@ -39,7 +39,7 @@ export default function CompaniesToolbar() {
       stage,
       activityWindow,
     });
-    downloadCsv(`companies-${TODAY}.csv`, companiesCsvRows(visible));
+    downloadCsv(`clientes-${TODAY}.csv`, companiesCsvRows(visible));
   }
 
   return (
@@ -48,25 +48,25 @@ export default function CompaniesToolbar() {
 
       <div className="hidden min-w-0 flex-wrap gap-2 sm:flex">
         <FilterMenu
-          label="Sort by"
+          label="Ordenar por"
           value={sortBy}
           options={SORT_MENU_OPTIONS}
           onChange={(value) => setSortBy(value as SortKey)}
         />
         <FilterMenu
-          label="Filter"
+          label="Filtrar"
           value={owner}
           options={OWNER_OPTIONS}
           onChange={setOwner}
         />
         <FilterMenu
-          label="Stage"
+          label="Fase"
           value={stage}
           options={STAGE_OPTIONS}
           onChange={setStage}
         />
         <FilterMenu
-          label="Last Activity"
+          label="Última Atividade"
           value={String(activityWindow)}
           options={ACTIVITY_OPTIONS}
           onChange={(value) => setActivityWindow(Number(value))}
@@ -76,7 +76,7 @@ export default function CompaniesToolbar() {
       <div className="flex shrink-0 items-center gap-1">
         <Button variant="secondary" size="sm" onClick={exportCsv}>
           <ShareIcon aria-hidden className="size-3" />
-          Export
+          Exportar
         </Button>
         <Button
           variant="primary"
@@ -84,7 +84,7 @@ export default function CompaniesToolbar() {
           onClick={() => setNewCompanyOpen(true)}
         >
           <PlusIcon aria-hidden className="size-3" />
-          New Company
+          Novo Cliente
         </Button>
       </div>
     </div>

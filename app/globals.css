@@ -45,6 +45,10 @@
   --color-trend-muted: var(--trend-muted);
   --color-track: var(--track);
   --color-status: var(--status);
+  --color-brand: var(--brand);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-paper: var(--brand-paper);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -121,6 +125,10 @@
   --trend-muted: #395e4d;
   --track: #3a3a3a;
   --status: #16c89e;
+  --brand: #df2828;
+  --brand-accent: #f9eb2a;
+  --brand-ink: #000000;
+  --brand-paper: #ffffff;
   --sidebar-width: 254px;
   --tag-blue-bg: #1d2b3e;
   --tag-blue-border: #23354c;

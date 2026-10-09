@@ -20,10 +20,10 @@ type Stat = {
 export default function ActivityTrend({ company }: ActivityTrendProps) {
   const activity = companyActivity(company);
   const stats: Stat[] = [
-    { icon: CursorClickIcon, label: "Total touches", value: activity.touches },
-    { icon: MailIcon, label: "Emails", value: activity.emails },
-    { icon: CalendarIcon, label: "Meetings", value: activity.meetings },
-    { icon: PhoneCallIcon, label: "Calls & notes", value: activity.calls },
+    { icon: CursorClickIcon, label: "Total de contactos", value: activity.touches },
+    { icon: MailIcon, label: "E-mails", value: activity.emails },
+    { icon: CalendarIcon, label: "Reuniões", value: activity.meetings },
+    { icon: PhoneCallIcon, label: "Chamadas e notas", value: activity.calls },
   ];
 
   return (
@@ -34,7 +34,7 @@ export default function ActivityTrend({ company }: ActivityTrendProps) {
           <Sparkline values={company.trend} className="h-[22px]" />
         </div>
         <span className="caption-style block text-soft">
-          Spikes around QBR prep and renewal review
+          Picos antes da reunião trimestral e da revisão de renovação
         </span>
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">

@@ -50,8 +50,8 @@ export default function Notifications() {
           size="icon"
           aria-label={
             unreadCount > 0
-              ? `Notifications, ${unreadCount} unread`
-              : "Notifications"
+              ? `Notificações, ${unreadCount} não lidas`
+              : "Notificações"
           }
           className="data-[state=open]:bg-muted relative"
         >
@@ -73,7 +73,7 @@ export default function Notifications() {
       >
         <div className="flex h-14 items-center justify-between gap-2 px-4">
           <div className="flex items-center gap-2">
-            <h2>Notifications</h2>
+            <h2>Notificações</h2>
             {unreadCount > 0 && <CountBadge>{unreadCount}</CountBadge>}
           </div>
           <Button
@@ -83,7 +83,7 @@ export default function Notifications() {
             onClick={markAllRead}
             className="-mr-1.5"
           >
-            Mark all as read
+            Marcar todas como lidas
           </Button>
         </div>
 
@@ -93,10 +93,10 @@ export default function Notifications() {
         >
           <TabsList className="border-line-strong border-b px-4">
             <TabsTrigger value="all" className="py-3">
-              All
+              Todas
             </TabsTrigger>
             <TabsTrigger value="unread" className="py-3">
-              Unread
+              Não lidas
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -125,10 +125,10 @@ export default function Notifications() {
               <BellIcon aria-hidden className="text-soft size-4" />
             </span>
             <span className="lead-style mt-1 block font-medium">
-              You’re all caught up
+              Está tudo em dia
             </span>
             <span className="caption-style text-subtle block">
-              New mentions and deal updates will show up here.
+              Novas menções e atualizações de oportunidades aparecem aqui.
             </span>
           </div>
         )}

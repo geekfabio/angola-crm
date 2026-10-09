@@ -1,4 +1,8 @@
 import type { Company, SortKey } from "@/data/companies";
+import { formatDateShort, formatMoney } from "@/lib/format";
+
+export { formatMoney };
+export const formatDate = formatDateShort;
 
 export type CompanyFilters = {
   sortBy: SortKey;
@@ -64,14 +68,14 @@ export function filterCompanies(
 export function companiesCsvRows(companies: Company[]) {
   return [
     [
-      "Company",
-      "Segment & Stage",
-      "Account Owner",
-      "Open Deals",
-      "Pipeline Value",
-      "Win Probability (%)",
-      "Last Interaction Date",
-      "Last Interaction",
+      "Cliente",
+      "Segmento e Fase",
+      "Gestor de Conta",
+      "Oportunidades Abertas",
+      "Valor em Carteira",
+      "Probabilidade de Fecho (%)",
+      "Data do Último Contacto",
+      "Último Contacto",
     ],
     ...companies.map((company) => [
       company.name,
@@ -118,29 +122,6 @@ export function companyActivity(company: Company) {
     meetings: Math.ceil(deals / 2),
     calls: deals + 1,
   };
-}
-
-export function formatDate(iso: string) {
-  const [, month, day] = iso.split("-").map(Number);
-  const names = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sept",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-  return `${names[month - 1]} ${day}`;
-}
-
-export function formatMoney(value: number) {
-  return value.toLocaleString("en-US");
 }
 
 export function daysSince(iso: string) {
