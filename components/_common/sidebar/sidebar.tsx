@@ -8,11 +8,11 @@ import {
 } from "@/components/_ui/sheet";
 import SidebarContent from "./sidebar-content";
 import SidebarResizer from "./sidebar-resizer";
-import { useCompaniesStore } from "@/stores/companies-store";
+import { useUiStore } from "@/stores/ui-store";
 
 export default function Sidebar() {
-  const sidebarOpen = useCompaniesStore((state) => state.sidebarOpen);
-  const setSidebarOpen = useCompaniesStore((state) => state.setSidebarOpen);
+  const sidebarOpen = useUiStore((state) => state.sidebarOpen);
+  const setSidebarOpen = useUiStore((state) => state.setSidebarOpen);
 
   return (
     <>

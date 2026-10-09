@@ -16,7 +16,7 @@ import {
   SheetTitle,
 } from "@/components/_ui/sheet";
 import FilterMenu from "@/components/_common/filter-menu";
-import DetailSection from "./detail-section";
+import DetailSection from "@/components/_common/detail-section";
 import PipelineHealth from "./pipeline-health";
 import ActivityTrend from "./activity-trend";
 import ScoreCard from "./score-card";

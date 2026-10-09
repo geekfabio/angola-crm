@@ -15,7 +15,6 @@ type CompaniesState = {
   profileName: string | null;
   profileOpen: boolean;
   newCompanyOpen: boolean;
-  sidebarOpen: boolean;
   searchOpen: boolean;
   unreadNotificationIds: string[];
   activeTab: string;
@@ -31,7 +30,6 @@ type CompaniesState = {
   openProfile: (name: string) => void;
   closeProfile: () => void;
   setNewCompanyOpen: (open: boolean) => void;
-  setSidebarOpen: (open: boolean) => void;
   setSearchOpen: (open: boolean) => void;
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
@@ -48,7 +46,6 @@ export const useCompaniesStore = create<CompaniesState>((set) => ({
   profileName: null,
   profileOpen: false,
   newCompanyOpen: false,
-  sidebarOpen: false,
   searchOpen: false,
   unreadNotificationIds: NOTIFICATIONS.filter((item) => item.unread).map(
     (item) => item.id,
@@ -73,7 +70,6 @@ export const useCompaniesStore = create<CompaniesState>((set) => ({
     set({ profileName, profileOpen: true, detailOpen: false }),
   closeProfile: () => set({ profileOpen: false }),
   setNewCompanyOpen: (newCompanyOpen) => set({ newCompanyOpen }),
-  setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
   setSearchOpen: (searchOpen) => set({ searchOpen }),
   markNotificationRead: (id) =>
     set((state) => ({

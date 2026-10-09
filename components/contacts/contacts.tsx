@@ -1,52 +1,34 @@
+"use client";
+
+import { useMemo } from "react";
 import ModuleHeader from "@/components/_common/module-header";
-import { ScrollArea } from "@/components/_ui/scroll-area";
-import Tag from "@/components/_ui/tag";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/_ui/table";
-import { CONSENT_TONES, CONTACTS } from "@/data/contacts";
+import ContactsToolbar from "./toolbar/toolbar";
+import ContactsTable from "./table/contacts-table";
+import ContactDetail from "./detail/contact-detail";
+import NewContactDialog from "./new-contact/new-contact-dialog";
+import MergeContactsDialog from "./merge-contacts/merge-contacts-dialog";
+import { filterContacts } from "@/lib/contacts";
+import { useContactsStore } from "@/stores/contacts-store";
 
 export default function Contacts() {
+  const contacts = useContactsStore((state) => state.contacts);
+  const companyId = useContactsStore((state) => state.companyId);
+  const contactability = useContactsStore((state) => state.contactability);
+  const search = useContactsStore((state) => state.search);
+
+  const visible = useMemo(
+    () => filterContacts(contacts, { companyId, contactability, search }),
+    [contacts, companyId, contactability, search],
+  );
+
   return (
     <section className="flex min-h-0 min-w-0 flex-1 flex-col">
-      <ModuleHeader title="Contactos" count={CONTACTS.length} />
-      <ScrollArea orientation="both" className="min-h-0 flex-1">
-        <Table className="min-w-[780px]">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Cargo</TableHead>
-              <TableHead>Cliente</TableHead>
-              <TableHead>Telefone</TableHead>
-              <TableHead>E-mail</TableHead>
-              <TableHead>Consentimento</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {CONTACTS.map((contact) => (
-              <TableRow key={contact.id}>
-                <TableCell className="font-medium">{contact.name}</TableCell>
-                <TableCell className="text-soft">{contact.role}</TableCell>
-                <TableCell className="text-soft">
-                  {contact.companyName}
-                </TableCell>
-                <TableCell className="tabular-nums">{contact.phone}</TableCell>
-                <TableCell className="text-soft">{contact.email}</TableCell>
-                <TableCell>
-                  <Tag tone={CONSENT_TONES[contact.consent]}>
-                    {contact.consent}
-                  </Tag>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </ScrollArea>
+      <ModuleHeader title="Contactos" count={visible.length} />
+      <ContactsToolbar />
+      <ContactsTable contacts={visible} />
+      <ContactDetail />
+      <NewContactDialog />
+      <MergeContactsDialog />
     </section>
   );
 }

@@ -23,7 +23,7 @@ import {
 } from "@/components/_ui/select";
 import { Slider } from "@/components/_ui/slider";
 import SegmentBar from "@/components/_common/segment-bar";
-import FormSection from "./form-section";
+import FormSection from "@/components/_common/form-section";
 import LogoUpload from "./logo-upload";
 import {
   DEFAULT_TREND,

@@ -2,7 +2,7 @@
 
 import Button from "@/components/_ui/button";
 import CountBadge from "@/components/_ui/count-badge";
-import { useCompaniesStore } from "@/stores/companies-store";
+import { useUiStore } from "@/stores/ui-store";
 import MenuIcon from "@/public/assets/images/_common/menu.svg";
 
 type ModuleHeaderProps = {
@@ -11,7 +11,7 @@ type ModuleHeaderProps = {
 };
 
 export default function ModuleHeader({ title, count }: ModuleHeaderProps) {
-  const setSidebarOpen = useCompaniesStore((state) => state.setSidebarOpen);
+  const setSidebarOpen = useUiStore((state) => state.setSidebarOpen);
 
   return (
     <header className="shrink-0 border-b border-border">

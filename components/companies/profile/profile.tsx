@@ -12,7 +12,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/_ui/sheet";
-import DetailSection from "../detail/detail-section";
+import DetailSection from "@/components/_common/detail-section";
 import ProfileAccount from "./profile-account";
 import { CURRENT_USER, profileByName } from "@/data/companies";
 import { ALL_OWNERS, formatMoney } from "@/lib/companies";
