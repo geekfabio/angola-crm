@@ -7,8 +7,11 @@ import { ScrollArea } from "@/components/_ui/scroll-area";
 import HeroFigure from "./charts/hero-figure";
 import StatTile from "./charts/stat-tile";
 import FunnelChart from "./charts/funnel-chart";
-import TrendAreaChart from "./charts/trend-area-chart";
+import SegmentedTrendChart from "./charts/segmented-trend-chart";
 import RankedBarList, { type RankedItem } from "./charts/ranked-bar-list";
+import ZoneBarChart from "./charts/zone-bar-chart";
+import RecentOpportunitiesList from "./charts/recent-opportunities-list";
+import ProductsRadialChart from "./charts/products-radial-chart";
 import AtRiskList from "./charts/at-risk-list";
 import { COMPANIES } from "@/data/companies";
 import { MONTHLY_QUOTA, MONTHLY_TREND, ZONE_FORECAST } from "@/data/forecast";
@@ -19,9 +22,11 @@ import {
   byManager,
   clientsAtRisk,
   conversionRate,
+  lostOpportunities,
   openOpportunities,
   pipelineByStage,
   scaleTrendTo,
+  wonOpportunities,
 } from "@/lib/dashboard";
 import { compactMoneyParts, formatMoney } from "@/lib/format";
 import { ease } from "@/lib/easings";
@@ -51,6 +56,8 @@ export default function Forecast() {
     const trendDeltaPercent = trendStart
       ? Math.round(((trendEnd - trendStart) / trendStart) * 100)
       : 0;
+    const wonTotal = stageTotal(wonOpportunities(opportunities));
+    const lostTotal = stageTotal(lostOpportunities(opportunities));
     const { active } = activeVsInactive(COMPANIES);
 
     return {
@@ -58,6 +65,8 @@ export default function Forecast() {
       weighted,
       trend,
       trendDeltaPercent,
+      wonTrend: scaleTrendTo(MONTHLY_TREND, Math.max(wonTotal, 1), 0.3),
+      lostTrend: scaleTrendTo(MONTHLY_TREND, Math.max(lostTotal, 1), 0.3),
       openCount: open.length,
       conversion: conversionRate(opportunities),
       avgDeal: averageDealSize(opportunities),
@@ -163,8 +172,45 @@ export default function Forecast() {
             <h2 className="eyebrow-style text-faint font-normal">
               Tendência da carteira
             </h2>
-            <TrendAreaChart values={metrics.trend} className="h-[180px] w-full" />
+            <SegmentedTrendChart
+              className="h-[180px] w-full"
+              metrics={[
+                { key: "carteira", label: "Carteira", values: metrics.trend, color: "var(--primary)" },
+                { key: "ganho", label: "Ganho", values: metrics.wonTrend, color: "var(--success)" },
+                { key: "perdido", label: "Perdido", values: metrics.lostTrend, color: "var(--danger)" },
+              ]}
+            />
           </motion.div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <motion.div
+              variants={SECTION_VARIANTS}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.5, ease: ease.power3Out }}
+              className="border-border flex flex-col gap-4 rounded-xl border p-5"
+            >
+              <h2 className="eyebrow-style text-faint font-normal">
+                Oportunidades recentes
+              </h2>
+              <RecentOpportunitiesList opportunities={opportunities} />
+            </motion.div>
+
+            <motion.div
+              variants={SECTION_VARIANTS}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.5, ease: ease.power3Out }}
+              className="border-border flex flex-col gap-4 rounded-xl border p-5"
+            >
+              <h2 className="eyebrow-style text-faint font-normal">
+                Produtos mais procurados
+              </h2>
+              <ProductsRadialChart opportunities={opportunities} />
+            </motion.div>
+          </div>
 
           <div className="grid gap-6 lg:grid-cols-2">
             <motion.div
@@ -192,7 +238,7 @@ export default function Forecast() {
               <h2 className="eyebrow-style text-faint font-normal">
                 Por zona
               </h2>
-              <RankedBarList items={metrics.zones} />
+              <ZoneBarChart items={metrics.zones} />
             </motion.div>
           </div>
 

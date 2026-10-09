@@ -8,6 +8,8 @@ import { formatMoney } from "@/lib/format";
 type TrendAreaChartProps = {
   values: number[];
   className?: string;
+  color?: string;
+  unitLabel?: string;
 };
 
 const WIDTH = 1000;
@@ -30,7 +32,12 @@ function buildGeometry(values: number[]) {
   }));
 }
 
-export default function TrendAreaChart({ values, className }: TrendAreaChartProps) {
+export default function TrendAreaChart({
+  values,
+  className,
+  color = "var(--primary)",
+  unitLabel = "Semana",
+}: TrendAreaChartProps) {
   const gradientId = useId();
   const prefersReducedMotion = useReducedMotion();
   const svgRef = useRef<SVGSVGElement>(null);
@@ -67,8 +74,8 @@ export default function TrendAreaChart({ values, className }: TrendAreaChartProp
       >
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.24} />
-            <stop offset="100%" stopColor="var(--primary)" stopOpacity={0} />
+            <stop offset="0%" stopColor={color} stopOpacity={0.24} />
+            <stop offset="100%" stopColor={color} stopOpacity={0} />
           </linearGradient>
         </defs>
 
@@ -86,7 +93,7 @@ export default function TrendAreaChart({ values, className }: TrendAreaChartProp
         <motion.path
           d={line}
           fill="none"
-          stroke="var(--primary)"
+          stroke={color}
           strokeWidth={2.5}
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -103,7 +110,7 @@ export default function TrendAreaChart({ values, className }: TrendAreaChartProp
           cx={last.x}
           cy={last.y}
           r={4.5}
-          fill="var(--primary)"
+          fill={color}
           stroke="var(--background)"
           strokeWidth={2}
           vectorEffect="non-scaling-stroke"
@@ -131,7 +138,7 @@ export default function TrendAreaChart({ values, className }: TrendAreaChartProp
               cx={active.x}
               cy={active.y}
               r={5}
-              fill="var(--primary)"
+              fill={color}
               stroke="var(--background)"
               strokeWidth={2}
               vectorEffect="non-scaling-stroke"
@@ -152,7 +159,7 @@ export default function TrendAreaChart({ values, className }: TrendAreaChartProp
               top: `${Math.max(0, (active.y / HEIGHT) * 100 - 18)}%`,
             }}
           >
-            <span className="text-subtle">Semana {hoverIndex! + 1}</span>
+            <span className="text-subtle">{unitLabel} {hoverIndex! + 1}</span>
             <span className="text-foreground font-medium tabular-nums">
               {formatMoney(active.value)}
             </span>

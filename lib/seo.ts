@@ -70,6 +70,13 @@ export const SITE_ROUTES: SiteRoute[] = [
     priority: 0.7,
   },
   {
+    path: "/tickets",
+    title: "Tickets",
+    description: "Pedidos e incidentes de clientes, com cronograma e comentários.",
+    changeFrequency: "daily",
+    priority: 0.7,
+  },
+  {
     path: "/login",
     title: "Entrar",
     description: "Entrar no CRM da Alimenta Angola.",

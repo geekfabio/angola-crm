@@ -1,4 +1,4 @@
-# Roteiro de UI — 15 fases
+# Roteiro de UI — 16 fases
 
 Enquanto o `ROADMAP.md` ordena o produto por fases de negócio (fundação, dados reais, Supabase), este ficheiro ordena a **construção da interface** dos módulos que já têm rota mas ainda são esqueleto visual — tabela de leitura, sem store, sem diálogos, sem painel de detalhe.
 
@@ -115,6 +115,19 @@ Registo de auditoria (quem alterou o quê, com foco em dados de cliente e envios
 Revisão de acessibilidade (`.claude/skills/better-accessibility`) e de 360px em todos os módulos construídos nas Fases 1–14; micro-interações consistentes com os tokens `--ease-power*`.
 
 **Pronto quando:** todos os módulos passam a mesma revisão que `AGENTS.md` já pede para mudanças de UI — ecrã estreito e largo, sem regressões.
+
+---
+
+## Fase 16 — Tickets: Suporte e SLA `✅`
+
+Módulo novo, fora da lista original de `FEATURES.md` — pedido explícito do utilizador para abrir pedidos/incidentes de clientes com cronograma e comentários, a partir de "leitura de e-mails".
+
+- `data/tickets.ts`: estados (Aberto, Em Curso, Em Espera, Resolvido, Fechado), prioridades (Baixa, Normal, Alta, Urgente), origem (E-mail, Telefone, WhatsApp, Manual); comentários e cronograma por ticket.
+- `stores/tickets-store.ts`: filtros, painel de detalhe, diálogo de novo ticket, diálogo "criar a partir de e-mail", `addComment`/mudança de estado e prioridade (regista sempre no cronograma).
+- Módulo novo na sidebar (`/tickets`), com tabela, painel de detalhe (estado/prioridade editáveis, cronograma, thread de comentários) e os dois diálogos de criação.
+- **Sem ligação a uma caixa de entrada real.** O diálogo "Criar a partir de E-mail" pede campos explícitos (Remetente, Assunto, Mensagem) — não analisa texto livre nem liga a um fornecedor. Ler e-mails reais para abrir tickets automaticamente depende de Supabase (continua sem ligar nesta sessão) e de autenticação OAuth com um fornecedor de e-mail; fica para quando essas duas peças existirem.
+
+**Pronto quando:** criar um ticket manual ou a partir de "e-mail" aparece na tabela, mudar o estado ou a prioridade regista um evento no cronograma, e adicionar um comentário aparece na thread.
 
 ---
 

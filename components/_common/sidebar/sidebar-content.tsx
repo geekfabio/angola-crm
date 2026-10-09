@@ -32,6 +32,7 @@ const NAV_ITEMS = [
   { href: "/atividades", icon: ListIcon, label: "Atividades" },
   { href: "/contactos", icon: BookClosedIcon, label: "Contactos" },
   { href: "/campanhas", icon: MailIcon, label: "Campanhas" },
+  { href: "/tickets", icon: MessageQuestionIcon, label: "Tickets" },
 ] as const;
 
 const TEAM_ITEMS = [
