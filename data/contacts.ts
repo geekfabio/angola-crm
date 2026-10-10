@@ -194,8 +194,8 @@ export const CONTACTS: Contact[] = [
     preferredLanguage: "Português",
     contactability: "Válido",
     consent: {
-      email: { granted: true, date: "2026-05-29", origin: "Formulário de registo" },
-      sms: { granted: false, date: "2026-05-29", origin: "Formulário de registo" },
+      email: { granted: false, date: "2026-05-29", origin: "Formulário de registo" },
+      sms: { granted: true, date: "2026-05-29", origin: "Formulário de registo" },
       whatsapp: { granted: true, date: "2026-05-29", origin: "Formulário de registo" },
     },
   },

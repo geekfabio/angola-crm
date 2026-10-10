@@ -1,59 +1,40 @@
+"use client";
+
+import { useMemo } from "react";
 import ModuleHeader from "@/components/_common/module-header";
-import { ScrollArea } from "@/components/_ui/scroll-area";
-import Tag from "@/components/_ui/tag";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/_ui/table";
-import { CAMPAIGNS, CHANNEL_TONES, STATUS_TONES } from "@/data/campaigns";
-import { formatNumber, formatPercent } from "@/lib/format";
+import CampaignsToolbar from "./toolbar/toolbar";
+import CampaignsTable from "./table/campaigns-table";
+import CampaignEditor from "./editor/campaign-editor";
+import TemplateLibraryDialog from "./library/template-library-dialog";
+import { filterCampaigns } from "@/lib/campaigns";
+import { useCampaignsStore } from "@/stores/campaigns-store";
 
 export default function Campaigns() {
+  const campaigns = useCampaignsStore((state) => state.campaigns);
+  const channel = useCampaignsStore((state) => state.channel);
+  const status = useCampaignsStore((state) => state.status);
+  const search = useCampaignsStore((state) => state.search);
+  const editorId = useCampaignsStore((state) => state.editorId);
+
+  const visible = useMemo(
+    () => filterCampaigns(campaigns, { channel, status, search }),
+    [campaigns, channel, status, search],
+  );
+
+  const editing = campaigns.find((campaign) => campaign.id === editorId);
+
   return (
-    <section className="flex min-h-0 min-w-0 flex-1 flex-col">
-      <ModuleHeader title="Campanhas" count={CAMPAIGNS.length} />
-      <ScrollArea orientation="both" className="min-h-0 flex-1">
-        <Table className="min-w-[720px]">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Campanha</TableHead>
-              <TableHead>Canal</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead className="text-right">Destinatários</TableHead>
-              <TableHead className="text-right">Taxa de Abertura</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {CAMPAIGNS.map((campaign) => (
-              <TableRow key={campaign.id}>
-                <TableCell className="font-medium">{campaign.name}</TableCell>
-                <TableCell>
-                  <Tag tone={CHANNEL_TONES[campaign.channel]}>
-                    {campaign.channel}
-                  </Tag>
-                </TableCell>
-                <TableCell>
-                  <Tag tone={STATUS_TONES[campaign.status]}>
-                    {campaign.status}
-                  </Tag>
-                </TableCell>
-                <TableCell className="text-right tabular-nums">
-                  {formatNumber(campaign.recipients)}
-                </TableCell>
-                <TableCell className="text-right tabular-nums text-soft">
-                  {campaign.openRate !== undefined
-                    ? formatPercent(campaign.openRate)
-                    : "—"}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </ScrollArea>
-    </section>
+    <>
+      {editing ? (
+        <CampaignEditor campaign={editing} />
+      ) : (
+        <section className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <ModuleHeader title="Campanhas" count={visible.length} />
+          <CampaignsToolbar />
+          <CampaignsTable campaigns={visible} />
+        </section>
+      )}
+      <TemplateLibraryDialog />
+    </>
   );
 }

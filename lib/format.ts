@@ -24,6 +24,25 @@ const LONG_DATE_FORMATTER = new Intl.DateTimeFormat("pt-AO", {
   year: "numeric",
 });
 
+const DATE_TIME_FORMATTER = new Intl.DateTimeFormat("pt-AO", {
+  timeZone: "Africa/Luanda",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
+export const LUANDA_OFFSET = "+01:00";
+
+export function luandaLocalToDate(local: string) {
+  return new Date(`${local}:00${LUANDA_OFFSET}`);
+}
+
+export function formatDateTime(local: string) {
+  return DATE_TIME_FORMATTER.format(luandaLocalToDate(local));
+}
+
 export function formatMoney(value: number) {
   return MONEY_FORMATTER.format(value);
 }

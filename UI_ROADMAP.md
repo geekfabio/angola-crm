@@ -64,17 +64,25 @@ Módulo `FEATURES.md` §2. Pré-requisito de Email/SMS — nenhuma campanha pode
 
 **Pronto quando:** a lista de clientes em risco reage ao mesmo filtro de janela de atividade usado em Clientes. ✅ Confirmado.
 
-## Fase 7 — Campanhas: Editor e Biblioteca (Email) `⬜`
+## Fase 7 — Campanhas: Editor e Biblioteca (Email) `✅`
 
-`FEATURES.md` §5. Editor de campanha por blocos (texto, imagem, botão), com pré-visualização desktop/mobile; biblioteca de modelos com a marca Alimenta Angola; variáveis de personalização com valor por omissão.
+`FEATURES.md` §5. `stores/campaigns-store.ts` passou a ser a fonte de verdade de `/campanhas`; clicar numa campanha de e-mail abre o editor (`components/campaigns/editor/`) em três passos — Conteúdo, Destinatários, Revisão e envio.
 
-**Pronto quando:** um modelo da biblioteca abre no editor pronto a personalizar.
+- Editor por blocos (`data/campaigns.ts`: Título, Texto, Destaque, Imagem, Botão, Separador), com reordenação e remoção, e pré-visualização ao vivo em computador/telemóvel (`email-preview.tsx`), desenhada só com os tokens de marca (`--brand`, `--brand-accent`, `--brand-ink`, `--brand-paper`).
+- Biblioteca de modelos (`components/campaigns/library/`): promoção semanal, lista de preços, novo produto, aviso de rutura, boas-vindas, aniversário do cliente, e um modelo em branco.
+- Variáveis `{{nome}}`, `{{empresa}}`, `{{gestor}}`, `{{zona}}`, `{{saldo}}` inseridas no cursor, cada uma com valor por omissão obrigatório; a pré-visualização pode ser vista "como" qualquer contacto ou só com os valores por omissão (`lib/campaigns.ts` → `renderVariables`).
+- Fora de âmbito, por dependerem de infraestrutura: modo HTML, anexos (Supabase Storage), carregamento de imagens (só o logótipo está disponível) e teste A/B.
 
-## Fase 8 — Campanhas: Segmentação e Envio (Email) `⬜`
+**Pronto quando:** um modelo da biblioteca abre no editor pronto a personalizar. ✅ Confirmado.
 
-Segmentos construídos sobre os filtros de Clientes/Contactos (zona, segmento, ABC, dias sem comprar); fluxo rascunho → revisão → agendamento; exclusão automática de quem não tem consentimento de e-mail (liga à Fase 2).
+## Fase 8 — Campanhas: Segmentação e Envio (Email) `✅`
 
-**Pronto quando:** um segmento sem consentimento mostra a contagem de exclusões antes de agendar.
+- Segmento dinâmico sobre os filtros de Clientes — zona, segmento, classe ABC (calculada por Pareto sobre o valor em carteira em `lib/campaigns.ts` → `abcClasses`) e dias sem comprar — com contagem de clientes, contactos, excluídos e destinatários elegíveis, e as duas listas lado a lado.
+- Exclusão automática (`buildAudience`): contactos inválidos, que saíram da empresa ou pediram remoção, e quem não tem consentimento de e-mail. Lê `useContactsStore` e `useCompaniesStore`, por isso mudar o consentimento em Contactos muda a contagem na campanha aberta.
+- Fluxo Rascunho → Em revisão (conteúdo bloqueado) → envio de teste registado → Agendada (data e hora de Luanda, sempre no futuro), com cancelamento de agendamento e regresso a rascunho.
+- **Nada é enviado.** O teste e o agendamento só mudam o estado em memória; o ecrã diz isso explicitamente. O envio real continua dependente do fornecedor de e-mail, de `lib/messaging/` e de `MESSAGING_LIVE=true` (`ROADMAP.md` Fase 4, `AGENTS.md`).
+
+**Pronto quando:** um segmento sem consentimento mostra a contagem de exclusões antes de agendar. ✅ Confirmado.
 
 ## Fase 9 — Campanhas: Medição `⬜`
 
