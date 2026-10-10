@@ -40,12 +40,17 @@ export const TAG_TONES: Record<Tag, TagTone> = {
   Reactivação: "teal",
 };
 
+export const TEAMS = ["Grandes Contas", "Televendas", "Equipa de Rua"] as const;
+
+export type Team = (typeof TEAMS)[number];
+
 export type Owner = {
   name: string;
   avatar: string;
   email: string;
   phone: string;
   role: string;
+  team: Team;
 };
 
 const AVATARS = Array.from(
@@ -93,6 +98,7 @@ export const OWNERS: Owner[] = OWNER_NAMES.map((name, i) => ({
   email: `${emailSlug(name)}@alimentaangola.co.ao`,
   phone: phoneFor(i),
   role: i % 3 === 0 ? "Gestor de Conta Sénior" : "Gestor de Conta",
+  team: TEAMS[i % TEAMS.length],
 }));
 
 export const CURRENT_USER: Owner = {
@@ -101,6 +107,7 @@ export const CURRENT_USER: Owner = {
   email: "tiago.fernandes@alimentaangola.co.ao",
   phone: "+244 923 000 000",
   role: "Diretor Comercial",
+  team: "Grandes Contas",
 };
 
 export function ownerByName(name: string): Owner {
@@ -116,6 +123,7 @@ export type Company = {
   name: string;
   tags: Tag[];
   owner: string;
+  zone: Zone;
   openDeals: number;
   pipelineValue: number;
   winProbability: number;
@@ -155,6 +163,7 @@ export const COMPANIES: Company[] = [
     name: "Mercearia Boa Esperança",
     tags: ["Grossista", "Venda adicional", "Expansão", "Renovação"],
     owner: "Sara Neto",
+    zone: "Luanda",
     openDeals: 7,
     pipelineValue: 48_000_000,
     winProbability: 70,
@@ -167,6 +176,7 @@ export const COMPANIES: Company[] = [
     name: "Restaurante Ilha do Cabo",
     tags: ["HORECA", "Novo cliente"],
     owner: "Jaime Teixeira",
+    zone: "Benguela",
     openDeals: 4,
     pipelineValue: 21_500_000,
     winProbability: 51,
@@ -179,6 +189,7 @@ export const COMPANIES: Company[] = [
     name: "Hotel Baía Azul",
     tags: ["Grossista"],
     owner: "Mariana Capitão",
+    zone: "Huíla",
     openDeals: 5,
     pipelineValue: 12_400_000,
     winProbability: 22,
@@ -191,6 +202,7 @@ export const COMPANIES: Company[] = [
     name: "Cantina Girassol",
     tags: ["Renovação"],
     owner: "Nádia Jamba",
+    zone: "Huambo",
     openDeals: 2,
     pipelineValue: 18_600_000,
     winProbability: 77,
@@ -203,6 +215,7 @@ export const COMPANIES: Company[] = [
     name: "Padaria Tchissola",
     tags: ["Piloto"],
     owner: "Alexandre Santos",
+    zone: "Luanda",
     openDeals: 6,
     pipelineValue: 31_000_000,
     winProbability: 82,
@@ -215,6 +228,7 @@ export const COMPANIES: Company[] = [
     name: "Supermercado Nova Vida",
     tags: ["Revendedor", "Expansão"],
     owner: "Marcos Domingos",
+    zone: "Luanda",
     openDeals: 8,
     pipelineValue: 27_700_000,
     winProbability: 86,
@@ -227,6 +241,7 @@ export const COMPANIES: Company[] = [
     name: "Pensão Miramar",
     tags: ["Venda adicional", "Expansão", "HORECA", "Piloto"],
     owner: "André Kiala",
+    zone: "Luanda",
     openDeals: 3,
     pipelineValue: 9_900_000,
     winProbability: 51,
@@ -239,6 +254,7 @@ export const COMPANIES: Company[] = [
     name: "Mercearia Kilamba",
     tags: ["Grossista", "Retalho"],
     owner: "Lina Wamba",
+    zone: "Luanda",
     openDeals: 5,
     pipelineValue: 19_800_000,
     winProbability: 61,
@@ -251,6 +267,7 @@ export const COMPANIES: Company[] = [
     name: "Restaurante Sabores de Luanda",
     tags: ["Retalho", "Venda adicional", "Renovação", "Parceria"],
     owner: "Jamile Fonseca",
+    zone: "Luanda",
     openDeals: 2,
     pipelineValue: 35_900_000,
     winProbability: 38,
@@ -263,6 +280,7 @@ export const COMPANIES: Company[] = [
     name: "Hotel Talatona Plaza",
     tags: ["HORECA", "Grossista", "Expansão", "Piloto"],
     owner: "Catarina Sacramento",
+    zone: "Luanda",
     openDeals: 8,
     pipelineValue: 9_600_000,
     winProbability: 24,
@@ -275,6 +293,7 @@ export const COMPANIES: Company[] = [
     name: "Cantina Esperança",
     tags: ["Retalho"],
     owner: "Ricardo Baptista",
+    zone: "Resto do país",
     openDeals: 3,
     pipelineValue: 18_900_000,
     winProbability: 72,
@@ -287,6 +306,7 @@ export const COMPANIES: Company[] = [
     name: "Mercearia Benfica",
     tags: ["Reactivação", "Expansão", "Revendedor"],
     owner: "Ana Milagre",
+    zone: "Luanda",
     openDeals: 5,
     pipelineValue: 14_700_000,
     winProbability: 55,
@@ -299,6 +319,7 @@ export const COMPANIES: Company[] = [
     name: "Revenda Zango",
     tags: ["Parceria", "Expansão"],
     owner: "Emília Garcia",
+    zone: "Luanda",
     openDeals: 9,
     pipelineValue: 11_900_000,
     winProbability: 45,
@@ -311,6 +332,7 @@ export const COMPANIES: Company[] = [
     name: "Instituto Técnico do Lobito",
     tags: ["Expansão", "Reactivação", "Renovação"],
     owner: "Olívio Chico",
+    zone: "Benguela",
     openDeals: 8,
     pipelineValue: 24_600_000,
     winProbability: 38,
@@ -323,6 +345,7 @@ export const COMPANIES: Company[] = [
     name: "Marisqueira da Ilha",
     tags: ["Retalho", "Parceria"],
     owner: "Avelina Brito",
+    zone: "Resto do país",
     openDeals: 4,
     pipelineValue: 28_300_000,
     winProbability: 23,
@@ -335,6 +358,7 @@ export const COMPANIES: Company[] = [
     name: "Hotel Mussulo Bay",
     tags: ["Expansão", "HORECA", "Venda adicional", "Piloto"],
     owner: "Nelson Lemos",
+    zone: "Luanda",
     openDeals: 3,
     pipelineValue: 37_500_000,
     winProbability: 44,
@@ -347,6 +371,7 @@ export const COMPANIES: Company[] = [
     name: "Mercearia São Paulo",
     tags: ["Grossista", "Retalho"],
     owner: "Graça Miguel",
+    zone: "Luanda",
     openDeals: 6,
     pipelineValue: 44_000_000,
     winProbability: 24,
@@ -359,6 +384,7 @@ export const COMPANIES: Company[] = [
     name: "Cantina Universitária do Kilamba",
     tags: ["Expansão", "Parceria", "Renovação", "Piloto"],
     owner: "Cloé Pascoal",
+    zone: "Luanda",
     openDeals: 2,
     pipelineValue: 17_800_000,
     winProbability: 52,

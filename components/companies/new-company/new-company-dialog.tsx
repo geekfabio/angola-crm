@@ -31,9 +31,11 @@ import {
   OWNERS,
   SEGMENTS,
   STAGES,
+  ZONES,
   type Company,
   type Segment,
   type Stage,
+  type Zone,
 } from "@/data/companies";
 import { TODAY, daysSince } from "@/lib/companies";
 import { slugify } from "@/lib/utils";
@@ -46,6 +48,7 @@ type FormState = {
   segment: Segment;
   stage: Stage;
   owner: string;
+  zone: Zone;
   pipelineValue: string;
   openDeals: string;
   winProbability: number;
@@ -59,6 +62,7 @@ const EMPTY_FORM: FormState = {
   segment: SEGMENTS[0],
   stage: STAGES[0],
   owner: OWNERS[0].name,
+  zone: ZONES[0],
   pipelineValue: "",
   openDeals: "1",
   winProbability: 50,
@@ -93,6 +97,7 @@ export default function NewCompanyDialog() {
       logo: form.logo ?? undefined,
       tags: [form.segment, form.stage],
       owner: form.owner,
+      zone: form.zone,
       openDeals: Math.max(0, Math.round(Number(form.openDeals) || 0)),
       pipelineValue: Math.max(0, Math.round(Number(form.pipelineValue) || 0)),
       winProbability: form.winProbability,
@@ -193,26 +198,45 @@ export default function NewCompanyDialog() {
           </FormSection>
 
           <FormSection title="Responsável e oportunidade">
-            <Field label="Gestor de conta" htmlFor="company-owner">
-              <Select
-                value={form.owner}
-                onValueChange={(value) => update("owner", value)}
-              >
-                <SelectTrigger id="company-owner">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {OWNERS.map((owner) => (
-                    <SelectItem key={owner.name} value={owner.name}>
-                      <span className="flex items-center gap-2">
-                        <Avatar src={owner.avatar} alt="" />
-                        {owner.name}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Gestor de conta" htmlFor="company-owner">
+                <Select
+                  value={form.owner}
+                  onValueChange={(value) => update("owner", value)}
+                >
+                  <SelectTrigger id="company-owner">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {OWNERS.map((owner) => (
+                      <SelectItem key={owner.name} value={owner.name}>
+                        <span className="flex items-center gap-2">
+                          <Avatar src={owner.avatar} alt="" />
+                          {owner.name}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Zona" htmlFor="company-zone">
+                <Select
+                  value={form.zone}
+                  onValueChange={(value) => update("zone", value as Zone)}
+                >
+                  <SelectTrigger id="company-zone">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ZONES.map((zone) => (
+                      <SelectItem key={zone} value={zone}>
+                        {zone}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+            </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Valor em carteira" htmlFor="company-pipeline">

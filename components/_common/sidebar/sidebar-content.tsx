@@ -29,6 +29,7 @@ const NAV_ITEMS = [
   { href: "/", icon: BuildingIcon, label: "Clientes", withCount: true },
   { href: "/oportunidades", icon: ClipboardIcon, label: "Oportunidades" },
   { href: "/previsao", icon: BarChartIcon, label: "Previsão" },
+  { href: "/relatorios", icon: BarChartAltIcon, label: "Relatórios" },
   { href: "/atividades", icon: ListIcon, label: "Atividades" },
   { href: "/contactos", icon: BookClosedIcon, label: "Contactos" },
   { href: "/campanhas", icon: MailIcon, label: "Campanhas" },

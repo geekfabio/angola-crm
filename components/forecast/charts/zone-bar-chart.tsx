@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import Button from "@/components/_ui/button";
-import type { RankedItem } from "./ranked-bar-list";
+import type { RankedItem } from "@/components/_common/ranked-bar-list";
 import { ease } from "@/lib/easings";
 import { compactMoneyParts } from "@/lib/format";
 

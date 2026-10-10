@@ -1,4 +1,4 @@
-import { OWNERS } from "./companies";
+import { OWNERS, type Team } from "./companies";
 
 export const MONTHLY_TREND = [2, 4, 2, 5, 5, 7, 6, 9, 8, 11, 10, 12, 11, 14];
 
@@ -32,4 +32,15 @@ export const ZONE_FORECAST: ZoneForecast[] = [
   { zone: "Huíla", amount: 28_500_000, quota: 40_000_000 },
   { zone: "Huambo", amount: 21_000_000, quota: 30_000_000 },
   { zone: "Resto do país", amount: 22_500_000, quota: 35_000_000 },
+];
+
+export type TeamForecast = {
+  team: Team;
+  quota: number;
+};
+
+export const TEAM_FORECAST: TeamForecast[] = [
+  { team: "Grandes Contas", quota: 140_000_000 },
+  { team: "Televendas", quota: 95_000_000 },
+  { team: "Equipa de Rua", quota: 85_000_000 },
 ];

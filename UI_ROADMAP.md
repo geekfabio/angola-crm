@@ -56,11 +56,13 @@ Módulo `FEATURES.md` §2. Pré-requisito de Email/SMS — nenhuma campanha pode
 
 **Pronto quando:** mudar a fase de uma oportunidade em `/oportunidades` muda o número em `/previsao`. ✅ Confirmado.
 
-## Fase 6 — Relatórios: Desempenho e Clientes em Risco `⬜`
+## Fase 6 — Relatórios: Desempenho e Clientes em Risco `✅`
 
-`FEATURES.md` §8. Painel por gestor/zona/equipa; lista de "clientes em risco" (sem compra há X dias, calculado a partir de `activityDays`); exportação CSV reaproveitando `lib/csv.ts`.
+`FEATURES.md` §8. Módulo novo (`/relatorios`, `components/reports/`) com KPIs do período (vendas, carteira aberta, taxa de conversão, clientes ativos), um painel de desempenho com alternador Gestor/Zona/Equipa (`lib/reports.ts`, `components/_common/ranked-bar-list.tsx`) e a lista de "clientes em risco" com o mesmo filtro de janela de atividade de Clientes — invertido para "sem compra há mais de X dias" (`data/companies.ts`:`ACTIVITY_WINDOWS`). Exportação CSV em ambos os painéis, reaproveitando `lib/csv.ts`.
 
-**Pronto quando:** a lista de clientes em risco reage ao mesmo filtro de janela de atividade usado em Clientes.
+`data/companies.ts` ganhou `zone` por cliente e `team`/`TEAMS` por gestor (liga às Zonas e Equipas Comerciais da sidebar); `data/forecast.ts` ganhou `TEAM_FORECAST`. Os componentes genéricos de `components/forecast/charts/` usados só pela Previsão (`stat-tile`, `ranked-bar-list`, `at-risk-list`, `animated-sparkline`) foram promovidos para `components/_common/`, já que agora servem dois módulos.
+
+**Pronto quando:** a lista de clientes em risco reage ao mesmo filtro de janela de atividade usado em Clientes. ✅ Confirmado.
 
 ## Fase 7 — Campanhas: Editor e Biblioteca (Email) `⬜`
 

@@ -29,6 +29,14 @@ function riskLevel(days: number) {
 export default function AtRiskList({ clients }: AtRiskListProps) {
   const prefersReducedMotion = useReducedMotion();
 
+  if (clients.length === 0) {
+    return (
+      <p className="caption-style text-subtle py-3">
+        Sem clientes em risco para os filtros escolhidos.
+      </p>
+    );
+  }
+
   return (
     <motion.ul
       variants={CONTAINER_VARIANTS}

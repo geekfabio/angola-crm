@@ -70,6 +70,13 @@ export const SITE_ROUTES: SiteRoute[] = [
     priority: 0.7,
   },
   {
+    path: "/relatorios",
+    title: "Relatórios",
+    description: "Desempenho por gestor, zona e equipa, e clientes em risco.",
+    changeFrequency: "weekly",
+    priority: 0.6,
+  },
+  {
     path: "/tickets",
     title: "Tickets",
     description: "Pedidos e incidentes de clientes, com cronograma e comentários.",

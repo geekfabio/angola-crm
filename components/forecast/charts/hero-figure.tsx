@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion } from "motion/react";
 import { SlidingNumber } from "@/components/motion-primitives/sliding-number";
-import AnimatedSparkline from "./animated-sparkline";
+import AnimatedSparkline from "@/components/_common/animated-sparkline";
 import SegmentBar from "@/components/_common/segment-bar";
 import { ease } from "@/lib/easings";
 import { formatPercent } from "@/lib/format";
