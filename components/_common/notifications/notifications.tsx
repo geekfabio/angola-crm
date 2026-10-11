@@ -11,8 +11,11 @@ import {
 import { ScrollArea } from "@/components/_ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/_ui/tabs";
 import NotificationItem from "./notification-item";
-import { NOTIFICATIONS } from "@/data/notifications";
+import { useOpenTarget } from "@/components/_common/navigation/use-open-target";
+import type { Notification } from "@/data/notifications";
+import { useNow } from "@/hooks/use-now";
 import { useCompaniesStore } from "@/stores/companies-store";
+import { useNotificationsStore } from "@/stores/notifications-store";
 import BellIcon from "@/public/assets/images/companies/header/bell.svg";
 
 type Filter = "all" | "unread";
@@ -22,24 +25,21 @@ export default function Notifications() {
   const [filter, setFilter] = useState<Filter>("all");
   const navigated = useRef(false);
   const companies = useCompaniesStore((state) => state.companies);
-  const unreadIds = useCompaniesStore((state) => state.unreadNotificationIds);
-  const markRead = useCompaniesStore((state) => state.markNotificationRead);
-  const markAllRead = useCompaniesStore(
-    (state) => state.markAllNotificationsRead,
-  );
-  const openDetail = useCompaniesStore((state) => state.openDetail);
+  const notifications = useNotificationsStore((state) => state.notifications);
+  const markRead = useNotificationsStore((state) => state.markRead);
+  const markAllRead = useNotificationsStore((state) => state.markAllRead);
+  const openTarget = useOpenTarget();
+  const now = useNow();
 
-  const unreadCount = unreadIds.length;
-  const visible = NOTIFICATIONS.filter(
-    (item) => filter === "all" || unreadIds.includes(item.id),
-  );
+  const unreadCount = notifications.filter((item) => item.unread).length;
+  const visible = notifications.filter((item) => filter === "all" || item.unread);
 
-  function handleSelect(id: string, companyId: string) {
-    markRead(id);
-    if (!companies.some((company) => company.id === companyId)) return;
+  function handleSelect(notification: Notification) {
+    markRead(notification.id);
+    if (!notification.target) return;
     navigated.current = true;
     setOpen(false);
-    openDetail(companyId);
+    openTarget(notification.target);
   }
 
   return (
@@ -111,10 +111,8 @@ export default function Notifications() {
                   company={companies.find(
                     (company) => company.id === notification.companyId,
                   )}
-                  unread={unreadIds.includes(notification.id)}
-                  onSelect={() =>
-                    handleSelect(notification.id, notification.companyId)
-                  }
+                  now={now}
+                  onSelect={() => handleSelect(notification)}
                 />
               ))}
             </ul>
@@ -128,10 +126,25 @@ export default function Notifications() {
               Está tudo em dia
             </span>
             <span className="caption-style text-subtle block">
-              Novas menções e atualizações de oportunidades aparecem aqui.
+              Menções e alterações feitas pela equipa aparecem aqui.
             </span>
           </div>
         )}
+
+        <div className="border-line-strong border-t p-1.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            href="/auditoria"
+            className="w-full"
+            onClick={() => {
+              navigated.current = true;
+              setOpen(false);
+            }}
+          >
+            Ver registo de auditoria
+          </Button>
+        </div>
       </PopoverContent>
     </Popover>
   );

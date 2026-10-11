@@ -1,6 +1,7 @@
 "use client";
 
 import Avatar from "@/components/_ui/avatar";
+import Button from "@/components/_ui/button";
 import { ScrollArea } from "@/components/_ui/scroll-area";
 import Tag from "@/components/_ui/tag";
 import {
@@ -16,26 +17,28 @@ import {
   TICKET_STATUS_TONES,
   type Ticket,
 } from "@/data/tickets";
-import { formatDateShort } from "@/lib/format";
+import { formatDateTimeShort, formatRelative } from "@/lib/format";
+import SlaBadge from "../sla/sla-badge";
 import { useTicketsStore } from "@/stores/tickets-store";
 
 type TicketsTableProps = {
   tickets: Ticket[];
+  now: number | null;
 };
 
-export default function TicketsTable({ tickets }: TicketsTableProps) {
+export default function TicketsTable({ tickets, now }: TicketsTableProps) {
   const openDetail = useTicketsStore((state) => state.openDetail);
 
   return (
     <ScrollArea orientation="both" className="min-h-0 flex-1">
-      <Table className="min-w-[920px]">
+      <Table className="min-w-[980px]">
         <TableHeader>
           <TableRow>
             <TableHead>Assunto</TableHead>
             <TableHead>Cliente</TableHead>
-            <TableHead>Origem</TableHead>
             <TableHead>Estado</TableHead>
             <TableHead>Prioridade</TableHead>
+            <TableHead>SLA</TableHead>
             <TableHead>Responsável</TableHead>
             <TableHead>Atualizado</TableHead>
           </TableRow>
@@ -47,13 +50,24 @@ export default function TicketsTable({ tickets }: TicketsTableProps) {
               onClick={() => openDetail(ticket.id)}
               className="hover:bg-card/60 cursor-pointer"
             >
-              <TableCell className="max-w-[280px] truncate font-medium">
-                {ticket.subject}
+              <TableCell className="max-w-[280px]">
+                <Button
+                  variant="link"
+                  size="none"
+                  title={ticket.subject}
+                  className="block max-w-full truncate text-left no-underline"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    openDetail(ticket.id);
+                  }}
+                >
+                  {ticket.subject}
+                </Button>
+                <span className="caption-style text-subtle mt-1 block">{ticket.origin}</span>
               </TableCell>
               <TableCell className="text-soft">
                 {ticket.companyName ?? "—"}
               </TableCell>
-              <TableCell className="text-soft">{ticket.origin}</TableCell>
               <TableCell>
                 <Tag tone={TICKET_STATUS_TONES[ticket.status]}>
                   {ticket.status}
@@ -65,13 +79,20 @@ export default function TicketsTable({ tickets }: TicketsTableProps) {
                 </Tag>
               </TableCell>
               <TableCell>
+                <SlaBadge ticket={ticket} now={now} />
+              </TableCell>
+              <TableCell>
                 <span className="flex items-center gap-1.5">
                   <Avatar src={ticket.assigneeAvatar} alt="" />
                   {ticket.assignee}
                 </span>
               </TableCell>
               <TableCell className="text-soft tabular-nums">
-                {formatDateShort(ticket.updatedAt)}
+                <time dateTime={ticket.updatedAt}>
+                  {now === null
+                    ? formatDateTimeShort(ticket.updatedAt)
+                    : formatRelative(ticket.updatedAt, now)}
+                </time>
               </TableCell>
             </TableRow>
           ))}
@@ -81,7 +102,7 @@ export default function TicketsTable({ tickets }: TicketsTableProps) {
                 colSpan={7}
                 className="caption-style text-subtle h-[120px] text-center"
               >
-                Nenhum ticket corresponde aos filtros atuais.
+                Nenhum ticket corresponde aos filtros atuais. Limpe os filtros ou escolha outro indicador acima.
               </TableCell>
             </TableRow>
           )}

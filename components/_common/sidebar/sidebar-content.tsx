@@ -136,6 +136,13 @@ export default function SidebarContent() {
 
       <SidebarSection className="border-sidebar-border shrink-0 border-t">
         <SidebarNavItem
+          href="/auditoria"
+          icon={ListIcon}
+          label="Auditoria"
+          tone="quiet"
+          active={pathname === "/auditoria"}
+        />
+        <SidebarNavItem
           href="/definicoes"
           icon={SettingsIcon}
           label="Definições"

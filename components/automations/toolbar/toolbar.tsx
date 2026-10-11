@@ -26,10 +26,13 @@ export default function AutomationsToolbar() {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <Input
+            type="search"
+            aria-label="Pesquisar automações"
+            data-page-search
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Pesquisar automação…"
-            className="h-[30px] w-[220px]"
+            className="h-[30px] w-full sm:w-[220px]"
           />
           <FilterMenu
             label="Estado"

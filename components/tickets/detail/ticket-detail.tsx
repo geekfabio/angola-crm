@@ -28,7 +28,10 @@ import {
   type TicketPriority,
   type TicketStatus,
 } from "@/data/tickets";
-import { formatDateLong } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
+import { useNow } from "@/hooks/use-now";
+import SlaBadge from "../sla/sla-badge";
+import SlaSection from "../sla/sla-section";
 import { useTicketsStore } from "@/stores/tickets-store";
 import MessageIcon from "@/public/assets/images/companies/sidebar/message-question.svg";
 import XIcon from "@/public/assets/images/companies/detail/x.svg";
@@ -42,6 +45,7 @@ export default function TicketDetail() {
   const setTicketPriority = useTicketsStore((state) => state.setTicketPriority);
   const addComment = useTicketsStore((state) => state.addComment);
   const [comment, setComment] = useState("");
+  const now = useNow();
 
   const ticket = tickets.find((item) => item.id === detailId);
 
@@ -83,7 +87,10 @@ export default function TicketDetail() {
         {ticket && (
           <div className="min-h-0 flex-1 overflow-y-auto">
             <div className="flex flex-col gap-2 p-5 shadow-[inset_0_-1px_0_var(--line-strong)]">
-              <h2 className="truncate">{ticket.subject}</h2>
+              <h2>{ticket.subject}</h2>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <SlaBadge ticket={ticket} now={now} />
+              </div>
               <span className="caption-style text-subtle">
                 {ticket.companyName ?? "Sem cliente associado"}
                 {ticket.contactName ? ` · ${ticket.contactName}` : ""}
@@ -134,6 +141,10 @@ export default function TicketDetail() {
               </div>
             </DetailSection>
 
+            <DetailSection title="Acordo de nível de serviço (SLA)">
+              <SlaSection ticket={ticket} now={now} />
+            </DetailSection>
+
             <DetailSection title="Cronograma">
               <ol className="flex flex-col gap-3">
                 {ticket.timeline.map((event) => (
@@ -145,7 +156,7 @@ export default function TicketDetail() {
                     <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                       <span className="lead-style">{event.label}</span>
                       <span className="caption-style text-subtle">
-                        {formatDateLong(event.date)} · {event.author}
+                        {formatDateTime(event.date)} · {event.author}
                       </span>
                     </span>
                   </li>
@@ -164,7 +175,7 @@ export default function TicketDetail() {
                           {item.author}
                         </span>
                         <span className="text-subtle">
-                          {formatDateLong(item.date)}
+                          {formatDateTime(item.date)}
                         </span>
                       </span>
                       <p className="p-style border-line-strong text-soft rounded-lg border bg-white/3 px-3 py-2">
@@ -184,6 +195,7 @@ export default function TicketDetail() {
                   className="flex flex-col gap-2"
                 >
                   <Textarea
+                    aria-label="Novo comentário"
                     value={comment}
                     onChange={(event) => setComment(event.target.value)}
                     placeholder="Escreva um comentário…"
@@ -206,7 +218,7 @@ export default function TicketDetail() {
 
         <SheetFooter>
           <Tag tone="neutral" size="sm">
-            {ticket ? `Criado em ${formatDateLong(ticket.createdAt)}` : ""}
+            {ticket ? `Criado em ${formatDateTime(ticket.createdAt)}` : ""}
           </Tag>
           <SheetClose asChild>
             <Button variant="subtle" size="sm">

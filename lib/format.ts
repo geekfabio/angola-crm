@@ -82,3 +82,68 @@ export function compactMoneyParts(value: number) {
   }
   return { amount: Math.round(value), suffix: "Kz" };
 }
+
+const TIME_FORMATTER = new Intl.DateTimeFormat("pt-AO", {
+  timeZone: "Africa/Luanda",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
+const SHORT_DATE_TIME_FORMATTER = new Intl.DateTimeFormat("pt-AO", {
+  timeZone: "Africa/Luanda",
+  day: "2-digit",
+  month: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
+const RELATIVE_FORMATTER = new Intl.RelativeTimeFormat("pt-AO", { numeric: "auto" });
+
+const MINUTE = 60 * 1000;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
+
+export function nowLuandaLocal(date = new Date()) {
+  return new Date(date.getTime() + HOUR).toISOString().slice(0, 16);
+}
+
+export function formatTime(local: string) {
+  return TIME_FORMATTER.format(luandaLocalToDate(local));
+}
+
+export function formatDateTimeShort(local: string) {
+  return SHORT_DATE_TIME_FORMATTER.format(luandaLocalToDate(local));
+}
+
+export function formatRelative(local: string, now: number) {
+  const diff = luandaLocalToDate(local).getTime() - now;
+  const abs = Math.abs(diff);
+  if (abs < MINUTE) return "agora mesmo";
+  if (abs < HOUR) return RELATIVE_FORMATTER.format(Math.round(diff / MINUTE), "minute");
+  if (abs < DAY) return RELATIVE_FORMATTER.format(Math.round(diff / HOUR), "hour");
+  if (abs < 7 * DAY) return RELATIVE_FORMATTER.format(Math.round(diff / DAY), "day");
+  return formatDateShort(local.slice(0, 10));
+}
+
+export function formatDuration(ms: number) {
+  const minutes = Math.max(0, Math.round(Math.abs(ms) / MINUTE));
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) {
+    const rest = minutes % 60;
+    return rest ? `${hours} h ${rest} min` : `${hours} h`;
+  }
+  const days = Math.floor(hours / 24);
+  const restHours = hours % 24;
+  return restHours ? `${days} d ${restHours} h` : `${days} d`;
+}
+
+export function formatDayHeading(day: string, now: number | null) {
+  if (now !== null) {
+    const today = nowLuandaLocal(new Date(now)).slice(0, 10);
+    const yesterday = nowLuandaLocal(new Date(now - DAY)).slice(0, 10);
+    if (day === today) return "Hoje";
+    if (day === yesterday) return "Ontem";
+  }
+  return formatDateLong(day);
+}

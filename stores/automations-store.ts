@@ -13,6 +13,7 @@ import {
   type Trigger,
 } from "@/data/automations";
 import { DEFAULT_AUTOMATION_FILTERS, automationIssues } from "@/lib/automations";
+import { recordEvent } from "./audit-store";
 
 function today() {
   return new Date().toISOString().slice(0, 10);
@@ -130,11 +131,23 @@ export const useAutomationsStore = create<AutomationsState>((set, get) => {
       const automation = get().automations.find((item) => item.id === id);
       if (!automation) return;
       if (status === "Ativa" && automationIssues(automation).length > 0) return;
+      if (automation.status === status) return;
       set((state) => ({
         automations: state.automations.map((item) =>
           item.id === id ? { ...item, status, updatedAt: today() } : item,
         ),
       }));
+      recordEvent({
+        action: status === "Ativa" ? "ativou a automação" : "pausou a automação",
+        target: { module: "Automações", id, label: automation.name },
+        sensitive: status === "Ativa",
+        changes: [{ field: "Estado", from: automation.status, to: status }],
+        toast: {
+          title: status === "Ativa" ? "Automação ativada" : "Automação pausada",
+          description: automation.name,
+          tone: "success",
+        },
+      });
     },
   };
 });

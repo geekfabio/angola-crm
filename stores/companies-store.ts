@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { COMPANIES, type Company, type SortKey } from "@/data/companies";
-import { NOTIFICATIONS } from "@/data/notifications";
 import { DEFAULT_FILTERS } from "@/lib/companies";
+import { recordEvent } from "./audit-store";
 
 type CompaniesState = {
   companies: Company[];
@@ -15,8 +15,6 @@ type CompaniesState = {
   profileName: string | null;
   profileOpen: boolean;
   newCompanyOpen: boolean;
-  searchOpen: boolean;
-  unreadNotificationIds: string[];
   activeTab: string;
   setSortBy: (sortBy: SortKey) => void;
   setOwner: (owner: string) => void;
@@ -30,14 +28,11 @@ type CompaniesState = {
   openProfile: (name: string) => void;
   closeProfile: () => void;
   setNewCompanyOpen: (open: boolean) => void;
-  setSearchOpen: (open: boolean) => void;
-  markNotificationRead: (id: string) => void;
-  markAllNotificationsRead: () => void;
   setActiveTab: (tab: string) => void;
   addCompany: (company: Company) => void;
 };
 
-export const useCompaniesStore = create<CompaniesState>((set) => ({
+export const useCompaniesStore = create<CompaniesState>((set, get) => ({
   companies: COMPANIES,
   ...DEFAULT_FILTERS,
   selectedIds: ["microsoft"],
@@ -46,10 +41,6 @@ export const useCompaniesStore = create<CompaniesState>((set) => ({
   profileName: null,
   profileOpen: false,
   newCompanyOpen: false,
-  searchOpen: false,
-  unreadNotificationIds: NOTIFICATIONS.filter((item) => item.unread).map(
-    (item) => item.id,
-  ),
   activeTab: "companies",
   setSortBy: (sortBy) => set({ sortBy }),
   setOwner: (owner) => set({ owner }),
@@ -70,18 +61,27 @@ export const useCompaniesStore = create<CompaniesState>((set) => ({
     set({ profileName, profileOpen: true, detailOpen: false }),
   closeProfile: () => set({ profileOpen: false }),
   setNewCompanyOpen: (newCompanyOpen) => set({ newCompanyOpen }),
-  setSearchOpen: (searchOpen) => set({ searchOpen }),
-  markNotificationRead: (id) =>
-    set((state) => ({
-      unreadNotificationIds: state.unreadNotificationIds.filter(
-        (unread) => unread !== id,
-      ),
-    })),
-  markAllNotificationsRead: () => set({ unreadNotificationIds: [] }),
   setActiveTab: (activeTab) => set({ activeTab }),
-  addCompany: (company) =>
+  addCompany: (company) => {
     set((state) => ({
       companies: [company, ...state.companies],
       newCompanyOpen: false,
-    })),
+    }));
+    recordEvent({
+      action: "criou o cliente",
+      target: { module: "Clientes", id: company.id, label: company.name },
+      companyId: company.id,
+      sensitive: true,
+      changes: [
+        { field: "Gestor de conta", to: company.owner },
+        { field: "Zona", to: company.zone },
+      ],
+      toast: {
+        title: "Cliente criado",
+        description: company.name,
+        tone: "success",
+        action: { label: "Abrir", run: () => get().openDetail(company.id) },
+      },
+    });
+  },
 }));

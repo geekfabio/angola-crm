@@ -1,4 +1,7 @@
 import Sidebar from "@/components/_common/sidebar/sidebar";
+import CommandPalette from "@/components/_common/command-palette/command-palette";
+import GlobalShortcuts from "@/components/_common/command-palette/global-shortcuts";
+import Toaster from "@/components/_ui/toaster";
 
 export default function AppLayout({
   children,
@@ -6,9 +9,20 @@ export default function AppLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <main className="flex h-dvh max-w-full overflow-hidden">
+    <div className="flex h-dvh max-w-full overflow-hidden">
+      <a
+        href="#conteudo"
+        className="bg-primary text-primary-foreground sr-only z-[70] rounded-full px-4 py-2.5 text-[14px] leading-none font-medium focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+      >
+        Saltar para o conteúdo
+      </a>
       <Sidebar />
-      {children}
-    </main>
+      <main id="conteudo" tabIndex={-1} className="flex min-h-0 min-w-0 flex-1 outline-none">
+        {children}
+      </main>
+      <CommandPalette />
+      <GlobalShortcuts />
+      <Toaster />
+    </div>
   );
 }

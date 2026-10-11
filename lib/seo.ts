@@ -84,6 +84,13 @@ export const SITE_ROUTES: SiteRoute[] = [
     priority: 0.6,
   },
   {
+    path: "/auditoria",
+    title: "Auditoria",
+    description: "Registo de quem alterou o quê nos clientes, contactos, envios e definições.",
+    changeFrequency: "daily",
+    priority: 0.3,
+  },
+  {
     path: "/definicoes",
     title: "Definições",
     description: "Dados da empresa, remetentes, modelos de mensagem, equipas, zonas e acessos.",

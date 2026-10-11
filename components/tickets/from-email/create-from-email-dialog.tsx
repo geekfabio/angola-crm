@@ -24,14 +24,11 @@ import {
 } from "@/components/_ui/select";
 import { COMPANIES, CURRENT_USER } from "@/data/companies";
 import type { Ticket } from "@/data/tickets";
+import { nowLuandaLocal } from "@/lib/format";
 import { useTicketsStore } from "@/stores/tickets-store";
 import MailIcon from "@/public/assets/images/companies/sidebar/mail.svg";
 
 const NO_COMPANY = "none";
-
-function today() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 type FormState = {
   from: string;
@@ -82,14 +79,14 @@ export default function CreateFromEmailDialog() {
       origin: "E-mail",
       assignee: CURRENT_USER.name,
       assigneeAvatar: CURRENT_USER.avatar,
-      createdAt: today(),
-      updatedAt: today(),
+      createdAt: nowLuandaLocal(),
+      updatedAt: nowLuandaLocal(),
       comments: [],
       timeline: [
         {
           id: "t1",
           label: "Ticket criado a partir de e-mail",
-          date: today(),
+          date: nowLuandaLocal(),
           author: form.from.trim() || "E-mail",
         },
       ],

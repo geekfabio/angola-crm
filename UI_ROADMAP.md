@@ -141,17 +141,26 @@ Tudo em memória — sem Supabase nem ligação real a fornecedores.
 
 **Pronto quando:** as "Zonas" e "Equipas Comerciais" da sidebar deixam de ser texto fixo e vêm desta área de Definições. ✅ Confirmado.
 
-## Fase 14 — Auditoria e Notificações Transversais `⬜`
+## Fase 14 — Auditoria e Notificações Transversais `✅`
 
-Registo de auditoria (quem alterou o quê, com foco em dados de cliente e envios); o centro de notificações do cabeçalho (`components/companies/header/notifications/`) passa a agregar eventos dos módulos novos, não só de Clientes.
+- **Registo de auditoria** (`/auditoria`, `components/audit/`, `stores/audit-store.ts`, `data/audit.ts`): quem fez o quê, em que registo, com as alterações campo a campo (valor antigo riscado → valor novo). Agrupado por dia ("Hoje", "Ontem"), com filtros por módulo e pessoa, pesquisa, "Só dados sensíveis" (consentimentos, fusões, envios, perfis de acesso) e exportação CSV. Clicar no registo abre-o no módulo certo.
+- **`recordEvent()`** é o ponto único: os stores de Clientes, Contactos, Oportunidades, Atividades, Campanhas, Automações, Tickets e Definições chamam-no nas ações que contam (criar, mover de fase, fundir, consentimento, agendar, ativar, convites, perfis…). Escreve na auditoria, gera a notificação e, quando faz sentido, o aviso no ecrã.
+- **Centro de notificações global** (`components/_common/notifications/`, `stores/notifications-store.ts`): o sino está em todos os cabeçalhos de módulo, com tempo relativo ("há 5 minutos"), "Não lidas", e ligação ao registo de auditoria. Clicar numa notificação abre o registo no módulo respetivo.
+- **Avisos (toasts)** (`components/_ui/toaster.tsx`, `stores/toast-store.ts`): confirmação discreta com ação — "Abrir" depois de criar, **"Anular"** depois de mover uma oportunidade de fase, fundir contactos ou eliminar um modelo (a eliminação de modelos deixou de pedir confirmação, porque pode ser anulada). Avisos com ação ficam até serem fechados; os restantes desaparecem em 5 s e param enquanto o rato ou o foco estão por cima.
 
-**Pronto quando:** criar uma oportunidade ou fundir um contacto gera uma notificação visível no sino do cabeçalho.
+Sem Supabase: o registo vive em memória. Quando houver base de dados, `recordEvent()` passa a escrever numa tabela de auditoria só de inserção, com RLS.
 
-## Fase 15 — Polimento Transversal `⬜`
+**Pronto quando:** criar uma oportunidade ou fundir um contacto gera uma notificação visível no sino do cabeçalho. ✅ Confirmado.
 
-Revisão de acessibilidade (`.claude/skills/better-accessibility`) e de 360px em todos os módulos construídos nas Fases 1–14; micro-interações consistentes com os tokens `--ease-power*`.
+## Fase 15 — Polimento Transversal `✅`
 
-**Pronto quando:** todos os módulos passam a mesma revisão que `AGENTS.md` já pede para mudanças de UI — ecrã estreito e largo, sem regressões.
+- **Paleta de comandos global** (⌘K / Ctrl K, ou o botão "Pesquisar…" em todos os cabeçalhos): pesquisa clientes, contactos, oportunidades, tickets e campanhas (sem acentos, por palavras), cria qualquer registo e navega para qualquer módulo. Substitui a paleta antiga que só existia em Clientes.
+- **Atalhos de teclado**: `N` cria o registo principal do módulo atual, `/` foca a pesquisa da página, `G` seguido de uma letra navega (C Clientes, O Oportunidades, P Previsão, R Relatórios, A Atividades, N Contactos, M Campanhas, U Automações, T Tickets, L Auditoria, D Definições). Desligados enquanto se escreve ou com um diálogo aberto; listados na própria paleta.
+- **Acessibilidade**: link "Saltar para o conteúdo" como primeira paragem do Tab e um `<main>` único; todas as pesquisas com `aria-label`; avisos numa região `aria-live="polite"`; estados de SLA e de auditoria com texto e ícone, nunca só cor; animações dos avisos reduzidas a opacidade com "reduzir movimento".
+- **Micro-interações**: botões com `scale(0.96)` ao carregar (só com movimento permitido); cabeçalhos de Oportunidades, Atividades e Clientes passaram a usar o `ModuleHeader` partilhado.
+- **360px**: revisão automática de todas as rotas — nenhum elemento cortado fora de áreas com scroll; as pesquisas ocupam a largura toda em ecrã estreito.
+
+**Pronto quando:** todos os módulos passam a mesma revisão que `AGENTS.md` já pede para mudanças de UI — ecrã estreito e largo, sem regressões. ✅ Confirmado (11 rotas a 360px e 1440px, sem erros na consola).
 
 ---
 
@@ -165,6 +174,18 @@ Módulo novo, fora da lista original de `FEATURES.md` — pedido explícito do u
 - **Sem ligação a uma caixa de entrada real.** O diálogo "Criar a partir de E-mail" pede campos explícitos (Remetente, Assunto, Mensagem) — não analisa texto livre nem liga a um fornecedor. Ler e-mails reais para abrir tickets automaticamente depende de Supabase (continua sem ligar nesta sessão) e de autenticação OAuth com um fornecedor de e-mail; fica para quando essas duas peças existirem.
 
 **Pronto quando:** criar um ticket manual ou a partir de "e-mail" aparece na tabela, mudar o estado ou a prioridade regista um evento no cronograma, e adicionar um comentário aparece na thread.
+
+### Reforço: SLA `✅`
+
+O título prometia SLA e a primeira versão não o tinha. Agora:
+
+- Política por prioridade (`data/tickets.ts`:`SLA_POLICIES`): Urgente 1 h / 8 h, Alta 4 h / 24 h, Normal 8 h / 72 h, Baixa 24 h / 120 h (primeira resposta / resolução), em horas corridas.
+- `lib/sla.ts` calcula o relógio de cada ticket: no prazo, **em risco** (menos de 25% do prazo), **atrasado**, pausado ("Em Espera"), cumprido ou fora do prazo. A primeira resposta fica registada no primeiro comentário ou ao passar a "Em Curso"; a resolução ao passar a "Resolvido"/"Fechado".
+- Faixa de indicadores no topo (Por resolver, Em risco, Atrasados, Cumprimento %) que também servem de filtro; coluna SLA na tabela, ordenada por urgência; secção SLA no detalhe com barra de progresso e prazo de cada marco.
+
+Simplificações assumidas: horas corridas (sem horário de expediente nem feriados) e o tempo "Em Espera" não é descontado — o relógio só aparece como pausado.
+
+**Pronto quando:** um ticket urgente sem resposta há mais de 1 h aparece como "Atrasado", conta no indicador e sobe para o topo da tabela. ✅ Confirmado.
 
 ---
 

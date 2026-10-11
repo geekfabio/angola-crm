@@ -39,10 +39,13 @@ export default function ActivitiesToolbar() {
     <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 px-4 py-4">
       <div className="flex min-w-0 flex-wrap items-center gap-2">
         <Input
+          type="search"
+          aria-label="Pesquisar atividades"
+          data-page-search
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Pesquisar cliente ou nota…"
-          className="h-[30px] w-[220px]"
+          className="h-[30px] w-full sm:w-[220px]"
         />
         {showType && (
           <FilterMenu

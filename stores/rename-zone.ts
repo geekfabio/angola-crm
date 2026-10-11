@@ -3,11 +3,17 @@ import { useAutomationsStore } from "./automations-store";
 import { useCampaignsStore } from "./campaigns-store";
 import { useCompaniesStore } from "./companies-store";
 import { useSettingsStore } from "./settings-store";
+import { recordEvent } from "./audit-store";
 
 export function renameZoneEverywhere(from: string, to: string) {
   if (from === to) return;
 
   useSettingsStore.getState().updateZone(from, { name: to });
+  recordEvent({
+    action: "mudou o nome da zona",
+    target: { module: "Definições", label: to },
+    changes: [{ field: "Nome", from, to }],
+  });
 
   useCompaniesStore.setState((state) => ({
     companies: state.companies.map((company) =>

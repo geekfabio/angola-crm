@@ -1,22 +1,25 @@
 import Asset from "@/components/_ui/asset";
 import Avatar from "@/components/_ui/avatar";
 import Button from "@/components/_ui/button";
-import { ownerByName, type Company } from "@/data/companies";
+import { profileByName, type Company } from "@/data/companies";
 import type { Notification } from "@/data/notifications";
+import { formatDateTimeShort, formatRelative } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 type NotificationItemProps = {
   notification: Notification;
   company?: Company;
-  unread: boolean;
+  now: number | null;
   onSelect: () => void;
 };
 
 function CompanyMark({
   company,
+  fallback,
   className,
 }: {
   company?: Company;
+  fallback: string;
   className?: string;
 }) {
   return (
@@ -38,7 +41,7 @@ function CompanyMark({
         />
       ) : (
         <span className="caption-style text-soft">
-          {company?.name.slice(0, 1) ?? "?"}
+          {company?.name.slice(0, 1) ?? fallback}
         </span>
       )}
     </span>
@@ -48,10 +51,12 @@ function CompanyMark({
 export default function NotificationItem({
   notification,
   company,
-  unread,
+  now,
   onSelect,
 }: NotificationItemProps) {
-  const actor = notification.actor ? ownerByName(notification.actor) : null;
+  const actor = notification.actor ? profileByName(notification.actor) : null;
+  const unread = notification.unread;
+  const fallback = (notification.target?.label ?? "·").slice(0, 1);
 
   return (
     <li className="relative">
@@ -68,11 +73,12 @@ export default function NotificationItem({
               <Avatar src={actor.avatar} alt="" className="size-8" />
               <CompanyMark
                 company={company}
+                fallback={fallback}
                 className="ring-popover absolute -right-1 -bottom-1 size-4 rounded-[5px] ring-2"
               />
             </>
           ) : (
-            <CompanyMark company={company} className="size-8 rounded-lg" />
+            <CompanyMark company={company} fallback={fallback} className="size-8 rounded-lg" />
           )}
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-2 pr-4">
@@ -88,7 +94,11 @@ export default function NotificationItem({
             </span>
           )}
           <span className="caption-style text-subtle flex items-center gap-1.5">
-            {notification.time}
+            <time dateTime={notification.at}>
+              {now === null
+                ? formatDateTimeShort(notification.at)
+                : formatRelative(notification.at, now)}
+            </time>
             {company && (
               <>
                 <span aria-hidden className="bg-subtle size-0.5 rounded-full" />

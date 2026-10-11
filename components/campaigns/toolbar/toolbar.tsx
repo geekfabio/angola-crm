@@ -33,10 +33,13 @@ export default function CampaignsToolbar() {
     <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 px-4 py-4">
       <div className="flex min-w-0 flex-wrap items-center gap-2">
         <Input
+          type="search"
+          aria-label="Pesquisar campanhas"
+          data-page-search
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Pesquisar campanha ou assunto…"
-          className="h-[30px] w-[220px]"
+          className="h-[30px] w-full sm:w-[220px]"
         />
         <FilterMenu label="Canal" value={channel} options={CHANNEL_OPTIONS} onChange={setChannel} />
         <FilterMenu label="Estado" value={status} options={STATUS_OPTIONS} onChange={setStatus} />

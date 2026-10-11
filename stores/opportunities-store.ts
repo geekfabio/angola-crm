@@ -7,6 +7,8 @@ import {
   type OpportunityStage,
 } from "@/data/opportunities";
 import { DEFAULT_FILTERS } from "@/lib/opportunities";
+import { formatMoney } from "@/lib/format";
+import { recordEvent } from "./audit-store";
 
 type View = "kanban" | "tabela";
 
@@ -42,6 +44,49 @@ type OpportunitiesState = {
   cancelLossMove: () => void;
 };
 
+function logStageMove(
+  previous: Opportunity,
+  stage: OpportunityStage,
+  lossReason?: LossReason,
+) {
+  const target = {
+    module: "Oportunidades" as const,
+    id: previous.id,
+    label: previous.companyName,
+  };
+  recordEvent({
+    action: "moveu a oportunidade",
+    target,
+    companyId: previous.companyId,
+    notify: "stage",
+    changes: [
+      { field: "Fase", from: previous.stage, to: stage },
+      ...(lossReason ? [{ field: "Motivo de perda", to: lossReason }] : []),
+    ],
+    toast: {
+      title: `Movida para ${stage}`,
+      description: previous.companyName,
+      action: {
+        label: "Anular",
+        run: () => {
+          useOpportunitiesStore.setState((state) => ({
+            opportunities: state.opportunities.map((item) =>
+              item.id === previous.id ? previous : item,
+            ),
+          }));
+          recordEvent({
+            action: "anulou a mudança de fase de",
+            target,
+            companyId: previous.companyId,
+            notify: false,
+            changes: [{ field: "Fase", from: stage, to: previous.stage }],
+          });
+        },
+      },
+    },
+  });
+}
+
 export const useOpportunitiesStore = create<OpportunitiesState>((set, get) => ({
   opportunities: OPPORTUNITIES,
   ...DEFAULT_FILTERS,
@@ -61,11 +106,27 @@ export const useOpportunitiesStore = create<OpportunitiesState>((set, get) => ({
   closeDetail: () => set({ detailOpen: false }),
   setNewOpportunityOpen: (newOpportunityOpen) => set({ newOpportunityOpen }),
 
-  addOpportunity: (opportunity) =>
+  addOpportunity: (opportunity) => {
     set((state) => ({
       opportunities: [opportunity, ...state.opportunities],
       newOpportunityOpen: false,
-    })),
+    }));
+    recordEvent({
+      action: "criou a oportunidade",
+      target: { module: "Oportunidades", id: opportunity.id, label: opportunity.companyName },
+      companyId: opportunity.companyId,
+      changes: [
+        { field: "Valor", to: formatMoney(opportunity.value) },
+        { field: "Fase", to: opportunity.stage },
+      ],
+      toast: {
+        title: "Oportunidade criada",
+        description: `${opportunity.companyName} · ${formatMoney(opportunity.value)}`,
+        tone: "success",
+        action: { label: "Abrir", run: () => get().openDetail(opportunity.id) },
+      },
+    });
+  },
 
   requestStageMove: (id, stage) => {
     const opportunity = get().opportunities.find((item) => item.id === id);
@@ -92,11 +153,14 @@ export const useOpportunitiesStore = create<OpportunitiesState>((set, get) => ({
           : item,
       ),
     }));
+    logStageMove(opportunity, stage);
   },
 
   confirmLossMove: (reason) => {
     const pending = get().pendingLossMove;
     if (!pending) return;
+    const opportunity = get().opportunities.find((item) => item.id === pending.id);
+    if (!opportunity) return;
 
     set((state) => ({
       opportunities: state.opportunities.map((item) =>
@@ -119,6 +183,7 @@ export const useOpportunitiesStore = create<OpportunitiesState>((set, get) => ({
       ),
       pendingLossMove: null,
     }));
+    logStageMove(opportunity, "Fechada - Perdida", reason);
   },
 
   cancelLossMove: () => set({ pendingLossMove: null }),

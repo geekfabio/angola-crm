@@ -6,12 +6,26 @@ import {
   type ContactabilityStatus,
 } from "@/data/contacts";
 import { DEFAULT_FILTERS } from "@/lib/contacts";
+import { recordEvent } from "./audit-store";
+
+const CHANNEL_LABELS: Record<ConsentChannel, string> = {
+  email: "e-mail",
+  sms: "SMS",
+  whatsapp: "WhatsApp",
+};
 
 function today() {
   return new Date().toISOString().slice(0, 10);
 }
 
 export type MergeFieldKey = "role" | "phone" | "whatsapp" | "email";
+
+const MERGE_FIELD_LABELS: Record<MergeFieldKey, string> = {
+  role: "Cargo",
+  phone: "Telefone",
+  whatsapp: "WhatsApp",
+  email: "E-mail",
+};
 
 export type MergeChoices = Record<MergeFieldKey, "primary" | "secondary">;
 
@@ -71,20 +85,61 @@ export const useContactsStore = create<ContactsState>((set, get) => ({
   closeDetail: () => set({ detailOpen: false }),
   setNewContactOpen: (newContactOpen) => set({ newContactOpen }),
 
-  addContact: (contact) =>
+  addContact: (contact) => {
     set((state) => ({
       contacts: [contact, ...state.contacts],
       newContactOpen: false,
-    })),
+    }));
+    recordEvent({
+      action: "criou o contacto",
+      target: { module: "Contactos", id: contact.id, label: contact.name },
+      companyId: contact.companyId,
+      sensitive: true,
+      toast: {
+        title: "Contacto criado",
+        description: contact.name,
+        tone: "success",
+        action: { label: "Abrir", run: () => get().openDetail(contact.id) },
+      },
+    });
+  },
 
-  updateContactability: (id, status) =>
+  updateContactability: (id, status) => {
+    const contact = get().contacts.find((item) => item.id === id);
+    if (!contact || contact.contactability === status) return;
     set((state) => ({
-      contacts: state.contacts.map((contact) =>
-        contact.id === id ? { ...contact, contactability: status } : contact,
+      contacts: state.contacts.map((item) =>
+        item.id === id ? { ...item, contactability: status } : item,
       ),
-    })),
+    }));
+    recordEvent({
+      action: "alterou o estado de contacto de",
+      target: { module: "Contactos", id, label: contact.name },
+      companyId: contact.companyId,
+      sensitive: true,
+      notify: false,
+      changes: [{ field: "Contactabilidade", from: contact.contactability, to: status }],
+    });
+  },
 
-  toggleConsent: (id, channel) =>
+  toggleConsent: (id, channel) => {
+    const contact = get().contacts.find((item) => item.id === id);
+    if (!contact) return;
+    const granted = !contact.consent[channel].granted;
+    recordEvent({
+      action: `${granted ? "registou" : "retirou"} o consentimento de ${CHANNEL_LABELS[channel]} de`,
+      target: { module: "Contactos", id, label: contact.name },
+      companyId: contact.companyId,
+      sensitive: true,
+      notify: false,
+      changes: [
+        {
+          field: `Consentimento ${CHANNEL_LABELS[channel]}`,
+          from: granted ? "Retirado" : "Concedido",
+          to: granted ? "Concedido" : "Retirado",
+        },
+      ],
+    });
     set((state) => ({
       contacts: state.contacts.map((contact) =>
         contact.id === id
@@ -101,7 +156,8 @@ export const useContactsStore = create<ContactsState>((set, get) => ({
             }
           : contact,
       ),
-    })),
+    }));
+  },
 
   setMergeOpen: (mergeOpen) =>
     set({
@@ -149,6 +205,7 @@ export const useContactsStore = create<ContactsState>((set, get) => ({
       },
     };
 
+    const snapshot = contacts;
     set((state) => ({
       contacts: state.contacts
         .map((item) => (item.id === primary.id ? merged : item))
@@ -158,5 +215,34 @@ export const useContactsStore = create<ContactsState>((set, get) => ({
       mergeSecondaryId: null,
       mergeChoices: DEFAULT_MERGE_CHOICES,
     }));
+
+    const target = { module: "Contactos" as const, id: primary.id, label: primary.name };
+    recordEvent({
+      action: `fundiu ${secondary.name} com o contacto`,
+      target,
+      companyId: primary.companyId,
+      sensitive: true,
+      changes: (["role", "phone", "whatsapp", "email"] as const)
+        .filter((field) => primary[field] !== merged[field])
+        .map((field) => ({ field: MERGE_FIELD_LABELS[field], from: primary[field], to: merged[field] })),
+      toast: {
+        title: "Contactos fundidos",
+        description: `${secondary.name} foi integrado em ${primary.name}.`,
+        tone: "success",
+        action: {
+          label: "Anular",
+          run: () => {
+            set({ contacts: snapshot });
+            recordEvent({
+              action: "anulou a fusão do contacto",
+              target,
+              companyId: primary.companyId,
+              sensitive: true,
+              notify: false,
+            });
+          },
+        },
+      },
+    });
   },
 }));

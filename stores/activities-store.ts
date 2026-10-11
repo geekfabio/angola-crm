@@ -1,7 +1,18 @@
 import { create } from "zustand";
-import { ACTIVITIES, type Activity } from "@/data/activities";
+import { ACTIVITIES, type Activity, type ActivityType } from "@/data/activities";
+import { CURRENT_USER } from "@/data/companies";
 import { TASKS, type Task, type TaskStatus } from "@/data/tasks";
 import { DEFAULT_FILTERS } from "@/lib/activities";
+import { recordEvent } from "./audit-store";
+
+const ACTIVITY_PHRASES: Record<ActivityType, string> = {
+  Visita: "registou uma visita a",
+  Chamada: "registou uma chamada com",
+  "E-mail": "registou um e-mail para",
+  Reunião: "registou uma reunião com",
+  Entrega: "registou uma entrega a",
+  Reclamação: "registou uma reclamação de",
+};
 
 export type ActivitiesView = "lista" | "calendario" | "tarefas" | "rota";
 
@@ -41,7 +52,7 @@ type ActivitiesState = {
   moveTaskStatus: (id: string, status: TaskStatus) => void;
 };
 
-export const useActivitiesStore = create<ActivitiesState>((set) => ({
+export const useActivitiesStore = create<ActivitiesState>((set, get) => ({
   activities: ACTIVITIES,
   tasks: TASKS,
   ...DEFAULT_FILTERS,
@@ -68,22 +79,44 @@ export const useActivitiesStore = create<ActivitiesState>((set) => ({
     }),
 
   setNewActivityOpen: (newActivityOpen) => set({ newActivityOpen }),
-  addActivity: (activity) =>
+  addActivity: (activity) => {
     set((state) => ({
       activities: [activity, ...state.activities],
       newActivityOpen: false,
-    })),
+    }));
+    recordEvent({
+      action: ACTIVITY_PHRASES[activity.type],
+      target: { module: "Atividades", id: activity.id, label: activity.companyName },
+      companyId: activity.companyId,
+      toast: { title: "Atividade registada", description: `${activity.type} · ${activity.companyName}`, tone: "success" },
+    });
+  },
 
   setNewTaskOpen: (newTaskOpen) => set({ newTaskOpen }),
-  addTask: (task) =>
+  addTask: (task) => {
     set((state) => ({
       tasks: [task, ...state.tasks],
       newTaskOpen: false,
-    })),
-  moveTaskStatus: (id, status) =>
+    }));
+    recordEvent({
+      action: "criou a tarefa",
+      target: { module: "Atividades", id: task.id, label: task.title },
+      notify: task.assignee === CURRENT_USER.name ? false : "update",
+      changes: [{ field: "Responsável", to: task.assignee }],
+      toast: { title: "Tarefa criada", description: task.title, tone: "success" },
+    });
+  },
+  moveTaskStatus: (id, status) => {
+    const task = get().tasks.find((item) => item.id === id);
+    if (!task || task.status === status) return;
     set((state) => ({
-      tasks: state.tasks.map((task) =>
-        task.id === id ? { ...task, status } : task,
-      ),
-    })),
+      tasks: state.tasks.map((item) => (item.id === id ? { ...item, status } : item)),
+    }));
+    recordEvent({
+      action: status === "Feita" ? "concluiu a tarefa" : "alterou o estado da tarefa",
+      target: { module: "Atividades", id, label: task.title },
+      notify: false,
+      changes: [{ field: "Estado", from: task.status, to: status }],
+    });
+  },
 }));

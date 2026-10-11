@@ -24,14 +24,11 @@ import {
 } from "@/components/_ui/select";
 import { COMPANIES, CURRENT_USER, OWNERS } from "@/data/companies";
 import { TICKET_PRIORITIES, type Ticket, type TicketPriority } from "@/data/tickets";
+import { nowLuandaLocal } from "@/lib/format";
 import { useTicketsStore } from "@/stores/tickets-store";
 import PlusIcon from "@/public/assets/images/_common/plus.svg";
 
 const NO_COMPANY = "none";
-
-function today() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 type FormState = {
   subject: string;
@@ -88,11 +85,11 @@ export default function NewTicketDialog() {
       origin: "Manual",
       assignee: assigneeOwner.name,
       assigneeAvatar: assigneeOwner.avatar,
-      createdAt: today(),
-      updatedAt: today(),
+      createdAt: nowLuandaLocal(),
+      updatedAt: nowLuandaLocal(),
       comments: [],
       timeline: [
-        { id: "t1", label: "Ticket criado", date: today(), author: CURRENT_USER.name },
+        { id: "t1", label: "Ticket criado", date: nowLuandaLocal(), author: CURRENT_USER.name },
       ],
     };
 

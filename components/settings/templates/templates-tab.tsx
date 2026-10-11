@@ -49,7 +49,6 @@ function TemplateRow({
   onDuplicate,
   onRemove,
 }: TemplateRowProps) {
-  const [confirming, setConfirming] = useState(false);
   const locked = usedBy.length > 0;
 
   return (
@@ -69,35 +68,21 @@ function TemplateRow({
         )}
       </div>
       <div className="flex shrink-0 flex-wrap items-center gap-1">
-        {confirming ? (
-          <>
-            <span className="caption-style text-soft mr-1">Eliminar modelo?</span>
-            <Button variant="ghost" size="sm" onClick={() => setConfirming(false)}>
-              Não
-            </Button>
-            <Button variant="primary" size="sm" onClick={onRemove}>
-              Sim, eliminar
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button variant="secondary" size="sm" onClick={onEdit}>
-              Editar
-            </Button>
-            <Button variant="ghost" size="sm" onClick={onDuplicate}>
-              Duplicar
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={locked}
-              title={locked ? "Em uso numa automação — retire-o primeiro." : undefined}
-              onClick={() => setConfirming(true)}
-            >
-              Eliminar
-            </Button>
-          </>
-        )}
+        <Button variant="secondary" size="sm" onClick={onEdit}>
+          Editar
+        </Button>
+        <Button variant="ghost" size="sm" onClick={onDuplicate}>
+          Duplicar
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={locked}
+          title={locked ? "Em uso numa automação — retire-o primeiro." : undefined}
+          onClick={onRemove}
+        >
+          Eliminar
+        </Button>
       </div>
     </li>
   );

@@ -11,12 +11,16 @@ import {
   type AudienceFilters,
   type BlockType,
   type Campaign,
+  type CampaignStatus,
   type CampaignBlock,
   type Channel,
   type VariableKey,
 } from "@/data/campaigns";
 import { DEFAULT_CAMPAIGN_FILTERS, createBlock } from "@/lib/campaigns";
 import { useSettingsStore } from "./settings-store";
+import { recordEvent } from "./audit-store";
+import type { AuditChange } from "@/data/audit";
+import { formatDateTime, formatNumber } from "@/lib/format";
 
 export type EditorStep = "conteudo" | "destinatarios" | "revisao" | "resultados";
 
@@ -85,6 +89,32 @@ export const useCampaignsStore = create<CampaignsState>((set, get) => {
           : campaign,
       ),
     }));
+  }
+
+  function transition(
+    id: string,
+    from: CampaignStatus,
+    next: Partial<Campaign> & { status: CampaignStatus },
+    action: string,
+    changes: AuditChange[] = [],
+  ) {
+    const campaign = get().campaigns.find((item) => item.id === id);
+    if (campaign?.status !== from) return;
+    patch(id, () => next);
+    recordEvent({
+      action,
+      target: { module: "Campanhas", id, label: campaign.name },
+      sensitive: next.status === "Agendada",
+      changes: [{ field: "Estado", from, to: next.status }, ...changes],
+      toast:
+        next.status === "Agendada"
+          ? {
+              title: "Campanha agendada",
+              description: `${campaign.name} · em modo de teste, nada é enviado a clientes reais.`,
+              tone: "success",
+            }
+          : undefined,
+    });
   }
 
   function editBlocks(
@@ -210,30 +240,45 @@ export const useCampaignsStore = create<CampaignsState>((set, get) => {
       ),
 
     submitForReview: (id) =>
-      patch(id, (campaign) =>
-        campaign.status === "Rascunho" ? { status: "Em revisão" } : {},
-      ),
+      transition(id, "Rascunho", { status: "Em revisão" }, "enviou para revisão a campanha"),
     backToDraft: (id) =>
-      patch(id, (campaign) =>
-        campaign.status === "Em revisão"
-          ? { status: "Rascunho", testSentAt: undefined }
-          : {},
+      transition(
+        id,
+        "Em revisão",
+        { status: "Rascunho", testSentAt: undefined },
+        "devolveu a rascunho a campanha",
       ),
-    recordTest: (id) =>
-      patch(id, (campaign) =>
-        campaign.status === "Em revisão" ? { testSentAt: luandaNow() } : {},
-      ),
-    schedule: (id, scheduledAt, recipients) =>
-      patch(id, (campaign) =>
-        campaign.status === "Em revisão" && campaign.testSentAt
-          ? { status: "Agendada", scheduledAt, recipients }
-          : {},
-      ),
+    recordTest: (id) => {
+      const campaign = get().campaigns.find((item) => item.id === id);
+      if (campaign?.status !== "Em revisão") return;
+      patch(id, () => ({ testSentAt: luandaNow() }));
+      recordEvent({
+        action: "enviou um teste da campanha",
+        target: { module: "Campanhas", id, label: campaign.name },
+        notify: false,
+        sensitive: true,
+      });
+    },
+    schedule: (id, scheduledAt, recipients) => {
+      const campaign = get().campaigns.find((item) => item.id === id);
+      if (campaign?.status !== "Em revisão" || !campaign.testSentAt) return;
+      transition(
+        id,
+        "Em revisão",
+        { status: "Agendada", scheduledAt, recipients },
+        "agendou a campanha",
+        [
+          { field: "Envio", to: formatDateTime(scheduledAt) },
+          { field: "Destinatários", to: formatNumber(recipients) },
+        ],
+      );
+    },
     cancelSchedule: (id) =>
-      patch(id, (campaign) =>
-        campaign.status === "Agendada"
-          ? { status: "Em revisão", scheduledAt: undefined }
-          : {},
+      transition(
+        id,
+        "Agendada",
+        { status: "Em revisão", scheduledAt: undefined },
+        "cancelou o agendamento da campanha",
       ),
   };
 });
