@@ -7,6 +7,7 @@ import {
 } from "@/data/contacts";
 import { DEFAULT_FILTERS } from "@/lib/contacts";
 import { recordEvent } from "./audit-store";
+import { diffRecord } from "@/lib/audit";
 
 const CHANNEL_LABELS: Record<ConsentChannel, string> = {
   email: "e-mail",
@@ -17,6 +18,19 @@ const CHANNEL_LABELS: Record<ConsentChannel, string> = {
 function today() {
   return new Date().toISOString().slice(0, 10);
 }
+
+export type ContactPatch = Partial<
+  Pick<Contact, "name" | "role" | "phone" | "whatsapp" | "email" | "companyId" | "companyName">
+>;
+
+const CONTACT_LABELS: Partial<Record<keyof Contact, string>> = {
+  name: "Nome",
+  role: "Cargo",
+  companyName: "Cliente",
+  phone: "Telefone",
+  whatsapp: "WhatsApp",
+  email: "E-mail",
+};
 
 export type MergeFieldKey = "role" | "phone" | "whatsapp" | "email";
 
@@ -57,6 +71,7 @@ type ContactsState = {
   setNewContactOpen: (open: boolean) => void;
   addContact: (contact: Contact) => void;
   updateContactability: (id: string, status: ContactabilityStatus) => void;
+  updateContact: (id: string, patch: ContactPatch) => void;
   toggleConsent: (id: string, channel: ConsentChannel) => void;
   setMergeOpen: (open: boolean) => void;
   setMergePrimaryId: (id: string | null) => void;
@@ -100,6 +115,37 @@ export const useContactsStore = create<ContactsState>((set, get) => ({
         description: contact.name,
         tone: "success",
         action: { label: "Abrir", run: () => get().openDetail(contact.id) },
+      },
+    });
+  },
+
+  updateContact: (id, patch) => {
+    const previous = get().contacts.find((item) => item.id === id);
+    if (!previous) return;
+    const next = { ...previous, ...patch };
+    const changes = diffRecord(previous, next, CONTACT_LABELS);
+    if (changes.length === 0) return;
+    set((state) => ({
+      contacts: state.contacts.map((item) => (item.id === id ? next : item)),
+    }));
+    recordEvent({
+      action: "atualizou o contacto",
+      target: { module: "Contactos", id, label: next.name },
+      companyId: next.companyId,
+      sensitive: true,
+      notify: false,
+      changes,
+      toast: {
+        title: "Contacto atualizado",
+        description: changes.map((change) => change.field).join(", "),
+        tone: "success",
+        action: {
+          label: "Anular",
+          run: () =>
+            set((state) => ({
+              contacts: state.contacts.map((item) => (item.id === id ? previous : item)),
+            })),
+        },
       },
     });
   },

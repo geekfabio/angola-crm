@@ -63,3 +63,19 @@ export function auditCsvRows(events: AuditEvent[]): CsvCell[][] {
     ]),
   ];
 }
+
+type Formatters<T> = Partial<{ [K in keyof T]: (value: T[K]) => string }>;
+
+export function diffRecord<T extends object>(
+  previous: T,
+  next: T,
+  labels: Partial<Record<keyof T, string>>,
+  formatters: Formatters<T> = {},
+) {
+  return (Object.keys(labels) as (keyof T)[])
+    .filter((key) => JSON.stringify(previous[key]) !== JSON.stringify(next[key]))
+    .map((key) => {
+      const format = formatters[key] ?? ((value: T[typeof key]) => String(value ?? "—"));
+      return { field: labels[key] as string, from: format(previous[key]), to: format(next[key]) };
+    });
+}

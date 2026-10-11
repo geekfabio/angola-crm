@@ -60,6 +60,12 @@ export default function GlobalShortcuts() {
         return;
       }
 
+      if (event.key === "?") {
+        event.preventDefault();
+        useUiStore.getState().setHelpOpen(true);
+        return;
+      }
+
       if (key === "/") {
         const search = document.querySelector<HTMLInputElement>("[data-page-search]");
         if (search) {

@@ -139,7 +139,7 @@ export const OPPORTUNITIES: Opportunity[] = [
     value: 4_900_000,
     stage: "Proposta",
     probability: 45,
-    expectedCloseDate: "2026-10-20",
+    expectedCloseDate: "2026-10-06",
     owner: "Alexandre Santos",
     products: ["Mercearia"],
     stageHistory: [

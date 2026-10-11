@@ -7,7 +7,8 @@ import {
   type OpportunityStage,
 } from "@/data/opportunities";
 import { DEFAULT_FILTERS } from "@/lib/opportunities";
-import { formatMoney } from "@/lib/format";
+import { formatDateShort, formatMoney } from "@/lib/format";
+import { diffRecord } from "@/lib/audit";
 import { recordEvent } from "./audit-store";
 
 type View = "kanban" | "tabela";
@@ -25,6 +26,7 @@ type OpportunitiesState = {
   owner: string;
   stage: string;
   search: string;
+  overdue: boolean;
   view: View;
   detailId: string | null;
   detailOpen: boolean;
@@ -33,15 +35,35 @@ type OpportunitiesState = {
   setOwner: (owner: string) => void;
   setStage: (stage: string) => void;
   setSearch: (search: string) => void;
+  setOverdue: (overdue: boolean) => void;
   resetFilters: () => void;
   setView: (view: View) => void;
   openDetail: (id: string) => void;
   closeDetail: () => void;
   setNewOpportunityOpen: (open: boolean) => void;
   addOpportunity: (opportunity: Opportunity) => void;
+  updateOpportunity: (id: string, patch: OpportunityPatch) => void;
   requestStageMove: (id: string, stage: OpportunityStage) => void;
   confirmLossMove: (reason: LossReason) => void;
   cancelLossMove: () => void;
+};
+
+export type OpportunityPatch = Partial<
+  Pick<Opportunity, "contactName" | "value" | "probability" | "expectedCloseDate" | "owner">
+>;
+
+const OPPORTUNITY_LABELS: Partial<Record<keyof Opportunity, string>> = {
+  contactName: "Contacto",
+  value: "Valor",
+  probability: "Probabilidade",
+  expectedCloseDate: "Data prevista de fecho",
+  owner: "Gestor",
+};
+
+const OPPORTUNITY_FORMATTERS = {
+  value: (value: number) => formatMoney(value),
+  probability: (value: number) => `${value}%`,
+  expectedCloseDate: (value: string) => formatDateShort(value),
 };
 
 function logStageMove(
@@ -99,6 +121,7 @@ export const useOpportunitiesStore = create<OpportunitiesState>((set, get) => ({
   setOwner: (owner) => set({ owner }),
   setStage: (stage) => set({ stage }),
   setSearch: (search) => set({ search }),
+  setOverdue: (overdue) => set({ overdue }),
   resetFilters: () => set({ ...DEFAULT_FILTERS }),
   setView: (view) => set({ view }),
 
@@ -124,6 +147,36 @@ export const useOpportunitiesStore = create<OpportunitiesState>((set, get) => ({
         description: `${opportunity.companyName} · ${formatMoney(opportunity.value)}`,
         tone: "success",
         action: { label: "Abrir", run: () => get().openDetail(opportunity.id) },
+      },
+    });
+  },
+
+  updateOpportunity: (id, patch) => {
+    const previous = get().opportunities.find((item) => item.id === id);
+    if (!previous) return;
+    const next = { ...previous, ...patch };
+    const changes = diffRecord(previous, next, OPPORTUNITY_LABELS, OPPORTUNITY_FORMATTERS);
+    if (changes.length === 0) return;
+    set((state) => ({
+      opportunities: state.opportunities.map((item) => (item.id === id ? next : item)),
+    }));
+    recordEvent({
+      action: "atualizou a oportunidade",
+      target: { module: "Oportunidades", id, label: next.companyName },
+      companyId: next.companyId,
+      notify: false,
+      changes,
+      toast: {
+        title: "Oportunidade atualizada",
+        description: changes.map((change) => change.field).join(", "),
+        tone: "success",
+        action: {
+          label: "Anular",
+          run: () =>
+            set((state) => ({
+              opportunities: state.opportunities.map((item) => (item.id === id ? previous : item)),
+            })),
+        },
       },
     });
   },

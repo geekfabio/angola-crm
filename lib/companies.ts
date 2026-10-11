@@ -9,29 +9,39 @@ export type CompanyFilters = {
   owner: string;
   stage: string;
   activityWindow: number;
+  zone: string;
+  team: string;
 };
 
 export const TODAY = "2026-09-14";
 
 export const ALL_OWNERS = "all";
 export const ANY_STAGE = "any";
+export const ANY_ZONE = "any";
+export const ALL_TEAMS = "all";
 
 export const DEFAULT_FILTERS: CompanyFilters = {
   sortBy: "pipelineValue",
   owner: ALL_OWNERS,
   stage: ANY_STAGE,
   activityWindow: 90,
+  zone: ANY_ZONE,
+  team: ALL_TEAMS,
 };
 
 export function activeFilterCount({
   owner,
   stage,
   activityWindow,
+  zone,
+  team,
 }: CompanyFilters) {
   return [
     owner !== DEFAULT_FILTERS.owner,
     stage !== DEFAULT_FILTERS.stage,
     activityWindow !== DEFAULT_FILTERS.activityWindow,
+    zone !== DEFAULT_FILTERS.zone,
+    team !== DEFAULT_FILTERS.team,
   ].filter(Boolean).length;
 }
 
@@ -39,10 +49,14 @@ const TAG_CHAR_BUDGET = 20;
 
 export function filterCompanies(
   companies: Company[],
-  { sortBy, owner, stage, activityWindow }: CompanyFilters,
+  { sortBy, owner, stage, activityWindow, zone, team }: CompanyFilters,
+  memberships: Record<string, string> = {},
 ): Company[] {
   const filtered = companies.filter((company) => {
+    if (company.archived) return false;
     if (owner !== ALL_OWNERS && company.owner !== owner) return false;
+    if (zone !== ANY_ZONE && company.zone !== zone) return false;
+    if (team !== ALL_TEAMS && memberships[company.owner] !== team) return false;
     if (stage !== ANY_STAGE && !company.tags.some((tag) => tag === stage)) {
       return false;
     }
@@ -127,4 +141,18 @@ export function companyActivity(company: Company) {
 export function daysSince(iso: string) {
   const day = 24 * 60 * 60 * 1000;
   return Math.max(0, Math.round((Date.parse(TODAY) - Date.parse(iso)) / day));
+}
+
+export function companyTotals(companies: Company[]) {
+  const pipeline = companies.reduce((sum, company) => sum + company.pipelineValue, 0);
+  const deals = companies.reduce((sum, company) => sum + company.openDeals, 0);
+  const probability = companies.length
+    ? Math.round(companies.reduce((sum, company) => sum + company.winProbability, 0) / companies.length)
+    : 0;
+  const weighted = companies.reduce(
+    (sum, company) => sum + (company.pipelineValue * company.winProbability) / 100,
+    0,
+  );
+  const inactive = companies.filter((company) => company.activityDays > 30).length;
+  return { pipeline, deals, probability, weighted, inactive };
 }

@@ -4,6 +4,18 @@ import { CURRENT_USER } from "@/data/companies";
 import { TASKS, type Task, type TaskStatus } from "@/data/tasks";
 import { DEFAULT_FILTERS } from "@/lib/activities";
 import { recordEvent } from "./audit-store";
+import { diffRecord } from "@/lib/audit";
+import { formatDateShort } from "@/lib/format";
+
+const ACTIVITY_LABELS: Partial<Record<keyof Activity, string>> = {
+  type: "Tipo",
+  companyName: "Cliente",
+  contactName: "Contacto",
+  owner: "Gestor",
+  zone: "Zona",
+  date: "Data",
+  note: "Nota",
+};
 
 const ACTIVITY_PHRASES: Record<ActivityType, string> = {
   Visita: "registou uma visita a",
@@ -46,6 +58,10 @@ type ActivitiesState = {
   setCalendarMonth: (month: string) => void;
   shiftCalendarMonth: (delta: number) => void;
   setNewActivityOpen: (open: boolean) => void;
+  editingActivityId: string | null;
+  editActivity: (id: string) => void;
+  updateActivity: (id: string, patch: Partial<Omit<Activity, "id">>) => void;
+  removeActivity: (id: string) => void;
   addActivity: (activity: Activity) => void;
   setNewTaskOpen: (open: boolean) => void;
   addTask: (task: Task) => void;
@@ -78,7 +94,76 @@ export const useActivitiesStore = create<ActivitiesState>((set, get) => ({
       };
     }),
 
-  setNewActivityOpen: (newActivityOpen) => set({ newActivityOpen }),
+  setNewActivityOpen: (newActivityOpen) =>
+    set(newActivityOpen ? { newActivityOpen } : { newActivityOpen, editingActivityId: null }),
+  editingActivityId: null,
+  editActivity: (editingActivityId) => set({ editingActivityId, newActivityOpen: true }),
+  updateActivity: (id, patch) => {
+    const previous = get().activities.find((item) => item.id === id);
+    if (!previous) return;
+    const next = { ...previous, ...patch };
+    const changes = diffRecord(previous, next, ACTIVITY_LABELS, {
+      date: (value: string) => formatDateShort(value),
+    });
+    set((state) => ({
+      activities: state.activities.map((item) => (item.id === id ? next : item)),
+      newActivityOpen: false,
+      editingActivityId: null,
+    }));
+    if (changes.length === 0) return;
+    recordEvent({
+      action: "atualizou o registo de atividade de",
+      target: { module: "Atividades", id, label: next.companyName },
+      companyId: next.companyId,
+      notify: false,
+      changes,
+      toast: {
+        title: "Registo atualizado",
+        description: `${next.type} · ${next.companyName}`,
+        tone: "success",
+        action: {
+          label: "Anular",
+          run: () =>
+            set((state) => ({
+              activities: state.activities.map((item) => (item.id === id ? previous : item)),
+            })),
+        },
+      },
+    });
+  },
+  removeActivity: (id) => {
+    const activities = get().activities;
+    const index = activities.findIndex((item) => item.id === id);
+    if (index < 0) return;
+    const removed = activities[index];
+    set({
+      activities: activities.filter((item) => item.id !== id),
+      newActivityOpen: false,
+      editingActivityId: null,
+    });
+    recordEvent({
+      action: "eliminou o registo de atividade de",
+      target: { module: "Atividades", label: removed.companyName },
+      companyId: removed.companyId,
+      notify: false,
+      changes: [{ field: removed.type, from: removed.note }],
+      toast: {
+        title: "Registo eliminado",
+        description: `${removed.type} · ${removed.companyName}`,
+        action: {
+          label: "Anular",
+          run: () =>
+            set((state) => ({
+              activities: [
+                ...state.activities.slice(0, index),
+                removed,
+                ...state.activities.slice(index),
+              ],
+            })),
+        },
+      },
+    });
+  },
   addActivity: (activity) => {
     set((state) => ({
       activities: [activity, ...state.activities],

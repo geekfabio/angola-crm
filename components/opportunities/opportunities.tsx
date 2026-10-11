@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import Button from "@/components/_ui/button";
 import OpportunitiesHeader from "./header/header";
 import OpportunitiesToolbar from "./toolbar/toolbar";
 import KanbanBoard from "./kanban/kanban-board";
@@ -9,6 +10,7 @@ import OpportunityDetail from "./detail/opportunity-detail";
 import NewOpportunityDialog from "./new-opportunity/new-opportunity-dialog";
 import LossReasonDialog from "./loss-reason-dialog";
 import { filterOpportunities } from "@/lib/opportunities";
+import { nowLuandaLocal } from "@/lib/format";
 import { useOpportunitiesStore } from "@/stores/opportunities-store";
 
 export default function Opportunities() {
@@ -16,11 +18,18 @@ export default function Opportunities() {
   const owner = useOpportunitiesStore((state) => state.owner);
   const stage = useOpportunitiesStore((state) => state.stage);
   const search = useOpportunitiesStore((state) => state.search);
+  const overdue = useOpportunitiesStore((state) => state.overdue);
+  const setOverdue = useOpportunitiesStore((state) => state.setOverdue);
   const view = useOpportunitiesStore((state) => state.view);
 
   const visible = useMemo(
-    () => filterOpportunities(opportunities, { owner, stage, search }),
-    [opportunities, owner, stage, search],
+    () =>
+      filterOpportunities(
+        opportunities,
+        { owner, stage, search, overdue },
+        nowLuandaLocal().slice(0, 10),
+      ),
+    [opportunities, owner, stage, search, overdue],
   );
 
   return (
@@ -30,6 +39,19 @@ export default function Opportunities() {
     >
       <OpportunitiesHeader count={visible.length} />
       <OpportunitiesToolbar />
+      {overdue && (
+        <div
+          role="status"
+          className="caption-style border-line-strong text-soft mx-4 mb-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-white/3 px-4 py-2.5"
+        >
+          {visible.length === 0
+            ? "Nenhuma oportunidade atrasada: todas as oportunidades abertas têm data de fecho no futuro."
+            : `${visible.length === 1 ? "1 oportunidade aberta tem" : `${visible.length} oportunidades abertas têm`} a data prevista de fecho ultrapassada.`}
+          <Button variant="ghost" size="sm" onClick={() => setOverdue(false)}>
+            Ver todas
+          </Button>
+        </div>
+      )}
       {view === "kanban" ? (
         <KanbanBoard opportunities={visible} />
       ) : (

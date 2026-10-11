@@ -2,6 +2,7 @@ import type { ComponentType, SVGProps } from "react";
 import Button from "@/components/_ui/button";
 import CountBadge from "@/components/_ui/count-badge";
 import { cn } from "@/lib/utils";
+import { useUiStore } from "@/stores/ui-store";
 
 type SidebarNavItemProps = {
   icon: ComponentType<SVGProps<SVGSVGElement>>;
@@ -30,7 +31,10 @@ export default function SidebarNavItem({
         variant="nav"
         size="md"
         href={href}
-        onClick={onClick}
+        onClick={() => {
+          onClick?.();
+          useUiStore.getState().setSidebarOpen(false);
+        }}
         data-active={active}
         aria-current={active ? "page" : undefined}
         className={cn(

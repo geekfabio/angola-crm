@@ -8,7 +8,6 @@ import Tag from "@/components/_ui/tag";
 import { ScrollArea } from "@/components/_ui/scroll-area";
 import {
   Sheet,
-  SheetClose,
   SheetContent,
   SheetDescription,
   SheetFooter,
@@ -21,13 +20,19 @@ import PipelineHealth from "./pipeline-health";
 import ActivityTrend from "./activity-trend";
 import ScoreCard from "./score-card";
 import ClientTimeline from "./client-timeline";
-import {
-  SCORE_CARDS,
-  TAG_TONES,
-  TREND_WINDOWS,
-  ownerByName,
-} from "@/data/companies";
+import CompanyEditForm, {
+  COMPANY_FORM_ID,
+  companyToDraft,
+  draftToPatch,
+  type CompanyDraft,
+} from "./company-edit-form";
+import EditFooter from "@/components/_common/editable/edit-footer";
+import { useEditable } from "@/components/_common/editable/use-editable";
+import { TAG_TONES, TREND_WINDOWS, ownerByName } from "@/data/companies";
+import { TREND_WINDOW_DAYS, companyScoreCards } from "@/lib/company-insights";
+import { useTicketsStore } from "@/stores/tickets-store";
 import { useCompaniesStore } from "@/stores/companies-store";
+import { useUiStore } from "@/stores/ui-store";
 import BuildingIcon from "@/public/assets/images/companies/detail/building.svg";
 import XIcon from "@/public/assets/images/companies/detail/x.svg";
 import MailIcon from "@/public/assets/images/companies/detail/mail-04.svg";
@@ -42,15 +47,35 @@ export default function CompanyDetail() {
   const closeDetail = useCompaniesStore((state) => state.closeDetail);
   const openProfile = useCompaniesStore((state) => state.openProfile);
   const [trendWindow, setTrendWindow] = useState(TREND_WINDOWS[1]);
-  const [scoreWindow, setScoreWindow] = useState(TREND_WINDOWS[1]);
+  const updateCompany = useCompaniesStore((state) => state.updateCompany);
+  const archiveCompanies = useCompaniesStore((state) => state.archiveCompanies);
+  const tickets = useTicketsStore((state) => state.tickets);
+  const editable = useEditable<CompanyDraft>();
+  const [editingFor, setEditingFor] = useState<string | null>(null);
 
   const company = companies.find((item) => item.id === detailId);
   const owner = company ? ownerByName(company.owner) : null;
+  const editing = editable.editing && editingFor === company?.id;
+
+  function requestClose() {
+    if (!editing) {
+      editable.reset();
+      closeDetail();
+      return;
+    }
+    editable.requestClose(closeDetail);
+  }
+
+  function save() {
+    if (!company || !editable.draft) return;
+    updateCompany(company.id, draftToPatch(company, editable.draft));
+    editable.reset();
+  }
 
   return (
     <Sheet
       open={detailOpen && company !== undefined}
-      onOpenChange={(open) => !open && closeDetail()}
+      onOpenChange={(open) => !open && requestClose()}
     >
       <SheetContent side="right" className="sm:w-[560px] sm:max-w-[560px]">
         <SheetHeader>
@@ -61,19 +86,24 @@ export default function CompanyDetail() {
           <SheetDescription className="sr-only">
             Resumo da conta, saúde do funil, atividade e cartões de pontuação
           </SheetDescription>
-          <SheetClose asChild>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="-mr-1"
-              aria-label="Fechar detalhe"
-            >
-              <XIcon aria-hidden className="text-foreground size-4" />
-            </Button>
-          </SheetClose>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="-mr-1"
+            aria-label="Fechar detalhe"
+            onClick={requestClose}
+          >
+            <XIcon aria-hidden className="text-foreground size-4" />
+          </Button>
         </SheetHeader>
 
-        {company && owner && (
+        {company && editing && editable.draft && (
+          <ScrollArea className="min-h-0 flex-1">
+            <CompanyEditForm draft={editable.draft} onChange={editable.update} onSubmit={save} />
+          </ScrollArea>
+        )}
+
+        {company && owner && !editing && (
           <ScrollArea className="min-h-0 flex-1">
             <div className="flex items-start gap-3 p-5 shadow-[inset_0_-1px_0_var(--line-strong)]">
               <span className="bg-muted flex size-[50px] shrink-0 items-center justify-center rounded-[12.5px] shadow-[0px_6.25px_6.25px_0px_rgba(15,15,15,0.24),0px_0px_0px_1.563px_#232323]">
@@ -147,24 +177,15 @@ export default function CompanyDetail() {
                 />
               }
             >
-              <ActivityTrend company={company} />
+              <ActivityTrend companyId={company.id} days={TREND_WINDOW_DAYS[trendWindow]} />
             </DetailSection>
 
             <DetailSection
               title="Cartão de pontuação"
               className="gap-3 shadow-none"
-              action={
-                <FilterMenu
-                  value={scoreWindow}
-                  options={WINDOW_OPTIONS}
-                  onChange={setScoreWindow}
-                  align="end"
-                  className="shadow-[0px_4px_4px_0px_rgba(15,15,15,0.24),0px_0px_0px_1px_#393939]"
-                />
-              }
             >
               <div className="flex flex-col gap-2">
-                {SCORE_CARDS.map((card, index) => (
+                {companyScoreCards(company, tickets, owner.avatar).map((card, index) => (
                   <ScoreCard key={`${card.title}-${index}`} card={card} />
                 ))}
               </div>
@@ -173,19 +194,42 @@ export default function CompanyDetail() {
         )}
 
         <SheetFooter>
-          <Button variant="link" size="none" href="#" className="lead-style">
-            Precisa de ajuda? Contacte-nos.
-          </Button>
-          <div className="flex items-center gap-2">
-            <SheetClose asChild>
-              <Button variant="subtle" size="sm">
-                Cancelar
-              </Button>
-            </SheetClose>
-            <Button variant="primary" size="sm" onClick={closeDetail}>
-              Guardar Alteração
-            </Button>
-          </div>
+          <EditFooter
+            editing={editing}
+            dirty={editable.dirty}
+            confirmingClose={editable.confirmingClose}
+            saveForm={COMPANY_FORM_ID}
+            onEdit={() => {
+              if (!company) return;
+              setEditingFor(company.id);
+              editable.start(companyToDraft(company));
+            }}
+            onCancel={editable.reset}
+            onDiscard={() => {
+              editable.reset();
+              closeDetail();
+            }}
+            onClose={requestClose}
+            extra={
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => company && archiveCompanies([company.id])}
+                >
+                  Arquivar
+                </Button>
+                <Button
+                  variant="link"
+                  size="none"
+                  className="caption-style hidden sm:inline-flex"
+                  onClick={() => useUiStore.getState().setHelpOpen(true)}
+                >
+                  Precisa de ajuda?
+                </Button>
+              </>
+            }
+          />
         </SheetFooter>
       </SheetContent>
     </Sheet>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useCompaniesStore } from "@/stores/companies-store";
 import { useRef, useState, type FormEvent } from "react";
 import Button from "@/components/_ui/button";
 import {
@@ -22,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/_ui/select";
-import { COMPANIES, OWNERS } from "@/data/companies";
+import { OWNERS } from "@/data/companies";
 import type { Task } from "@/data/tasks";
 import { useActivitiesStore } from "@/stores/activities-store";
 import CheckSquareIcon from "@/public/assets/images/companies/table/check-square.svg";
@@ -52,6 +53,7 @@ const EMPTY_FORM: FormState = {
 };
 
 export default function NewTaskDialog() {
+  const companies = useCompaniesStore((state) => state.companies);
   const open = useActivitiesStore((state) => state.newTaskOpen);
   const setOpen = useActivitiesStore((state) => state.setNewTaskOpen);
   const addTask = useActivitiesStore((state) => state.addTask);
@@ -72,7 +74,7 @@ export default function NewTaskDialog() {
       return;
     }
 
-    const company = COMPANIES.find((item) => item.id === form.companyId);
+    const company = companies.find((item) => item.id === form.companyId);
 
     const task: Task = {
       id: `task-${Date.now()}`,
@@ -139,7 +141,7 @@ export default function NewTaskDialog() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={NO_COMPANY}>Sem cliente associado</SelectItem>
-                  {COMPANIES.map((company) => (
+                  {companies.filter((company) => !company.archived).map((company) => (
                     <SelectItem key={company.id} value={company.id}>
                       {company.name}
                     </SelectItem>

@@ -6,6 +6,7 @@ import FilterMenu from "@/components/_common/filter-menu";
 import { OWNER_OPTIONS, STAGE_OPTIONS } from "./filter-options";
 import { useOpportunitiesStore } from "@/stores/opportunities-store";
 import PlusIcon from "@/public/assets/images/_common/plus.svg";
+import AlertIcon from "@/public/assets/images/companies/sidebar/alert-triangle.svg";
 
 export default function OpportunitiesToolbar() {
   const owner = useOpportunitiesStore((state) => state.owner);
@@ -14,6 +15,8 @@ export default function OpportunitiesToolbar() {
   const setOwner = useOpportunitiesStore((state) => state.setOwner);
   const setStage = useOpportunitiesStore((state) => state.setStage);
   const setSearch = useOpportunitiesStore((state) => state.setSearch);
+  const overdue = useOpportunitiesStore((state) => state.overdue);
+  const setOverdue = useOpportunitiesStore((state) => state.setOverdue);
   const setNewOpportunityOpen = useOpportunitiesStore(
     (state) => state.setNewOpportunityOpen,
   );
@@ -42,6 +45,15 @@ export default function OpportunitiesToolbar() {
           options={STAGE_OPTIONS}
           onChange={setStage}
         />
+        <Button
+          variant={overdue ? "primary" : "secondary"}
+          size="sm"
+          aria-pressed={overdue}
+          onClick={() => setOverdue(!overdue)}
+        >
+          <AlertIcon aria-hidden className="size-3" />
+          Atrasadas
+        </Button>
       </div>
 
       <Button

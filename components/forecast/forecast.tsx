@@ -13,7 +13,7 @@ import ZoneBarChart from "./charts/zone-bar-chart";
 import RecentOpportunitiesList from "./charts/recent-opportunities-list";
 import ProductsRadialChart from "./charts/products-radial-chart";
 import AtRiskList from "@/components/_common/at-risk-list";
-import { COMPANIES } from "@/data/companies";
+import { useCompaniesStore } from "@/stores/companies-store";
 import { MONTHLY_QUOTA, MONTHLY_TREND, ZONE_FORECAST } from "@/data/forecast";
 import { stageTotal, weightedPipeline } from "@/lib/opportunities";
 import {
@@ -44,9 +44,11 @@ const KPI_CONTAINER_VARIANTS = {
 
 export default function Forecast() {
   const opportunities = useOpportunitiesStore((state) => state.opportunities);
+  const companies = useCompaniesStore((state) => state.companies);
   const prefersReducedMotion = useReducedMotion();
 
   const metrics = useMemo(() => {
+    const liveCompanies = companies.filter((company) => !company.archived);
     const open = openOpportunities(opportunities);
     const pipelineTotal = stageTotal(open);
     const weighted = weightedPipeline(open);
@@ -58,7 +60,7 @@ export default function Forecast() {
       : 0;
     const wonTotal = stageTotal(wonOpportunities(opportunities));
     const lostTotal = stageTotal(lostOpportunities(opportunities));
-    const { active } = activeVsInactive(COMPANIES);
+    const { active } = activeVsInactive(liveCompanies);
 
     return {
       pipelineTotal,
@@ -85,9 +87,9 @@ export default function Forecast() {
         amount: zone.amount,
         quota: zone.quota,
       })),
-      risk: clientsAtRisk(COMPANIES),
+      risk: clientsAtRisk(liveCompanies),
     };
-  }, [opportunities]);
+  }, [opportunities, companies]);
 
   const weightedParts = compactMoneyParts(metrics.weighted);
   const pipelineParts = compactMoneyParts(metrics.pipelineTotal);

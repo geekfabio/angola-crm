@@ -131,6 +131,7 @@ export type Company = {
   lastInteraction: { date: string; label: string };
   activityDays: number;
   logo?: string;
+  archived?: boolean;
 };
 
 export const TREND_PATTERN = [
@@ -445,35 +446,3 @@ export type ScoreCard = {
   stars: number;
 };
 
-export const SCORE_CARDS: ScoreCard[] = [
-  {
-    title: "Adequação ao negócio",
-    description:
-      "Avalia o quanto o cliente se encaixa no perfil ideal da carteira.",
-    reviewer: "Emília Garcia",
-    reviewerAvatar: "/assets/images/_common/avatars/detail-2.png",
-    updated: "Atualizado há 2h",
-    verdict: "Potencial elevado",
-    stars: 4,
-  },
-  {
-    title: "Adequação logística",
-    description:
-      "Avalia a capacidade de entrega, o canal preferido e a prontidão para integração.",
-    reviewer: "Ricardo Baptista",
-    reviewerAvatar: "/assets/images/_common/avatars/detail-3.png",
-    updated: "Atualizado há 2h",
-    verdict: "Potencial elevado",
-    stars: 4,
-  },
-  {
-    title: "Adequação logística",
-    description:
-      "Avalia a capacidade de entrega, o canal preferido e a prontidão para integração.",
-    reviewer: "Tomás Lourenço",
-    reviewerAvatar: "/assets/images/_common/avatars/detail-1.png",
-    updated: "Atualizado há 2h",
-    verdict: "Potencial elevado",
-    stars: 4,
-  },
-];

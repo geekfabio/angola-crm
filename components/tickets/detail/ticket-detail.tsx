@@ -33,6 +33,7 @@ import { useNow } from "@/hooks/use-now";
 import SlaBadge from "../sla/sla-badge";
 import SlaSection from "../sla/sla-section";
 import { useTicketsStore } from "@/stores/tickets-store";
+import { CURRENT_USER, OWNERS, profileByName } from "@/data/companies";
 import MessageIcon from "@/public/assets/images/companies/sidebar/message-question.svg";
 import XIcon from "@/public/assets/images/companies/detail/x.svg";
 
@@ -44,6 +45,7 @@ export default function TicketDetail() {
   const setTicketStatus = useTicketsStore((state) => state.setTicketStatus);
   const setTicketPriority = useTicketsStore((state) => state.setTicketPriority);
   const addComment = useTicketsStore((state) => state.addComment);
+  const setTicketAssignee = useTicketsStore((state) => state.setTicketAssignee);
   const [comment, setComment] = useState("");
   const now = useNow();
 
@@ -135,10 +137,37 @@ export default function TicketDetail() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="caption-style text-subtle flex items-center justify-between">
-                <span>Origem: {ticket.origin}</span>
-                <span>Responsável: {ticket.assignee}</span>
+              <div className="grid grid-cols-[auto_1fr] items-center gap-3">
+                <label htmlFor="ticket-assignee" className="caption-style text-subtle">
+                  Responsável
+                </label>
+                <Select
+                  value={ticket.assignee}
+                  onValueChange={(value) => {
+                    const person = profileByName(value);
+                    setTicketAssignee(ticket.id, value, person.avatar);
+                  }}
+                >
+                  <SelectTrigger id="ticket-assignee">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[CURRENT_USER, ...OWNERS]
+                      .filter((person, index, all) => all.findIndex((item) => item.name === person.name) === index)
+                      .concat(
+                        [CURRENT_USER, ...OWNERS].some((person) => person.name === ticket.assignee)
+                          ? []
+                          : [{ ...CURRENT_USER, name: ticket.assignee }],
+                      )
+                      .map((person) => (
+                        <SelectItem key={person.name} value={person.name}>
+                          {person.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
               </div>
+              <span className="caption-style text-subtle">Origem: {ticket.origin}</span>
             </DetailSection>
 
             <DetailSection title="Acordo de nível de serviço (SLA)">

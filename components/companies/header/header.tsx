@@ -2,21 +2,19 @@
 
 import Avatar from "@/components/_ui/avatar";
 import Button from "@/components/_ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/_ui/tabs";
+import Link from "next/link";
 import ModuleHeader from "@/components/_common/module-header";
 import { CURRENT_USER } from "@/data/companies";
 import { useCompaniesStore } from "@/stores/companies-store";
 import ActiveDot from "@/public/assets/images/companies/header/active-dot.svg";
 
-const TABS = [
-  { value: "companies", label: "Clientes" },
-  { value: "deals", label: "Oportunidades" },
-  { value: "forecast", label: "Previsão" },
+const VIEWS = [
+  { href: "/", label: "Clientes" },
+  { href: "/oportunidades", label: "Oportunidades" },
+  { href: "/previsao", label: "Previsão" },
 ];
 
 export default function CompaniesHeader() {
-  const activeTab = useCompaniesStore((state) => state.activeTab);
-  const setActiveTab = useCompaniesStore((state) => state.setActiveTab);
   const openProfile = useCompaniesStore((state) => state.openProfile);
 
   return (
@@ -41,15 +39,25 @@ export default function CompaniesHeader() {
         </Button>
       }
     >
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="border-border border-b px-4">
-          {TABS.map((tab) => (
-            <TabsTrigger key={tab.value} value={tab.value}>
-              {tab.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
+      <nav aria-label="Vistas da carteira" className="border-border flex items-center gap-4 border-b px-4">
+        {VIEWS.map((view) => {
+          const current = view.href === "/";
+          return (
+            <Link
+              key={view.href}
+              href={view.href}
+              aria-current={current ? "page" : undefined}
+              className={
+                current
+                  ? "caption-style text-foreground border-foreground -mb-px border-b py-4 font-medium"
+                  : "caption-style text-subtle hover:text-soft focus-visible:text-foreground ease-power3-out -mb-px border-b border-transparent py-4 transition-colors duration-150 outline-none"
+              }
+            >
+              {view.label}
+            </Link>
+          );
+        })}
+      </nav>
     </ModuleHeader>
   );
 }

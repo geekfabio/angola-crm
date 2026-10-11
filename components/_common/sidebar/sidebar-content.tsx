@@ -7,6 +7,9 @@ import SidebarNavItem from "./sidebar-nav-item";
 import SidebarSection from "./sidebar-section";
 import { useCompaniesStore } from "@/stores/companies-store";
 import { useSettingsStore } from "@/stores/settings-store";
+import { useOpportunitiesStore } from "@/stores/opportunities-store";
+import { useUiStore } from "@/stores/ui-store";
+import { ALL_TEAMS, ANY_ZONE } from "@/lib/companies";
 import { ZONE_DOTS } from "./zone-dots";
 import { TEAM_ICON_COMPONENTS } from "./team-icons";
 import SettingsIcon from "@/public/assets/images/_common/filter.svg";
@@ -22,8 +25,6 @@ import UserPlusIcon from "@/public/assets/images/companies/sidebar/user-plus.svg
 import MessageQuestionIcon from "@/public/assets/images/companies/sidebar/message-question.svg";
 import ClockIcon from "@/public/assets/images/companies/detail/clock.svg";
 
-const BASE_CLIENT_COUNT = 223;
-
 const NAV_ITEMS = [
   { href: "/", icon: BuildingIcon, label: "Clientes", withCount: true },
   { href: "/oportunidades", icon: ClipboardIcon, label: "Oportunidades" },
@@ -38,14 +39,21 @@ const NAV_ITEMS = [
 
 
 const REPORTING_ITEMS = [
-  { icon: BarChartAltIcon, label: "Previsão do 1.º Trimestre" },
-  { icon: AlertTriangleIcon, label: "Oportunidades Atrasadas" },
+  { icon: BarChartAltIcon, label: "Previsão do Trimestre", href: "/previsao", overdue: false },
+  { icon: AlertTriangleIcon, label: "Oportunidades Atrasadas", href: "/oportunidades", overdue: true },
 ] as const;
 
 
 export default function SidebarContent() {
   const pathname = usePathname();
-  const clientCount = useCompaniesStore((state) => state.companies.length);
+  const clientCount = useCompaniesStore(
+    (state) => state.companies.filter((company) => !company.archived).length,
+  );
+  const teamFilter = useCompaniesStore((state) => state.team);
+  const zoneFilter = useCompaniesStore((state) => state.zone);
+  const overdueFilter = useOpportunitiesStore((state) => state.overdue);
+  const applyView = useCompaniesStore((state) => state.applyView);
+  const setHelpOpen = useUiStore((state) => state.setHelpOpen);
   const teams = useSettingsStore((state) => state.teams);
   const zones = useSettingsStore((state) => state.zones);
   const setSettingsTab = useSettingsStore((state) => state.setTab);
@@ -82,11 +90,20 @@ export default function SidebarContent() {
                 href={item.href}
                 icon={item.icon}
                 label={item.label}
-                active={pathname === item.href}
+                active={
+                  pathname === item.href &&
+                  !(item.href === "/" && (teamFilter !== ALL_TEAMS || zoneFilter !== ANY_ZONE)) &&
+                  !(item.href === "/oportunidades" && overdueFilter)
+                }
+                onClick={
+                  item.href === "/"
+                    ? () => applyView({})
+                    : item.href === "/oportunidades"
+                      ? () => useOpportunitiesStore.getState().setOverdue(false)
+                      : undefined
+                }
                 count={
-                  "withCount" in item && item.withCount
-                    ? BASE_CLIENT_COUNT + clientCount
-                    : undefined
+                  "withCount" in item && item.withCount ? clientCount : undefined
                 }
               />
             ))}
@@ -101,8 +118,11 @@ export default function SidebarContent() {
               .map((team) => (
                 <SidebarNavItem
                   key={team.id}
+                  href="/"
                   icon={TEAM_ICON_COMPONENTS[team.icon]}
                   label={team.name}
+                  active={pathname === "/" && teamFilter === team.id}
+                  onClick={() => applyView({ team: team.id })}
                 />
               ))}
           </SidebarSection>
@@ -114,8 +134,11 @@ export default function SidebarContent() {
             {REPORTING_ITEMS.map((item) => (
               <SidebarNavItem
                 key={item.label}
+                href={item.href}
                 icon={item.icon}
                 label={item.label}
+                active={pathname === item.href && (!item.overdue || overdueFilter)}
+                onClick={() => useOpportunitiesStore.getState().setOverdue(item.overdue)}
               />
             ))}
           </SidebarSection>
@@ -126,8 +149,11 @@ export default function SidebarContent() {
               .map((zone) => (
                 <SidebarNavItem
                   key={zone.name}
+                  href="/"
                   icon={ZONE_DOTS[zone.color]}
                   label={zone.name}
+                  active={pathname === "/" && zoneFilter === zone.name}
+                  onClick={() => applyView({ zone: zone.name })}
                 />
               ))}
           </SidebarSection>
@@ -159,7 +185,12 @@ export default function SidebarContent() {
             setInviteOpen(true);
           }}
         />
-        <SidebarNavItem icon={MessageQuestionIcon} label="Ajuda" tone="quiet" />
+        <SidebarNavItem
+          icon={MessageQuestionIcon}
+          label="Ajuda"
+          tone="quiet"
+          onClick={() => setHelpOpen(true)}
+        />
       </SidebarSection>
     </div>
   );

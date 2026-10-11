@@ -10,7 +10,9 @@ import {
   STAGE_OPTIONS,
 } from "./filter-options";
 import type { SortKey } from "@/data/companies";
-import { TODAY, companiesCsvRows, filterCompanies } from "@/lib/companies";
+import { TODAY, companiesCsvRows } from "@/lib/companies";
+import { useVisibleCompanies } from "../use-visible-companies";
+import ActiveFilters from "./active-filters";
 import { downloadCsv } from "@/lib/csv";
 import { useCompaniesStore } from "@/stores/companies-store";
 import ShareIcon from "@/public/assets/images/companies/toolbar/share.svg";
@@ -31,18 +33,14 @@ export default function CompaniesToolbar() {
     (state) => state.setNewCompanyOpen,
   );
 
+  const visible = useVisibleCompanies();
+
   function exportCsv() {
-    const { companies } = useCompaniesStore.getState();
-    const visible = filterCompanies(companies, {
-      sortBy,
-      owner,
-      stage,
-      activityWindow,
-    });
     downloadCsv(`clientes-${TODAY}.csv`, companiesCsvRows(visible));
   }
 
   return (
+    <div className="flex shrink-0 flex-col">
     <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 px-4 py-4">
       <MobileFilters className="sm:hidden" />
 
@@ -87,6 +85,8 @@ export default function CompaniesToolbar() {
           Novo Cliente
         </Button>
       </div>
+    </div>
+    <ActiveFilters />
     </div>
   );
 }

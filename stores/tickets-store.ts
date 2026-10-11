@@ -49,6 +49,7 @@ type TicketsState = {
   addComment: (ticketId: string, body: string) => void;
   setTicketStatus: (ticketId: string, status: TicketStatus) => void;
   setTicketPriority: (ticketId: string, priority: TicketPriority) => void;
+  setTicketAssignee: (ticketId: string, assignee: string, avatar: string) => void;
 };
 
 export const useTicketsStore = create<TicketsState>((set, get) => {
@@ -152,6 +153,22 @@ export const useTicketsStore = create<TicketsState>((set, get) => {
         target: ticketRef(ticket),
         companyId: ticket.companyId,
         changes: [{ field: "Estado", from: ticket.status, to: status }],
+      });
+    },
+
+    setTicketAssignee: (ticketId, assignee, avatar) => {
+      const ticket = get().tickets.find((item) => item.id === ticketId);
+      if (!ticket || ticket.assignee === assignee) return;
+      update(ticketId, (current, now) => ({
+        assignee,
+        assigneeAvatar: avatar,
+        timeline: [...current.timeline, timelineEvent(`Atribuído a ${assignee}`, now)],
+      }));
+      recordEvent({
+        action: "reatribuiu o ticket",
+        target: ticketRef(ticket),
+        companyId: ticket.companyId,
+        changes: [{ field: "Responsável", from: ticket.assignee, to: assignee }],
       });
     },
 

@@ -26,6 +26,7 @@ import { COMPANIES, OWNERS } from "@/data/companies";
 import { useSettingsStore } from "@/stores/settings-store";
 import { ACTIVITY_TYPES, type Activity, type ActivityType } from "@/data/activities";
 import { useActivitiesStore } from "@/stores/activities-store";
+import { useCompaniesStore } from "@/stores/companies-store";
 import PlusIcon from "@/public/assets/images/_common/plus.svg";
 
 function today() {
@@ -56,8 +57,29 @@ export default function NewActivityDialog() {
   const open = useActivitiesStore((state) => state.newActivityOpen);
   const setOpen = useActivitiesStore((state) => state.setNewActivityOpen);
   const addActivity = useActivitiesStore((state) => state.addActivity);
+  const updateActivity = useActivitiesStore((state) => state.updateActivity);
+  const removeActivity = useActivitiesStore((state) => state.removeActivity);
+  const editingId = useActivitiesStore((state) => state.editingActivityId);
+  const editing = useActivitiesStore((state) =>
+    state.activities.find((item) => item.id === state.editingActivityId),
+  );
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
+
+  if (open && editing && loadedFor !== editing.id) {
+    setLoadedFor(editing.id);
+    setForm({
+      type: editing.type,
+      companyId: editing.companyId,
+      contactName: editing.contactName ?? "",
+      owner: editing.owner,
+      zone: editing.zone,
+      date: editing.date,
+      note: editing.note,
+    });
+  }
   const zones = useSettingsStore((state) => state.zones);
+  const companies = useCompaniesStore((state) => state.companies);
   const zone = form.zone || zones[0]?.name || "";
   const [noteError, setNoteError] = useState<string | null>(null);
   const noteRef = useRef<HTMLTextAreaElement>(null);
@@ -75,8 +97,22 @@ export default function NewActivityDialog() {
       return;
     }
 
-    const company = COMPANIES.find((item) => item.id === form.companyId);
+    const company = companies.find((item) => item.id === form.companyId);
     if (!company) return;
+
+    if (editingId) {
+      updateActivity(editingId, {
+        type: form.type,
+        companyId: company.id,
+        companyName: company.name,
+        contactName: form.contactName.trim() || undefined,
+        owner: form.owner,
+        zone,
+        date: form.date || today(),
+        note,
+      });
+      return;
+    }
 
     const activity: Activity = {
       id: `act-${Date.now()}`,
@@ -99,15 +135,17 @@ export default function NewActivityDialog() {
         className="max-w-[520px]"
         onCloseAutoFocus={() => {
           setForm(EMPTY_FORM);
+          setLoadedFor(null);
           setNoteError(null);
         }}
       >
         <form onSubmit={handleSubmit} noValidate className="flex flex-col">
           <DialogHeader>
-            <DialogTitle>Novo Registo</DialogTitle>
+            <DialogTitle>{editingId ? "Editar Registo" : "Novo Registo"}</DialogTitle>
             <DialogDescription>
-              Regista uma visita, chamada ou outra interação. Aparece na
-              lista e no calendário de imediato.
+              {editingId
+                ? "Corrija os dados do registo. A alteração fica no registo de auditoria."
+                : "Regista uma visita, chamada ou outra interação. Aparece na lista e no calendário de imediato."}
             </DialogDescription>
           </DialogHeader>
 
@@ -150,7 +188,7 @@ export default function NewActivityDialog() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {COMPANIES.map((company) => (
+                  {companies.filter((company) => !company.archived || company.id === form.companyId).map((company) => (
                     <SelectItem key={company.id} value={company.id}>
                       {company.name}
                     </SelectItem>
@@ -232,14 +270,24 @@ export default function NewActivityDialog() {
           </FormSection>
 
           <DialogFooter>
+            {editingId && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mr-auto"
+                onClick={() => removeActivity(editingId)}
+              >
+                Eliminar
+              </Button>
+            )}
             <DialogClose asChild>
               <Button variant="subtle" size="sm">
                 Cancelar
               </Button>
             </DialogClose>
             <Button variant="primary" size="sm" type="submit">
-              <PlusIcon aria-hidden className="size-3" />
-              Criar Registo
+              {!editingId && <PlusIcon aria-hidden className="size-3" />}
+              {editingId ? "Guardar alterações" : "Criar Registo"}
             </Button>
           </DialogFooter>
         </form>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Avatar from "@/components/_ui/avatar";
 import Button from "@/components/_ui/button";
 import CountBadge from "@/components/_ui/count-badge";
@@ -29,11 +29,8 @@ import {
   STAGE_OPTIONS,
 } from "./filter-options";
 import { ownerByName, type SortKey } from "@/data/companies";
-import {
-  ALL_OWNERS,
-  activeFilterCount,
-  filterCompanies,
-} from "@/lib/companies";
+import { ALL_OWNERS, activeFilterCount } from "@/lib/companies";
+import { useCompanyFilters, useVisibleCompanies } from "../use-visible-companies";
 import { cn } from "@/lib/utils";
 import { useCompaniesStore } from "@/stores/companies-store";
 import FilterIcon from "@/public/assets/images/_common/filter.svg";
@@ -45,7 +42,6 @@ type MobileFiltersProps = {
 
 export default function MobileFilters({ className }: MobileFiltersProps) {
   const [open, setOpen] = useState(false);
-  const companies = useCompaniesStore((state) => state.companies);
   const sortBy = useCompaniesStore((state) => state.sortBy);
   const owner = useCompaniesStore((state) => state.owner);
   const stage = useCompaniesStore((state) => state.stage);
@@ -58,14 +54,9 @@ export default function MobileFilters({ className }: MobileFiltersProps) {
   );
   const resetFilters = useCompaniesStore((state) => state.resetFilters);
 
-  const filters = { sortBy, owner, stage, activityWindow };
+  const filters = useCompanyFilters();
   const activeCount = activeFilterCount(filters);
-  const resultCount = useMemo(
-    () =>
-      filterCompanies(companies, { sortBy, owner, stage, activityWindow })
-        .length,
-    [companies, sortBy, owner, stage, activityWindow],
-  );
+  const resultCount = useVisibleCompanies().length;
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>

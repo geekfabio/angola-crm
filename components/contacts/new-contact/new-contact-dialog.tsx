@@ -1,5 +1,6 @@
 "use client";
 
+import { useCompaniesStore } from "@/stores/companies-store";
 import { useRef, useState, type FormEvent } from "react";
 import Button from "@/components/_ui/button";
 import { Checkbox } from "@/components/_ui/checkbox";
@@ -54,6 +55,7 @@ const EMPTY_FORM: FormState = {
 };
 
 export default function NewContactDialog() {
+  const companies = useCompaniesStore((state) => state.companies);
   const open = useContactsStore((state) => state.newContactOpen);
   const setOpen = useContactsStore((state) => state.setNewContactOpen);
   const addContact = useContactsStore((state) => state.addContact);
@@ -83,7 +85,7 @@ export default function NewContactDialog() {
       return;
     }
 
-    const company = COMPANIES.find((item) => item.id === form.companyId);
+    const company = companies.find((item) => item.id === form.companyId);
     if (!company) return;
 
     const contact: Contact = {
@@ -178,7 +180,7 @@ export default function NewContactDialog() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {COMPANIES.map((company) => (
+                    {companies.filter((company) => !company.archived).map((company) => (
                       <SelectItem key={company.id} value={company.id}>
                         {company.name}
                       </SelectItem>

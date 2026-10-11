@@ -1,12 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import Button from "@/components/_ui/button";
+import EditFooter from "@/components/_common/editable/edit-footer";
+import { useEditable } from "@/components/_common/editable/use-editable";
+import ContactEditForm, {
+  CONTACT_FORM_ID,
+  contactToDraft,
+  type ContactDraft,
+} from "./contact-edit-form";
 import { Checkbox } from "@/components/_ui/checkbox";
 import DetailSection from "@/components/_common/detail-section";
 import Tag from "@/components/_ui/tag";
 import {
   Sheet,
-  SheetClose,
   SheetContent,
   SheetDescription,
   SheetFooter,
@@ -45,12 +52,26 @@ export default function ContactDetail() {
   );
   const toggleConsent = useContactsStore((state) => state.toggleConsent);
 
+  const updateContact = useContactsStore((state) => state.updateContact);
+  const editable = useEditable<ContactDraft>();
+  const [editingFor, setEditingFor] = useState<string | null>(null);
+
   const contact = contacts.find((item) => item.id === detailId);
+  const editing = editable.editing && editingFor === contact?.id;
+
+  function requestClose() {
+    if (!editing) {
+      editable.reset();
+      closeDetail();
+      return;
+    }
+    editable.requestClose(closeDetail);
+  }
 
   return (
     <Sheet
       open={detailOpen && contact !== undefined}
-      onOpenChange={(open) => !open && closeDetail()}
+      onOpenChange={(open) => !open && requestClose()}
     >
       <SheetContent side="right" className="sm:w-[480px] sm:max-w-[480px]">
         <SheetHeader>
@@ -61,19 +82,31 @@ export default function ContactDetail() {
           <SheetDescription className="sr-only">
             Dados, cliente associado e consentimento por canal
           </SheetDescription>
-          <SheetClose asChild>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="-mr-1"
-              aria-label="Fechar detalhe"
-            >
-              <XIcon aria-hidden className="text-foreground size-4" />
-            </Button>
-          </SheetClose>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="-mr-1"
+            aria-label="Fechar detalhe"
+            onClick={requestClose}
+          >
+            <XIcon aria-hidden className="text-foreground size-4" />
+          </Button>
         </SheetHeader>
 
-        {contact && (
+        {contact && editing && editable.draft && (
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <ContactEditForm
+              draft={editable.draft}
+              onChange={editable.update}
+              onSubmit={(patch) => {
+                updateContact(contact.id, patch);
+                editable.reset();
+              }}
+            />
+          </div>
+        )}
+
+        {contact && !editing && (
           <div className="min-h-0 flex-1 overflow-y-auto">
             <div className="flex flex-col gap-3 p-5 shadow-[inset_0_-1px_0_var(--line-strong)]">
               <h2 className="truncate">{contact.name}</h2>
@@ -151,11 +184,23 @@ export default function ContactDetail() {
         )}
 
         <SheetFooter>
-          <SheetClose asChild>
-            <Button variant="subtle" size="sm">
-              Fechar
-            </Button>
-          </SheetClose>
+          <EditFooter
+            editing={editing}
+            dirty={editable.dirty}
+            confirmingClose={editable.confirmingClose}
+            saveForm={CONTACT_FORM_ID}
+            onEdit={() => {
+              if (!contact) return;
+              setEditingFor(contact.id);
+              editable.start(contactToDraft(contact));
+            }}
+            onCancel={editable.reset}
+            onDiscard={() => {
+              editable.reset();
+              closeDetail();
+            }}
+            onClose={requestClose}
+          />
         </SheetFooter>
       </SheetContent>
     </Sheet>

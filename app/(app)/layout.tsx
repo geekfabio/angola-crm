@@ -2,6 +2,7 @@ import Sidebar from "@/components/_common/sidebar/sidebar";
 import CommandPalette from "@/components/_common/command-palette/command-palette";
 import GlobalShortcuts from "@/components/_common/command-palette/global-shortcuts";
 import Toaster from "@/components/_ui/toaster";
+import HelpDialog from "@/components/_common/help/help-dialog";
 
 export default function AppLayout({
   children,
@@ -22,6 +23,7 @@ export default function AppLayout({
       </main>
       <CommandPalette />
       <GlobalShortcuts />
+      <HelpDialog />
       <Toaster />
     </div>
   );

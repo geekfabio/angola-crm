@@ -1,4 +1,8 @@
+"use client";
+
+import Button from "@/components/_ui/button";
 import { ScrollArea } from "@/components/_ui/scroll-area";
+import { useActivitiesStore } from "@/stores/activities-store";
 import Tag from "@/components/_ui/tag";
 import { ACTIVITY_TONES, type Activity } from "@/data/activities";
 import { formatDateLong } from "@/lib/format";
@@ -8,6 +12,8 @@ type ActivityListProps = {
 };
 
 export default function ActivityList({ activities }: ActivityListProps) {
+  const editActivity = useActivitiesStore((state) => state.editActivity);
+
   return (
     <ScrollArea className="min-h-0 flex-1">
       {activities.length === 0 ? (
@@ -30,8 +36,18 @@ export default function ActivityList({ activities }: ActivityListProps) {
                     {activity.zone}
                   </Tag>
                 </div>
-                <span className="caption-style text-subtle">
-                  {formatDateLong(activity.date)}
+                <span className="flex items-center gap-2">
+                  <span className="caption-style text-subtle">
+                    {formatDateLong(activity.date)}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    aria-label={`Editar registo de ${activity.type.toLowerCase()} em ${activity.companyName}`}
+                    onClick={() => editActivity(activity.id)}
+                  >
+                    Editar
+                  </Button>
                 </span>
               </div>
               <p className="p-style text-soft">{activity.note}</p>

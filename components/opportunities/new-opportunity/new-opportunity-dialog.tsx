@@ -1,5 +1,6 @@
 "use client";
 
+import { useCompaniesStore } from "@/stores/companies-store";
 import { useRef, useState, type FormEvent } from "react";
 import Button from "@/components/_ui/button";
 import {
@@ -61,6 +62,7 @@ const EMPTY_FORM: FormState = {
 };
 
 export default function NewOpportunityDialog() {
+  const companies = useCompaniesStore((state) => state.companies);
   const open = useOpportunitiesStore((state) => state.newOpportunityOpen);
   const setOpen = useOpportunitiesStore((state) => state.setNewOpportunityOpen);
   const addOpportunity = useOpportunitiesStore((state) => state.addOpportunity);
@@ -90,7 +92,7 @@ export default function NewOpportunityDialog() {
       return;
     }
 
-    const company = COMPANIES.find((item) => item.id === form.companyId);
+    const company = companies.find((item) => item.id === form.companyId);
     if (!company) return;
 
     const opportunity: Opportunity = {
@@ -140,7 +142,7 @@ export default function NewOpportunityDialog() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {COMPANIES.map((company) => (
+                  {companies.filter((company) => !company.archived).map((company) => (
                     <SelectItem key={company.id} value={company.id}>
                       {company.name}
                     </SelectItem>

@@ -1,4 +1,4 @@
-# Roteiro de UI — 17 fases
+# Roteiro de UI — 18 fases
 
 Enquanto o `ROADMAP.md` ordena o produto por fases de negócio (fundação, dados reais, Supabase), este ficheiro ordena a **construção da interface** dos módulos que já têm rota mas ainda são esqueleto visual — tabela de leitura, sem store, sem diálogos, sem painel de detalhe.
 
@@ -199,6 +199,21 @@ Pedido do utilizador, separado das campanhas: o envio de SMS é pré-pago. O for
 - Depende de Supabase (saldo e histórico persistidos) e das credenciais do fornecedor em Supabase secrets — nunca no repositório (`AGENTS.md`).
 
 **Pronto quando:** carregar crédito aumenta o saldo, e agendar uma campanha mais cara do que o saldo é bloqueado com o valor em falta.
+
+---
+
+## Fase 18 — Completar o que já existe `✅`
+
+Pedido do utilizador: antes de módulos novos, nenhum botão, separador ou número enganador. Levantamento feito por análise ao código (todos os `Button`/itens de menu sem ação) e leitura dos componentes herdados do template.
+
+- **Edição nos painéis de detalhe** (`components/_common/editable/`): Clientes, Oportunidades e Contactos ganharam "Editar" no próprio painel, com validação, "Guardar alterações" e aviso "Tem alterações por guardar — Descartar / Guardar" ao fechar com mudanças pendentes. Atividades editam-se e eliminam-se no mesmo diálogo de criação; o responsável do ticket passou a ser editável. Tudo regista campo a campo na Auditoria (`diffRecord` em `lib/audit.ts`) e o aviso traz "Anular".
+- **Clientes**: arquivar (com "Anular") em vez de apagar; seleção múltipla com barra de ações em grupo (atribuir gestor, mudar zona, exportar seleção, arquivar); rodapé com cálculos reais (soma da carteira, probabilidade média e um cálculo à escolha — carteira ponderada, oportunidades abertas, sem contacto há +30 dias), sobre a seleção quando existe; filtros ativos visíveis em pastilhas removíveis; "Limpar filtros" no estado vazio.
+- **Detalhe do cliente**: "Tendência de atividade" calculada a partir das atividades reais e do período escolhido (7/30/90 dias); cartões de pontuação calculados (adequação ao negócio pela probabilidade e carteira, relação pelo último contacto, serviço pelos tickets em aberto) em vez de dados fixos iguais para todos; "Guardar Alteração" falso e ligação `#` removidos.
+- **Sidebar**: Equipas e Zonas abrem a carteira filtrada (e ficam marcadas como ativas); "Oportunidades Atrasadas" abre Oportunidades com o novo filtro "Atrasadas"; "Previsão do Trimestre" abre a Previsão; contador de Clientes real (não arquivados); "Ajuda" abre um painel com atalhos, dicas e o contacto definido em Definições → Empresa (também com a tecla `?`). Em mobile a navegação fecha ao escolher uma página.
+- **Cabeçalho de Clientes**: os separadores Clientes / Oportunidades / Previsão passaram a ser ligações de navegação reais.
+- Diálogos de nova oportunidade, contacto, tarefa e atividade, e os indicadores da Previsão, passaram a ler os clientes do store (incluem clientes novos, excluem arquivados).
+
+**Pronto quando:** nenhum controlo visível fica sem efeito e qualquer registo criado pode ser corrigido sem o recriar. ✅ Confirmado.
 
 ---
 

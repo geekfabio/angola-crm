@@ -1,11 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import Button from "@/components/_ui/button";
+import EditFooter from "@/components/_common/editable/edit-footer";
+import { useEditable } from "@/components/_common/editable/use-editable";
+import OpportunityEditForm, {
+  OPPORTUNITY_FORM_ID,
+  opportunityDraftToPatch,
+  opportunityToDraft,
+  type OpportunityDraft,
+} from "./opportunity-edit-form";
 import DetailSection from "@/components/_common/detail-section";
 import Tag from "@/components/_ui/tag";
 import {
   Sheet,
-  SheetClose,
   SheetContent,
   SheetDescription,
   SheetFooter,
@@ -38,12 +46,26 @@ export default function OpportunityDetail() {
     (state) => state.requestStageMove,
   );
 
+  const updateOpportunity = useOpportunitiesStore((state) => state.updateOpportunity);
+  const editable = useEditable<OpportunityDraft>();
+  const [editingFor, setEditingFor] = useState<string | null>(null);
+
   const opportunity = opportunities.find((item) => item.id === detailId);
+  const editing = editable.editing && editingFor === opportunity?.id;
+
+  function requestClose() {
+    if (!editing) {
+      editable.reset();
+      closeDetail();
+      return;
+    }
+    editable.requestClose(closeDetail);
+  }
 
   return (
     <Sheet
       open={detailOpen && opportunity !== undefined}
-      onOpenChange={(open) => !open && closeDetail()}
+      onOpenChange={(open) => !open && requestClose()}
     >
       <SheetContent side="right" className="sm:w-[480px] sm:max-w-[480px]">
         <SheetHeader>
@@ -54,16 +76,15 @@ export default function OpportunityDetail() {
           <SheetDescription className="sr-only">
             Resumo, fase e histórico da oportunidade
           </SheetDescription>
-          <SheetClose asChild>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="-mr-1"
-              aria-label="Fechar detalhe"
-            >
-              <XIcon aria-hidden className="text-foreground size-4" />
-            </Button>
-          </SheetClose>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="-mr-1"
+            aria-label="Fechar detalhe"
+            onClick={requestClose}
+          >
+            <XIcon aria-hidden className="text-foreground size-4" />
+          </Button>
         </SheetHeader>
 
         {opportunity && (
@@ -82,6 +103,17 @@ export default function OpportunityDetail() {
               </div>
             </div>
 
+            {editing && editable.draft ? (
+              <OpportunityEditForm
+                draft={editable.draft}
+                onChange={editable.update}
+                onSubmit={() => {
+                  if (!editable.draft) return;
+                  updateOpportunity(opportunity.id, opportunityDraftToPatch(editable.draft));
+                  editable.reset();
+                }}
+              />
+            ) : (
             <DetailSection title="Resumo">
               <div className="lead-style grid grid-cols-2 gap-3">
                 <span className="text-subtle">Valor</span>
@@ -100,6 +132,7 @@ export default function OpportunityDetail() {
                 <span className="text-right">{opportunity.owner}</span>
               </div>
             </DetailSection>
+            )}
 
             <DetailSection title="Fase">
               <Select
@@ -164,11 +197,23 @@ export default function OpportunityDetail() {
         )}
 
         <SheetFooter>
-          <SheetClose asChild>
-            <Button variant="subtle" size="sm">
-              Fechar
-            </Button>
-          </SheetClose>
+          <EditFooter
+            editing={editing}
+            dirty={editable.dirty}
+            confirmingClose={editable.confirmingClose}
+            saveForm={OPPORTUNITY_FORM_ID}
+            onEdit={() => {
+              if (!opportunity) return;
+              setEditingFor(opportunity.id);
+              editable.start(opportunityToDraft(opportunity));
+            }}
+            onCancel={editable.reset}
+            onDiscard={() => {
+              editable.reset();
+              closeDetail();
+            }}
+            onClose={requestClose}
+          />
         </SheetFooter>
       </SheetContent>
     </Sheet>
