@@ -22,6 +22,7 @@ import DotPink from "@/public/assets/images/companies/sidebar/dot-pink.svg";
 import DotPurple from "@/public/assets/images/companies/sidebar/dot-purple.svg";
 import UserPlusIcon from "@/public/assets/images/companies/sidebar/user-plus.svg";
 import MessageQuestionIcon from "@/public/assets/images/companies/sidebar/message-question.svg";
+import ClockIcon from "@/public/assets/images/companies/detail/clock.svg";
 
 const BASE_CLIENT_COUNT = 223;
 
@@ -33,6 +34,7 @@ const NAV_ITEMS = [
   { href: "/atividades", icon: ListIcon, label: "Atividades" },
   { href: "/contactos", icon: BookClosedIcon, label: "Contactos" },
   { href: "/campanhas", icon: MailIcon, label: "Campanhas" },
+  { href: "/automacoes", icon: ClockIcon, label: "Automações" },
   { href: "/tickets", icon: MessageQuestionIcon, label: "Tickets" },
 ] as const;
 

@@ -107,11 +107,19 @@ Módulo `FEATURES.md` §2. Pré-requisito de Email/SMS — nenhuma campanha pode
 
 **Pronto quando:** escrever um SMS com acentos mostra o aviso de custo extra em tempo real. ✅ Confirmado.
 
-## Fase 11 — Automações: Motor de Regras `⬜`
+## Fase 11 — Automações: Motor de Regras `✅`
 
-`FEATURES.md` §7. Construtor visual gatilho → condição → ação (lista fixa de gatilhos e ações, sem motor genérico); sequências com espera entre passos; travão de frequência por contacto.
+`FEATURES.md` §7. Módulo novo `/automacoes` (`components/automations/`, `stores/automations-store.ts`), com lista e construtor no mesmo padrão de Campanhas.
 
-**Pronto quando:** criar uma regra simples (ex.: "N dias sem comprar → enviar SMS") aparece na lista de automações ativas.
+- Construtor visual **Quando → Se → Então**: lista fixa de gatilhos (cliente criado, oportunidade muda de fase, ganha ou perdida, N dias sem comprar, aniversário, dívida vencida, campanha aberta/clicada), condições sobre zona, segmento e classe ABC, e uma sequência de passos com espera em dias antes de cada ação.
+- Ações: enviar e-mail ou SMS (com os modelos da biblioteca de Campanhas), criar tarefa para o gestor, mudar a fase do cliente, notificar o gestor, adicionar a um segmento.
+- Resumo legível da regra e calendário da sequência (Dia 0, Dia 7…), validação antes de ativar (`lib/automations.ts` → `automationIssues`) e automações ativas só de leitura — é preciso pausar para editar.
+- **Travão global** de mensagens por contacto por semana (por omissão 2), com aviso quando uma sequência envia mais do que isso na mesma semana (`maxMessagesInWeek`).
+- **Simulação** para "N dias sem comprar": que clientes entrariam hoje, com as condições aplicadas.
+- Quatro automações de exemplo: boas-vindas, reativação de cliente inativo, seguimento de proposta sem resposta, aniversário.
+- Nada é executado: ativar só muda o estado (sandbox). "Aniversário" e "dívida vencida" dependem de dados que ainda não existem (data de início da relação; faturação/ERP) e o ecrã diz isso.
+
+**Pronto quando:** criar uma regra simples (ex.: "N dias sem comprar → enviar SMS") aparece na lista de automações ativas. ✅ Confirmado.
 
 ## Fase 12 — Definições: Empresa e Modelos `⬜`
 
