@@ -1,3 +1,5 @@
+import { DEFAULT_SEND_WINDOW, type SendWindow } from "@/lib/sms";
+
 export type Channel = "Email" | "SMS";
 
 export const CAMPAIGN_STATUSES = [
@@ -34,6 +36,10 @@ export const BRAND_LOGO = "/assets/images/_common/brand/alimenta-angola-logo.png
 export const SENDER = "Alimenta Angola <promocoes@alimentaangola.co.ao>";
 
 export const SANDBOX_ADDRESS = "teste@alimentaangola.co.ao";
+
+export const SANDBOX_PHONE = "+244 900 000 000";
+
+export const DEFAULT_SENDER_ID = "ALIMENTA";
 
 export type BlockType =
   | "heading"
@@ -276,6 +282,63 @@ export const BLANK_TEMPLATE: CampaignTemplate = {
   ],
 };
 
+export type SmsTemplate = {
+  id: string;
+  name: string;
+  description: string;
+  body: string;
+};
+
+export const SMS_TEMPLATES: SmsTemplate[] = [
+  {
+    id: "sms-promocao",
+    name: "Promoção relâmpago",
+    description: "Desconto curto, válido poucos dias.",
+    body: "Alimenta Angola: {{nome}}, só esta semana -15% em óleo e arroz no armazém de {{zona}}. Fale com {{gestor}}.",
+  },
+  {
+    id: "sms-entrega",
+    name: "Aviso de entrega",
+    description: "Encomenda a caminho do cliente.",
+    body: "Alimenta Angola: {{nome}}, a sua encomenda sai hoje para entrega em {{zona}}. Obrigado pela preferencia!",
+  },
+  {
+    id: "sms-pagamento",
+    name: "Lembrete de pagamento",
+    description: "Fatura a vencer, com o saldo em conta.",
+    body: "Alimenta Angola: {{nome}}, a sua fatura vence esta semana. Saldo: {{saldo}}. Dúvidas? Fale com {{gestor}}.",
+  },
+  {
+    id: "sms-rutura",
+    name: "Aviso de rutura",
+    description: "Produto sem stock e prazo de reposição.",
+    body: "Alimenta Angola: o óleo alimentar 5 L está sem stock em {{zona}} até à próxima semana. Alternativas: {{gestor}}.",
+  },
+];
+
+export const BLANK_SMS_TEMPLATE: SmsTemplate = {
+  id: "sms-em-branco",
+  name: "Em branco",
+  description: "Começar com uma mensagem vazia.",
+  body: "Alimenta Angola: ",
+};
+
+export type CampaignLink = {
+  label: string;
+  clicks: number;
+};
+
+export type CampaignMetrics = {
+  sent: number;
+  delivered: number;
+  opened: number;
+  clicked: number;
+  hardBounces: number;
+  softBounces: number;
+  unsubscribed: number;
+  links: CampaignLink[];
+};
+
 export type Campaign = {
   id: string;
   name: string;
@@ -285,14 +348,32 @@ export type Campaign = {
   subject: string;
   preheader: string;
   blocks: CampaignBlock[];
+  smsBody: string;
+  senderId: string;
+  smsOptOut: boolean;
+  sendWindow: SendWindow;
   fallbacks: Fallbacks;
   audience: AudienceFilters;
   testSentAt?: string;
   scheduledAt?: string;
+  sentAt?: string;
   recipients: number;
-  openRate?: number;
+  metrics?: CampaignMetrics;
   updatedAt: string;
 };
+
+export const SMS_DEFAULTS = {
+  smsBody: "",
+  senderId: DEFAULT_SENDER_ID,
+  smsOptOut: true,
+  sendWindow: DEFAULT_SEND_WINDOW,
+} satisfies Partial<Campaign>;
+
+export const EMAIL_DEFAULTS = {
+  subject: "",
+  preheader: "",
+  blocks: [],
+} satisfies Partial<Campaign>;
 
 export function blocksFromTemplate(
   template: CampaignTemplate,
@@ -312,7 +393,13 @@ function seeded(
   templateId: string,
   rest: Omit<
     Campaign,
-    "id" | "templateId" | "subject" | "preheader" | "blocks" | "fallbacks"
+    | "id"
+    | "templateId"
+    | "subject"
+    | "preheader"
+    | "blocks"
+    | "fallbacks"
+    | keyof typeof SMS_DEFAULTS
   >,
 ): Campaign {
   const template = templateById(templateId);
@@ -322,6 +409,34 @@ function seeded(
     subject: template.subject,
     preheader: template.preheader,
     blocks: blocksFromTemplate(template, id),
+    ...SMS_DEFAULTS,
+    fallbacks: { ...DEFAULT_FALLBACKS },
+    ...rest,
+  };
+}
+
+function seededSms(
+  id: string,
+  templateId: string,
+  rest: Omit<
+    Campaign,
+    | "id"
+    | "templateId"
+    | "smsBody"
+    | "senderId"
+    | "smsOptOut"
+    | "sendWindow"
+    | "fallbacks"
+    | keyof typeof EMAIL_DEFAULTS
+  >,
+): Campaign {
+  const template = SMS_TEMPLATES.find((item) => item.id === templateId)!;
+  return {
+    id,
+    templateId,
+    ...EMAIL_DEFAULTS,
+    ...SMS_DEFAULTS,
+    smsBody: template.body,
     fallbacks: { ...DEFAULT_FALLBACKS },
     ...rest,
   };
@@ -333,8 +448,22 @@ export const CAMPAIGNS: Campaign[] = [
     channel: "Email",
     status: "Enviada",
     audience: { ...DEFAULT_AUDIENCE, segment: "Grossista" },
+    testSentAt: "2026-09-28T17:05",
+    sentAt: "2026-09-29T09:00",
     recipients: 486,
-    openRate: 42,
+    metrics: {
+      sent: 486,
+      delivered: 471,
+      opened: 198,
+      clicked: 61,
+      hardBounces: 9,
+      softBounces: 6,
+      unsubscribed: 3,
+      links: [
+        { label: "Ver promoções", clicks: 52 },
+        { label: "Logótipo (cabeçalho)", clicks: 9 },
+      ],
+    },
     updatedAt: "2026-09-29",
   }),
   seeded("cmp-2", "lista-precos", {
@@ -342,23 +471,44 @@ export const CAMPAIGNS: Campaign[] = [
     channel: "Email",
     status: "Enviada",
     audience: { ...DEFAULT_AUDIENCE },
+    testSentAt: "2026-09-30T15:40",
+    sentAt: "2026-10-01T08:30",
     recipients: 512,
-    openRate: 38,
+    metrics: {
+      sent: 512,
+      delivered: 497,
+      opened: 189,
+      clicked: 44,
+      hardBounces: 11,
+      softBounces: 4,
+      unsubscribed: 2,
+      links: [
+        { label: "Consultar lista de preços", clicks: 41 },
+        { label: "Logótipo (cabeçalho)", clicks: 3 },
+      ],
+    },
     updatedAt: "2026-10-01",
   }),
-  {
-    id: "cmp-3",
+  seededSms("cmp-3", "sms-rutura", {
     name: "Aviso de rutura — óleo alimentar",
     channel: "SMS",
     status: "Enviada",
-    subject: "",
-    preheader: "",
-    blocks: [],
-    fallbacks: { ...DEFAULT_FALLBACKS },
     audience: { ...DEFAULT_AUDIENCE },
+    testSentAt: "2026-10-02T16:10",
+    sentAt: "2026-10-03T10:00",
     recipients: 310,
+    metrics: {
+      sent: 310,
+      delivered: 297,
+      opened: 0,
+      clicked: 0,
+      hardBounces: 8,
+      softBounces: 5,
+      unsubscribed: 1,
+      links: [],
+    },
     updatedAt: "2026-10-03",
-  },
+  }),
   seeded("cmp-4", "boas-vindas", {
     name: "Boas-vindas — novos clientes HORECA",
     channel: "Email",
@@ -369,20 +519,16 @@ export const CAMPAIGNS: Campaign[] = [
     recipients: 64,
     updatedAt: "2026-10-08",
   }),
-  {
-    id: "cmp-5",
+  seededSms("cmp-5", "sms-pagamento", {
     name: "Lembrete de pagamento — contas em atraso",
     channel: "SMS",
     status: "Agendada",
-    subject: "",
-    preheader: "",
-    blocks: [],
-    fallbacks: { ...DEFAULT_FALLBACKS },
-    audience: { ...DEFAULT_AUDIENCE },
+    audience: { ...DEFAULT_AUDIENCE, inactiveDays: "60" },
+    testSentAt: "2026-10-07T11:30",
     scheduledAt: "2026-10-12T10:00",
     recipients: 128,
     updatedAt: "2026-10-07",
-  },
+  }),
   seeded("cmp-6", "novo-produto", {
     name: "Novo produto — massas importadas",
     channel: "Email",

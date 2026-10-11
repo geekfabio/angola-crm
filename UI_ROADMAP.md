@@ -84,17 +84,28 @@ Módulo `FEATURES.md` §2. Pré-requisito de Email/SMS — nenhuma campanha pode
 
 **Pronto quando:** um segmento sem consentimento mostra a contagem de exclusões antes de agendar. ✅ Confirmado.
 
-## Fase 9 — Campanhas: Medição `⬜`
+## Fase 9 — Campanhas: Medição `✅`
 
-Métricas simuladas de entregues/aberturas/cliques/devoluções por campanha; essas métricas entram na linha do tempo do cliente (painel de detalhe de Clientes, ao lado de Atividades).
+- Campanhas enviadas abrem diretamente no novo separador "4. Resultados" (`components/campaigns/editor/results-step.tsx`): taxas de entrega, abertura e cliques, percurso enviados → entregues → abertos → clicaram, devoluções permanentes/temporárias, remoções da subscrição e cliques por ligação. Para SMS: entregues, falhados e respostas PARAR.
+- Métricas agregadas em `data/campaigns.ts` (`metrics`) e eventos por contacto em `data/campaign-events.ts` (Entregue, Aberto, Clicou, Devolvido, Falhou, Removeu subscrição); taxas em `lib/campaigns.ts` → `campaignRates`.
+- A ficha do cliente (`components/companies/detail/client-timeline.tsx`) ganhou uma **Linha do tempo** que junta as atividades (`useActivitiesStore`) e os eventos de campanha dos contactos desse cliente.
+- Métricas de exemplo — o ecrã diz isso. Com o fornecedor ligado chegam por webhook (`ROADMAP.md` Fase 4, ponto 6). Teste A/B continua fora de âmbito.
 
-**Pronto quando:** abrir uma campanha enviada mostra números de abertura, e esses números também aparecem na ficha do cliente.
+**Pronto quando:** abrir uma campanha enviada mostra números de abertura, e esses números também aparecem na ficha do cliente. ✅ Confirmado.
 
-## Fase 10 — SMS: Composição e Custo `⬜`
+## Fase 10 — SMS: Composição e Custo `✅`
 
-`FEATURES.md` §6. Composição com contagem de caracteres/segmentos GSM-7 vs. Unicode (acentos avisam custo); estimativa de custo por operadora antes de confirmar; janela de envio respeitada (hora de Luanda).
+`FEATURES.md` §6. Campanhas SMS usam o mesmo editor, segmentos e variáveis do e-mail, com passo de conteúdo próprio (`sms-content-step.tsx`) e quatro modelos na biblioteca (alternador E-mail/SMS).
 
-**Pronto quando:** escrever um SMS com acentos mostra o aviso de custo extra em tempo real.
+- `lib/sms.ts`: contagem GSM-7 (com tabela de extensão a 2 septetos) vs. Unicode, segmentos de 160/153 e 70/67, transliteração para GSM-7 ("Substituir acentos"), validação do remetente (3–11 caracteres) e da janela de envio.
+- `lib/phone.ts` (previsto no `CLAUDE.md`): normalização para E.164 (+244) e operadora pelo prefixo — Unitel 92/93/94, Movicel 91/99, Africell 95. A confirmar com o agregador.
+- Aviso em tempo real quando há acentos, com os caracteres culpados e quantos segmentos se poupam; instrução de remoção «Resp. PARAR p/ sair» opcional e incluída na contagem.
+- Audiência por canal: exclui quem não tem consentimento de SMS ou tem número inválido, e mostra telefone + operadora.
+- Revisão e envio: custo estimado por operadora **antes de confirmar**, calculado por destinatário com as variáveis preenchidas (os nomes também podem trazer acentos), e quanto custam os acentos. Tarifas de referência fictícias.
+- O agendamento recusa horas fora da janela de envio (hora de Luanda). Nada é enviado — sandbox, como no e-mail.
+- Fora de âmbito: estados por mensagem via webhook, SMS transacional e `PARAR` a retirar o consentimento automaticamente (dependem do agregador).
+
+**Pronto quando:** escrever um SMS com acentos mostra o aviso de custo extra em tempo real. ✅ Confirmado.
 
 ## Fase 11 — Automações: Motor de Regras `⬜`
 

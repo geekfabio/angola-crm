@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, type ReactNode } from "react";
 import Button from "@/components/_ui/button";
 import {
   Dialog,
@@ -9,15 +10,24 @@ import {
   DialogTitle,
 } from "@/components/_ui/dialog";
 import { ScrollArea } from "@/components/_ui/scroll-area";
+import Tag from "@/components/_ui/tag";
 import {
+  BLANK_SMS_TEMPLATE,
   BLANK_TEMPLATE,
+  CHANNEL_LABELS,
+  SMS_TEMPLATES,
   TEMPLATES,
   type CampaignTemplate,
+  type Channel,
+  type SmsTemplate,
 } from "@/data/campaigns";
+import { analyzeSms } from "@/lib/sms";
 import { useCampaignsStore } from "@/stores/campaigns-store";
 import { cn } from "@/lib/utils";
 
-function TemplateThumb({ template }: { template: CampaignTemplate }) {
+const CHANNELS: Channel[] = ["Email", "SMS"];
+
+function EmailThumb({ template }: { template: CampaignTemplate }) {
   const banner = template.blocks.find((block) => block.type === "banner");
   const heading = template.blocks.find((block) => block.type === "heading");
   const hasButton = template.blocks.some((block) => block.type === "button");
@@ -52,10 +62,61 @@ function TemplateThumb({ template }: { template: CampaignTemplate }) {
   );
 }
 
+function SmsThumb({ template }: { template: SmsTemplate }) {
+  const analysis = analyzeSms(template.body);
+  return (
+    <div aria-hidden className="bg-background flex h-[132px] flex-col gap-2 rounded-md border border-line-strong p-3">
+      <div className="bg-secondary line-clamp-4 rounded-xl rounded-bl-sm px-2.5 py-2 text-[11px] leading-[1.35] text-foreground">
+        {template.body}
+      </div>
+      <Tag
+        tone={analysis.encoding === "Unicode" ? "amber" : "green"}
+        size="sm"
+        className="mt-auto self-start"
+      >
+        {analysis.encoding}
+      </Tag>
+    </div>
+  );
+}
+
+function TemplateCard({
+  name,
+  description,
+  primary,
+  thumb,
+  onUse,
+}: {
+  name: string;
+  description: string;
+  primary: boolean;
+  thumb: ReactNode;
+  onUse: () => void;
+}) {
+  return (
+    <div className="border-border flex flex-col gap-3 rounded-xl border p-3">
+      {thumb}
+      <div className="flex flex-col gap-1">
+        <span className="lead-style font-medium">{name}</span>
+        <span className="caption-style text-subtle">{description}</span>
+      </div>
+      <Button
+        variant={primary ? "primary" : "secondary"}
+        size="sm"
+        className="mt-auto self-start"
+        onClick={onUse}
+      >
+        Usar modelo
+      </Button>
+    </div>
+  );
+}
+
 export default function TemplateLibraryDialog() {
   const open = useCampaignsStore((state) => state.libraryOpen);
   const setOpen = useCampaignsStore((state) => state.setLibraryOpen);
   const createFromTemplate = useCampaignsStore((state) => state.createFromTemplate);
+  const [channel, setChannel] = useState<Channel>("Email");
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -63,35 +124,47 @@ export default function TemplateLibraryDialog() {
         <DialogHeader>
           <DialogTitle>Biblioteca de modelos</DialogTitle>
           <DialogDescription>
-            Modelos de e-mail com a marca Alimenta Angola. Escolha um para abrir
-            no editor como rascunho.
+            Modelos com a marca Alimenta Angola. Escolha um para abrir no editor
+            como rascunho.
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[70dvh]">
+        <div className="flex items-center gap-1 px-6 pt-4">
+          {CHANNELS.map((item) => (
+            <Button
+              key={item}
+              variant={item === channel ? "primary" : "ghost"}
+              size="sm"
+              onClick={() => setChannel(item)}
+            >
+              {CHANNEL_LABELS[item]}
+            </Button>
+          ))}
+        </div>
+
+        <ScrollArea className="max-h-[65dvh]">
           <div className="grid gap-3 p-6 sm:grid-cols-2 lg:grid-cols-3">
-            {[...TEMPLATES, BLANK_TEMPLATE].map((template) => (
-              <div
-                key={template.id}
-                className="border-border flex flex-col gap-3 rounded-xl border p-3"
-              >
-                <TemplateThumb template={template} />
-                <div className="flex flex-col gap-1">
-                  <span className="lead-style font-medium">{template.name}</span>
-                  <span className="caption-style text-subtle">
-                    {template.description}
-                  </span>
-                </div>
-                <Button
-                  variant={template.id === BLANK_TEMPLATE.id ? "secondary" : "primary"}
-                  size="sm"
-                  className="mt-auto self-start"
-                  onClick={() => createFromTemplate(template.id)}
-                >
-                  Usar modelo
-                </Button>
-              </div>
-            ))}
+            {channel === "Email"
+              ? [...TEMPLATES, BLANK_TEMPLATE].map((template) => (
+                  <TemplateCard
+                    key={template.id}
+                    name={template.name}
+                    description={template.description}
+                    primary={template.id !== BLANK_TEMPLATE.id}
+                    thumb={<EmailThumb template={template} />}
+                    onUse={() => createFromTemplate("Email", template.id)}
+                  />
+                ))
+              : [...SMS_TEMPLATES, BLANK_SMS_TEMPLATE].map((template) => (
+                  <TemplateCard
+                    key={template.id}
+                    name={template.name}
+                    description={template.description}
+                    primary={template.id !== BLANK_SMS_TEMPLATE.id}
+                    thumb={<SmsThumb template={template} />}
+                    onUse={() => createFromTemplate("SMS", template.id)}
+                  />
+                ))}
           </div>
         </ScrollArea>
       </DialogContent>

@@ -7,11 +7,27 @@ import {
   type BlockType,
   type Campaign,
   type CampaignBlock,
+  type CampaignMetrics,
+  type Channel,
   type Fallbacks,
   type VariableKey,
 } from "@/data/campaigns";
+import type { Activity } from "@/data/activities";
+import {
+  CAMPAIGN_EVENTS,
+  type CampaignEvent,
+  type CampaignEventType,
+} from "@/data/campaign-events";
 import type { Company } from "@/data/companies";
 import type { Contact, ContactabilityStatus } from "@/data/contacts";
+import { normalizeAngolanPhone, operatorFor, type Operator } from "./phone";
+import {
+  OPT_OUT_SUFFIX,
+  SMS_TARIFFS,
+  analyzeSms,
+  isValidSenderId,
+  toGsm,
+} from "./sms";
 
 export type CampaignFilters = {
   channel: string;
@@ -36,7 +52,8 @@ export function filterCampaigns(
     if (
       query &&
       !campaign.name.toLowerCase().includes(query) &&
-      !campaign.subject.toLowerCase().includes(query)
+      !campaign.subject.toLowerCase().includes(query) &&
+      !campaign.smsBody.toLowerCase().includes(query)
     )
       return false;
     return true;
@@ -115,10 +132,14 @@ export function abcClasses(companies: Company[]): Map<string, AbcClass> {
 
 export type ExclusionReason =
   | Exclude<ContactabilityStatus, "Válido">
-  | "Sem consentimento de e-mail";
+  | "Sem consentimento de e-mail"
+  | "Sem consentimento de SMS"
+  | "Número inválido";
 
 export const EXCLUSION_TONES: Record<ExclusionReason, "red" | "amber" | "neutral"> = {
   "Sem consentimento de e-mail": "amber",
+  "Sem consentimento de SMS": "amber",
+  "Número inválido": "red",
   Inválido: "red",
   "Saiu da empresa": "neutral",
   "Pediu remoção": "neutral",
@@ -127,6 +148,8 @@ export const EXCLUSION_TONES: Record<ExclusionReason, "red" | "amber" | "neutral
 export type AudienceEntry = {
   contact: Contact;
   company?: Company;
+  phone?: string;
+  operator?: Operator;
   reason?: ExclusionReason;
 };
 
@@ -137,16 +160,34 @@ export type Audience = {
   exclusionCounts: Partial<Record<ExclusionReason, number>>;
 };
 
-function exclusionFor(contact: Contact): ExclusionReason | undefined {
-  if (contact.contactability !== "Válido") return contact.contactability;
-  if (!contact.consent.email.granted) return "Sem consentimento de e-mail";
-  return undefined;
+function toEntry(
+  contact: Contact,
+  company: Company | undefined,
+  channel: Channel,
+): AudienceEntry {
+  const entry: AudienceEntry = { contact, company };
+  if (contact.contactability !== "Válido") {
+    return { ...entry, reason: contact.contactability };
+  }
+  if (channel === "Email") {
+    return contact.consent.email.granted
+      ? entry
+      : { ...entry, reason: "Sem consentimento de e-mail" };
+  }
+  const phone = normalizeAngolanPhone(contact.phone);
+  const operator = phone ? operatorFor(phone) : null;
+  if (!phone || !operator) return { ...entry, reason: "Número inválido" };
+  const withPhone = { ...entry, phone, operator };
+  return contact.consent.sms.granted
+    ? withPhone
+    : { ...withPhone, reason: "Sem consentimento de SMS" };
 }
 
 export function buildAudience(
   filters: AudienceFilters,
   companies: Company[],
   contacts: Contact[],
+  channel: Channel = "Email",
 ): Audience {
   const abc = abcClasses(companies);
   const minDays = filters.inactiveDays === ANY ? null : Number(filters.inactiveDays);
@@ -166,11 +207,7 @@ export function buildAudience(
   const byId = new Map(matched.map((company) => [company.id, company]));
   const entries = contacts
     .filter((contact) => byId.has(contact.companyId))
-    .map<AudienceEntry>((contact) => ({
-      contact,
-      company: byId.get(contact.companyId),
-      reason: exclusionFor(contact),
-    }));
+    .map((contact) => toEntry(contact, byId.get(contact.companyId), channel));
 
   const excluded = entries.filter((entry) => entry.reason);
   const exclusionCounts: Audience["exclusionCounts"] = {};
@@ -193,10 +230,36 @@ export type ReviewCheck = {
   ok: boolean;
 };
 
+export function smsText(campaign: Campaign) {
+  return campaign.smsBody + (campaign.smsOptOut ? OPT_OUT_SUFFIX : "");
+}
+
 export function reviewChecks(campaign: Campaign, eligibleCount: number): ReviewCheck[] {
+  const content: ReviewCheck[] =
+    campaign.channel === "SMS"
+      ? [
+          {
+            key: "body",
+            label: "Mensagem preenchida",
+            ok: campaign.smsBody.trim() !== "",
+          },
+          {
+            key: "sender",
+            label: "Remetente válido (3 a 11 caracteres)",
+            ok: isValidSenderId(campaign.senderId),
+          },
+        ]
+      : [
+          { key: "subject", label: "Assunto preenchido", ok: campaign.subject.trim() !== "" },
+          {
+            key: "blocks",
+            label: "Conteúdo com pelo menos um bloco",
+            ok: campaign.blocks.length > 0,
+          },
+        ];
+
   return [
-    { key: "subject", label: "Assunto preenchido", ok: campaign.subject.trim() !== "" },
-    { key: "blocks", label: "Conteúdo com pelo menos um bloco", ok: campaign.blocks.length > 0 },
+    ...content,
     {
       key: "fallbacks",
       label: "Valor por omissão em todas as variáveis",
@@ -217,4 +280,145 @@ export function reviewChecks(campaign: Campaign, eligibleCount: number): ReviewC
 
 export function canSubmitForReview(checks: ReviewCheck[]) {
   return checks.filter((check) => check.key !== "test").every((check) => check.ok);
+}
+
+export type OperatorCost = {
+  operator: Operator;
+  recipients: number;
+  segments: number;
+  cost: number;
+};
+
+export type SmsCostEstimate = {
+  byOperator: OperatorCost[];
+  segments: number;
+  cost: number;
+  gsmCost: number;
+  unicodeRecipients: number;
+};
+
+export function estimateSmsCost(
+  entries: AudienceEntry[],
+  text: string,
+  fallbacks: Fallbacks,
+): SmsCostEstimate {
+  const totals = new Map<Operator, OperatorCost>();
+  let gsmCost = 0;
+  let unicodeRecipients = 0;
+
+  for (const entry of entries) {
+    if (!entry.operator) continue;
+    const rendered = renderVariables(
+      text,
+      valuesForContact(entry.contact, entry.company),
+      fallbacks,
+    );
+    const analysis = analyzeSms(rendered);
+    const tariff = SMS_TARIFFS[entry.operator];
+    const current = totals.get(entry.operator) ?? {
+      operator: entry.operator,
+      recipients: 0,
+      segments: 0,
+      cost: 0,
+    };
+    current.recipients += 1;
+    current.segments += analysis.segments;
+    current.cost += analysis.segments * tariff;
+    totals.set(entry.operator, current);
+    gsmCost += analyzeSms(toGsm(rendered)).segments * tariff;
+    if (analysis.encoding === "Unicode") unicodeRecipients += 1;
+  }
+
+  const byOperator = [...totals.values()].sort((a, b) => b.cost - a.cost);
+  return {
+    byOperator,
+    segments: byOperator.reduce((sum, item) => sum + item.segments, 0),
+    cost: byOperator.reduce((sum, item) => sum + item.cost, 0),
+    gsmCost,
+    unicodeRecipients,
+  };
+}
+
+export type CampaignRates = {
+  delivered: number;
+  opened: number;
+  clicked: number;
+  bounced: number;
+  unsubscribed: number;
+};
+
+function share(part: number, whole: number) {
+  return whole === 0 ? 0 : Math.round((part / whole) * 1000) / 10;
+}
+
+export function campaignRates(metrics: CampaignMetrics): CampaignRates {
+  return {
+    delivered: share(metrics.delivered, metrics.sent),
+    opened: share(metrics.opened, metrics.delivered),
+    clicked: share(metrics.clicked, metrics.delivered),
+    bounced: share(metrics.hardBounces + metrics.softBounces, metrics.sent),
+    unsubscribed: share(metrics.unsubscribed, metrics.delivered),
+  };
+}
+
+export function eventsForCampaign(campaignId: string) {
+  return CAMPAIGN_EVENTS.filter((event) => event.campaignId === campaignId).sort(
+    (a, b) => b.date.localeCompare(a.date),
+  );
+}
+
+export type TimelineItem =
+  | {
+      kind: "activity";
+      id: string;
+      date: string;
+      activity: Activity;
+    }
+  | {
+      kind: "campaign";
+      id: string;
+      date: string;
+      event: CampaignEvent;
+      eventType: CampaignEventType;
+      campaign?: Campaign;
+      contact?: Contact;
+    };
+
+export function clientTimeline(
+  companyId: string,
+  contacts: Contact[],
+  activities: Activity[],
+  campaigns: Campaign[],
+  limit = 10,
+): TimelineItem[] {
+  const companyContacts = new Map(
+    contacts
+      .filter((contact) => contact.companyId === companyId)
+      .map((contact) => [contact.id, contact]),
+  );
+
+  const campaignItems: TimelineItem[] = CAMPAIGN_EVENTS.filter((event) =>
+    companyContacts.has(event.contactId),
+  ).map((event) => ({
+    kind: "campaign",
+    id: event.id,
+    date: event.date,
+    event,
+    eventType: event.type,
+    campaign: campaigns.find((campaign) => campaign.id === event.campaignId),
+    contact: companyContacts.get(event.contactId),
+  }));
+
+  const activityItems: TimelineItem[] = activities
+    .filter((activity) => activity.companyId === companyId)
+    .map((activity) => ({
+      kind: "activity",
+      id: activity.id,
+      date: `${activity.date}T00:00`,
+      activity,
+    }));
+
+  return [...campaignItems, ...activityItems]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, limit);
 }

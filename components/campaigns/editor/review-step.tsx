@@ -5,20 +5,25 @@ import Button from "@/components/_ui/button";
 import Field from "@/components/_ui/field";
 import { Input } from "@/components/_ui/input";
 import Tag from "@/components/_ui/tag";
-import { SANDBOX_ADDRESS, type Campaign } from "@/data/campaigns";
+import { SANDBOX_ADDRESS, SANDBOX_PHONE, type Campaign } from "@/data/campaigns";
 import {
   EXCLUSION_TONES,
+  campaignRates,
   canSubmitForReview,
+  estimateSmsCost,
   reviewChecks,
+  smsText,
   type Audience,
   type ExclusionReason,
 } from "@/lib/campaigns";
 import {
   formatDateTime,
+  formatMoney,
   formatNumber,
-  formatPercent,
+  formatPercentDecimal,
   luandaLocalToDate,
 } from "@/lib/format";
+import { SMS_TARIFFS, analyzeSms, isWithinWindow } from "@/lib/sms";
 import { useCampaignsStore } from "@/stores/campaigns-store";
 import { cn } from "@/lib/utils";
 
@@ -36,7 +41,13 @@ export default function ReviewStep({ campaign, audience }: ReviewStepProps) {
   const [scheduledAt, setScheduledAt] = useState("");
   const [scheduleError, setScheduleError] = useState<string | null>(null);
 
+  const isSms = campaign.channel === "SMS";
+  const testTarget = isSms ? SANDBOX_PHONE : SANDBOX_ADDRESS;
+  const windowLabel = `${campaign.sendWindow.start}–${campaign.sendWindow.end}`;
   const checks = reviewChecks(campaign, audience.eligible.length);
+  const cost = isSms
+    ? estimateSmsCost(audience.eligible, smsText(campaign), campaign.fallbacks)
+    : null;
   const exclusions = Object.entries(audience.exclusionCounts) as [
     ExclusionReason,
     number,
@@ -49,6 +60,12 @@ export default function ReviewStep({ campaign, audience }: ReviewStepProps) {
     }
     if (luandaLocalToDate(scheduledAt).getTime() <= Date.now()) {
       setScheduleError("A data de envio tem de estar no futuro.");
+      return;
+    }
+    if (isSms && !isWithinWindow(scheduledAt, campaign.sendWindow)) {
+      setScheduleError(
+        `Fora da janela de envio (${windowLabel}, hora de Luanda). Escolha outra hora.`,
+      );
       return;
     }
     setScheduleError(null);
@@ -109,15 +126,63 @@ export default function ReviewStep({ campaign, audience }: ReviewStepProps) {
             </span>
           )}
         </section>
+
+        {cost && campaign.status !== "Enviada" && (
+          <section className="border-border flex flex-col gap-4 rounded-xl border p-5">
+            <h2 className="eyebrow-style text-faint font-normal">Custo estimado</h2>
+            <div className="flex items-baseline gap-2">
+              <span className="text-[26px] leading-none font-semibold tabular-nums">
+                {formatMoney(cost.cost)}
+              </span>
+              <span className="caption-style text-subtle">
+                {formatNumber(cost.segments)} segmentos no total
+              </span>
+            </div>
+            {cost.byOperator.length > 0 && (
+              <ul className="divide-border flex flex-col divide-y">
+                {cost.byOperator.map((item) => (
+                  <li
+                    key={item.operator}
+                    className="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0"
+                  >
+                    <span className="flex flex-col gap-0.5">
+                      <span className="lead-style">{item.operator}</span>
+                      <span className="caption-style text-subtle tabular-nums">
+                        {formatNumber(item.recipients)} destinatários ·{" "}
+                        {formatNumber(item.segments)} segmentos ·{" "}
+                        {formatMoney(SMS_TARIFFS[item.operator])}/segmento
+                      </span>
+                    </span>
+                    <span className="lead-style tabular-nums">{formatMoney(item.cost)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {cost.cost > cost.gsmCost && (
+              <span className="caption-style rounded-lg border border-(--tag-amber-border) bg-(--tag-amber-bg) px-3 py-2 text-(--tag-amber-text)">
+                Os acentos acrescentam {formatMoney(cost.cost - cost.gsmCost)} a esta
+                campanha ({cost.unicodeRecipients} de {audience.eligible.length}{" "}
+                mensagens em Unicode).
+                {analyzeSms(smsText(campaign)).encoding === "GSM-7" &&
+                  " O texto não tem acentos — vêm dos valores das variáveis, como nomes de gestores com ã ou ç."}
+              </span>
+            )}
+            <span className="caption-style text-subtle">
+              Calculado por destinatário, com as variáveis já preenchidas. Tarifas de
+              referência fictícias, a confirmar com o agregador de SMS.
+            </span>
+          </section>
+        )}
       </div>
 
       <section className="border-border flex min-w-0 flex-col gap-4 self-start rounded-xl border p-5">
         <h2 className="eyebrow-style text-faint font-normal">Envio</h2>
 
         <div className="caption-style rounded-lg border border-line-strong bg-white/3 px-4 py-3 text-soft">
-          Modo sandbox: nenhum e-mail sai deste ecrã. O envio real depende do
-          fornecedor de e-mail e de <span className="font-mono">MESSAGING_LIVE=true</span>{" "}
-          (ver ROADMAP, Fase 4).
+          Modo sandbox: {isSms ? "nenhum SMS" : "nenhum e-mail"} sai deste ecrã. O
+          envio real depende {isSms ? "do agregador de SMS" : "do fornecedor de e-mail"}{" "}
+          e de <span className="font-mono">MESSAGING_LIVE=true</span> (ver ROADMAP,
+          Fase {isSms ? "5" : "4"}).
         </div>
 
         {campaign.status === "Rascunho" && (
@@ -145,12 +210,12 @@ export default function ReviewStep({ campaign, audience }: ReviewStepProps) {
               {campaign.testSentAt ? (
                 <span className="caption-style text-subtle">
                   Teste registado a {formatDateTime(campaign.testSentAt)} para{" "}
-                  {SANDBOX_ADDRESS} — em sandbox, nada foi entregue.
+                  {testTarget} — em sandbox, nada foi entregue.
                 </span>
               ) : (
                 <span className="caption-style text-subtle">
                   Obrigatório antes de agendar. Fica registado em sandbox para{" "}
-                  {SANDBOX_ADDRESS}.
+                  {testTarget}.
                 </span>
               )}
               <Button
@@ -169,6 +234,7 @@ export default function ReviewStep({ campaign, audience }: ReviewStepProps) {
                 label="Data e hora (Luanda)"
                 htmlFor="campaign-schedule"
                 error={scheduleError ?? undefined}
+                hint={isSms ? `Janela de envio: ${windowLabel}.` : undefined}
               >
                 <Input
                   id="campaign-schedule"
@@ -228,10 +294,13 @@ export default function ReviewStep({ campaign, audience }: ReviewStepProps) {
             <span className="lead-style">
               Enviada a {formatNumber(campaign.recipients)} destinatários
             </span>
-            {campaign.openRate !== undefined && (
+            {campaign.metrics && (
               <span className="caption-style text-subtle">
-                Taxa de abertura: {formatPercent(campaign.openRate)}. Métricas
-                detalhadas chegam com a medição de campanhas.
+                Taxa de entrega:{" "}
+                {formatPercentDecimal(campaignRates(campaign.metrics).delivered)}
+                {!isSms &&
+                  ` · Taxa de abertura: ${formatPercentDecimal(campaignRates(campaign.metrics).opened)}`}
+                . Detalhe no separador Resultados.
               </span>
             )}
           </div>

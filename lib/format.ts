@@ -55,6 +55,15 @@ export function formatPercent(value: number) {
   return PERCENT_FORMATTER.format(value / 100);
 }
 
+const PERCENT_DECIMAL_FORMATTER = new Intl.NumberFormat("pt-AO", {
+  style: "percent",
+  maximumFractionDigits: 1,
+});
+
+export function formatPercentDecimal(value: number) {
+  return PERCENT_DECIMAL_FORMATTER.format(value / 100);
+}
+
 export function formatDateShort(iso: string) {
   return SHORT_DATE_FORMATTER.format(new Date(`${iso}T00:00:00Z`));
 }

@@ -18,12 +18,12 @@ import {
   STATUS_TONES,
   type Campaign,
 } from "@/data/campaigns";
-import { buildAudience } from "@/lib/campaigns";
+import { buildAudience, campaignRates } from "@/lib/campaigns";
 import {
   formatDateShort,
   formatDateTime,
   formatNumber,
-  formatPercent,
+  formatPercentDecimal,
 } from "@/lib/format";
 import { useCampaignsStore } from "@/stores/campaigns-store";
 import { useCompaniesStore } from "@/stores/companies-store";
@@ -34,10 +34,7 @@ type CampaignsTableProps = {
 };
 
 function isLive(campaign: Campaign) {
-  return (
-    campaign.channel === "Email" &&
-    (campaign.status === "Rascunho" || campaign.status === "Em revisão")
-  );
+  return campaign.status === "Rascunho" || campaign.status === "Em revisão";
 }
 
 export default function CampaignsTable({ campaigns }: CampaignsTableProps) {
@@ -51,7 +48,8 @@ export default function CampaignsTable({ campaigns }: CampaignsTableProps) {
       if (isLive(campaign)) {
         counts.set(
           campaign.id,
-          buildAudience(campaign.audience, companies, contacts).eligible.length,
+          buildAudience(campaign.audience, companies, contacts, campaign.channel)
+            .eligible.length,
         );
       }
     }
@@ -60,77 +58,75 @@ export default function CampaignsTable({ campaigns }: CampaignsTableProps) {
 
   return (
     <ScrollArea orientation="both" className="min-h-0 flex-1">
-      <Table className="min-w-[860px]">
+      <Table className="min-w-[920px]">
         <TableHeader>
           <TableRow>
             <TableHead>Campanha</TableHead>
             <TableHead>Canal</TableHead>
             <TableHead>Estado</TableHead>
             <TableHead className="text-right">Destinatários</TableHead>
-            <TableHead className="text-right">Taxa de Abertura</TableHead>
+            <TableHead className="text-right">Entrega</TableHead>
+            <TableHead className="text-right">Abertura</TableHead>
             <TableHead>Data</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {campaigns.map((campaign) => {
-            const editable = campaign.channel === "Email";
-            return (
-              <TableRow
-                key={campaign.id}
-                onClick={editable ? () => openEditor(campaign.id) : undefined}
-                className={editable ? "hover:bg-card/60 cursor-pointer" : undefined}
-              >
-                <TableCell className="max-w-[320px]">
-                  <span className="flex min-w-0 flex-col gap-1">
-                    {editable ? (
-                      <Button
-                        variant="link"
-                        size="none"
-                        className="justify-start truncate no-underline"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          openEditor(campaign.id);
-                        }}
-                      >
-                        {campaign.name}
-                      </Button>
-                    ) : (
-                      <span className="truncate font-medium">{campaign.name}</span>
-                    )}
-                    <span className="caption-style text-subtle truncate">
-                      {editable
-                        ? campaign.subject || "Sem assunto"
-                        : "Edição de SMS ainda não disponível"}
-                    </span>
+          {campaigns.map((campaign) => (
+            <TableRow
+              key={campaign.id}
+              onClick={() => openEditor(campaign.id)}
+              className="hover:bg-card/60 cursor-pointer"
+            >
+              <TableCell className="max-w-[320px]">
+                <span className="flex min-w-0 flex-col gap-1">
+                  <Button
+                    variant="link"
+                    size="none"
+                    className="justify-start truncate no-underline"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      openEditor(campaign.id);
+                    }}
+                  >
+                    {campaign.name}
+                  </Button>
+                  <span className="caption-style text-subtle truncate">
+                    {(campaign.channel === "SMS" ? campaign.smsBody : campaign.subject) ||
+                      "Sem conteúdo"}
                   </span>
-                </TableCell>
-                <TableCell>
-                  <Tag tone={CHANNEL_TONES[campaign.channel]}>
-                    {CHANNEL_LABELS[campaign.channel]}
-                  </Tag>
-                </TableCell>
-                <TableCell>
-                  <Tag tone={STATUS_TONES[campaign.status]}>{campaign.status}</Tag>
-                </TableCell>
-                <TableCell className="text-right tabular-nums">
-                  {formatNumber(liveRecipients.get(campaign.id) ?? campaign.recipients)}
-                </TableCell>
-                <TableCell className="text-soft text-right tabular-nums">
-                  {campaign.openRate !== undefined
-                    ? formatPercent(campaign.openRate)
-                    : "—"}
-                </TableCell>
-                <TableCell className="text-soft tabular-nums">
-                  {campaign.status === "Agendada" && campaign.scheduledAt
-                    ? formatDateTime(campaign.scheduledAt)
-                    : formatDateShort(campaign.updatedAt)}
-                </TableCell>
-              </TableRow>
-            );
-          })}
+                </span>
+              </TableCell>
+              <TableCell>
+                <Tag tone={CHANNEL_TONES[campaign.channel]}>
+                  {CHANNEL_LABELS[campaign.channel]}
+                </Tag>
+              </TableCell>
+              <TableCell>
+                <Tag tone={STATUS_TONES[campaign.status]}>{campaign.status}</Tag>
+              </TableCell>
+              <TableCell className="text-right tabular-nums">
+                {formatNumber(liveRecipients.get(campaign.id) ?? campaign.recipients)}
+              </TableCell>
+              <TableCell className="text-soft text-right tabular-nums">
+                {campaign.metrics
+                  ? formatPercentDecimal(campaignRates(campaign.metrics).delivered)
+                  : "—"}
+              </TableCell>
+              <TableCell className="text-soft text-right tabular-nums">
+                {campaign.metrics && campaign.channel === "Email"
+                  ? formatPercentDecimal(campaignRates(campaign.metrics).opened)
+                  : "—"}
+              </TableCell>
+              <TableCell className="text-soft tabular-nums">
+                {campaign.status === "Agendada" && campaign.scheduledAt
+                  ? formatDateTime(campaign.scheduledAt)
+                  : formatDateShort(campaign.updatedAt)}
+              </TableCell>
+            </TableRow>
+          ))}
           {campaigns.length === 0 && (
             <TableRow>
-              <TableCell colSpan={6} className="caption-style text-subtle py-10 text-center">
+              <TableCell colSpan={7} className="caption-style text-subtle py-10 text-center">
                 Sem campanhas para os filtros escolhidos.
               </TableCell>
             </TableRow>

@@ -1,20 +1,25 @@
 import { create } from "zustand";
 import {
+  BLANK_SMS_TEMPLATE,
   BLANK_TEMPLATE,
   CAMPAIGNS,
   DEFAULT_AUDIENCE,
   DEFAULT_FALLBACKS,
+  EMAIL_DEFAULTS,
+  SMS_DEFAULTS,
+  SMS_TEMPLATES,
   TEMPLATES,
   blocksFromTemplate,
   type AudienceFilters,
   type BlockType,
   type Campaign,
   type CampaignBlock,
+  type Channel,
   type VariableKey,
 } from "@/data/campaigns";
 import { DEFAULT_CAMPAIGN_FILTERS, createBlock } from "@/lib/campaigns";
 
-export type EditorStep = "conteudo" | "destinatarios" | "revisao";
+export type EditorStep = "conteudo" | "destinatarios" | "revisao" | "resultados";
 
 function today() {
   return new Date().toISOString().slice(0, 10);
@@ -43,10 +48,21 @@ type CampaignsState = {
   openEditor: (id: string) => void;
   closeEditor: () => void;
   setEditorStep: (step: EditorStep) => void;
-  createFromTemplate: (templateId: string) => void;
+  createFromTemplate: (channel: Channel, templateId: string) => void;
   updateDetails: (
     id: string,
-    patch: Partial<Pick<Campaign, "name" | "subject" | "preheader">>,
+    patch: Partial<
+      Pick<
+        Campaign,
+        | "name"
+        | "subject"
+        | "preheader"
+        | "smsBody"
+        | "senderId"
+        | "smsOptOut"
+        | "sendWindow"
+      >
+    >,
   ) => void;
   addBlock: (id: string, type: BlockType) => void;
   updateBlock: (id: string, block: CampaignBlock) => void;
@@ -61,7 +77,7 @@ type CampaignsState = {
   cancelSchedule: (id: string) => void;
 };
 
-export const useCampaignsStore = create<CampaignsState>((set) => {
+export const useCampaignsStore = create<CampaignsState>((set, get) => {
   function patch(id: string, fn: (campaign: Campaign) => Partial<Campaign>) {
     set((state) => ({
       campaigns: state.campaigns.map((campaign) =>
@@ -92,28 +108,55 @@ export const useCampaignsStore = create<CampaignsState>((set) => {
     setStatus: (status) => set({ status }),
     setSearch: (search) => set({ search }),
     setLibraryOpen: (libraryOpen) => set({ libraryOpen }),
-    openEditor: (editorId) => set({ editorId, editorStep: "conteudo" }),
+    openEditor: (editorId) => {
+      const campaign = get().campaigns.find((item) => item.id === editorId);
+      set({
+        editorId,
+        editorStep: campaign?.status === "Enviada" ? "resultados" : "conteudo",
+      });
+    },
     closeEditor: () => set({ editorId: null }),
     setEditorStep: (editorStep) => set({ editorStep }),
 
-    createFromTemplate: (templateId) => {
-      const template =
-        TEMPLATES.find((item) => item.id === templateId) ?? BLANK_TEMPLATE;
+    createFromTemplate: (channel, templateId) => {
       const id = newId("cmp");
-      const campaign: Campaign = {
+      const base = {
         id,
-        name: template.id === BLANK_TEMPLATE.id ? "Nova campanha" : template.name,
-        channel: "Email",
-        status: "Rascunho",
-        templateId: template.id,
-        subject: template.subject,
-        preheader: template.preheader,
-        blocks: blocksFromTemplate(template, id),
+        channel,
+        status: "Rascunho" as const,
         fallbacks: { ...DEFAULT_FALLBACKS },
         audience: { ...DEFAULT_AUDIENCE },
         recipients: 0,
         updatedAt: today(),
       };
+      let campaign: Campaign;
+
+      if (channel === "SMS") {
+        const template =
+          SMS_TEMPLATES.find((item) => item.id === templateId) ?? BLANK_SMS_TEMPLATE;
+        campaign = {
+          ...base,
+          ...EMAIL_DEFAULTS,
+          ...SMS_DEFAULTS,
+          name:
+            template.id === BLANK_SMS_TEMPLATE.id ? "Nova campanha SMS" : template.name,
+          templateId: template.id,
+          smsBody: template.body,
+        };
+      } else {
+        const template =
+          TEMPLATES.find((item) => item.id === templateId) ?? BLANK_TEMPLATE;
+        campaign = {
+          ...base,
+          ...SMS_DEFAULTS,
+          name: template.id === BLANK_TEMPLATE.id ? "Nova campanha" : template.name,
+          templateId: template.id,
+          subject: template.subject,
+          preheader: template.preheader,
+          blocks: blocksFromTemplate(template, id),
+        };
+      }
+
       set((state) => ({
         campaigns: [campaign, ...state.campaigns],
         libraryOpen: false,

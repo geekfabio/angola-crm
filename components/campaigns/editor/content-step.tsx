@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Button from "@/components/_ui/button";
 import Field from "@/components/_ui/field";
 import { Input } from "@/components/_ui/input";
@@ -14,24 +14,16 @@ import FilterMenu from "@/components/_common/filter-menu";
 import BlockEditor from "./block-editor";
 import EmailPreview, { type PreviewDevice } from "./email-preview";
 import VariableMenu from "./variable-menu";
-import {
-  BLOCK_LABELS,
-  VARIABLES,
-  type BlockType,
-  type Campaign,
-} from "@/data/campaigns";
-import { valuesForContact } from "@/lib/campaigns";
+import FallbacksSection from "./fallbacks-section";
+import { usePreviewContact } from "./use-preview-contact";
+import { BLOCK_LABELS, type BlockType, type Campaign } from "@/data/campaigns";
 import { useCampaignsStore } from "@/stores/campaigns-store";
-import { useCompaniesStore } from "@/stores/companies-store";
-import { useContactsStore } from "@/stores/contacts-store";
 import PlusIcon from "@/public/assets/images/_common/plus.svg";
 
 type ContentStepProps = {
   campaign: Campaign;
   readOnly: boolean;
 };
-
-const NO_CONTACT = "none";
 
 const DEVICES: { key: PreviewDevice; label: string }[] = [
   { key: "desktop", label: "Computador" },
@@ -44,28 +36,9 @@ export default function ContentStep({ campaign, readOnly }: ContentStepProps) {
   const updateBlock = useCampaignsStore((state) => state.updateBlock);
   const removeBlock = useCampaignsStore((state) => state.removeBlock);
   const moveBlock = useCampaignsStore((state) => state.moveBlock);
-  const setFallback = useCampaignsStore((state) => state.setFallback);
-  const contacts = useContactsStore((state) => state.contacts);
-  const companies = useCompaniesStore((state) => state.companies);
   const [device, setDevice] = useState<PreviewDevice>("desktop");
-  const [previewContactId, setPreviewContactId] = useState(
-    contacts[0]?.id ?? NO_CONTACT,
-  );
+  const preview = usePreviewContact();
   const subjectRef = useRef<HTMLInputElement>(null);
-
-  const contactOptions = useMemo(
-    () => [
-      { value: NO_CONTACT, label: "Valores por omissão" },
-      ...contacts.map((contact) => ({ value: contact.id, label: contact.name })),
-    ],
-    [contacts],
-  );
-
-  const previewContact = contacts.find((contact) => contact.id === previewContactId);
-  const previewCompany = companies.find(
-    (company) => company.id === previewContact?.companyId,
-  );
-  const values = valuesForContact(previewContact, previewCompany);
 
   function insertInSubject(token: string) {
     const element = subjectRef.current;
@@ -180,41 +153,7 @@ export default function ContentStep({ campaign, readOnly }: ContentStepProps) {
           )}
         </section>
 
-        <section className="border-border flex flex-col gap-4 rounded-xl border p-5">
-          <h2 className="eyebrow-style text-faint font-normal">
-            Variáveis de personalização
-          </h2>
-          <span className="caption-style text-subtle">
-            Cada variável precisa de um valor por omissão, usado quando o
-            contacto não tem esse dado.
-          </span>
-          <div className="flex flex-col gap-3">
-            {VARIABLES.map((variable) => {
-              const id = `fallback-${variable.key}`;
-              const empty = !campaign.fallbacks[variable.key].trim();
-              return (
-                <Field
-                  key={variable.key}
-                  label={`{{${variable.key}}} · ${variable.label}`}
-                  htmlFor={id}
-                  required
-                  error={empty ? "Valor por omissão obrigatório." : undefined}
-                >
-                  <Input
-                    id={id}
-                    value={campaign.fallbacks[variable.key]}
-                    disabled={readOnly}
-                    aria-invalid={empty || undefined}
-                    className="aria-invalid:border-danger"
-                    onChange={(event) =>
-                      setFallback(campaign.id, variable.key, event.target.value)
-                    }
-                  />
-                </Field>
-              );
-            })}
-          </div>
-        </section>
+        <FallbacksSection campaign={campaign} readOnly={readOnly} />
       </div>
 
       <section className="border-border flex min-w-0 flex-col gap-4 self-start rounded-xl border p-5 xl:sticky xl:top-5">
@@ -235,16 +174,16 @@ export default function ContentStep({ campaign, readOnly }: ContentStepProps) {
         </div>
         <FilterMenu
           label="Ver como"
-          value={previewContactId}
-          options={contactOptions}
-          onChange={setPreviewContactId}
+          value={preview.contactId}
+          options={preview.options}
+          onChange={preview.setContactId}
           className="self-start"
         />
         <EmailPreview
           subject={campaign.subject}
           preheader={campaign.preheader}
           blocks={campaign.blocks}
-          values={values}
+          values={preview.values}
           fallbacks={campaign.fallbacks}
           device={device}
         />

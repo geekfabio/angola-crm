@@ -20,6 +20,7 @@ import DetailSection from "@/components/_common/detail-section";
 import PipelineHealth from "./pipeline-health";
 import ActivityTrend from "./activity-trend";
 import ScoreCard from "./score-card";
+import ClientTimeline from "./client-timeline";
 import {
   SCORE_CARDS,
   TAG_TONES,
@@ -125,6 +126,10 @@ export default function CompanyDetail() {
                   {owner.phone}
                 </span>
               </div>
+            </DetailSection>
+
+            <DetailSection title="Linha do tempo">
+              <ClientTimeline companyId={company.id} />
             </DetailSection>
 
             <DetailSection title="Saúde do funil">

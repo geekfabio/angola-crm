@@ -7,9 +7,16 @@ import { ScrollArea } from "@/components/_ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/_ui/tabs";
 import Tag from "@/components/_ui/tag";
 import ContentStep from "./content-step";
+import SmsContentStep from "./sms-content-step";
+import ResultsStep from "./results-step";
 import AudienceStep from "./audience-step";
 import ReviewStep from "./review-step";
-import { STATUS_TONES, type Campaign } from "@/data/campaigns";
+import {
+  CHANNEL_LABELS,
+  CHANNEL_TONES,
+  STATUS_TONES,
+  type Campaign,
+} from "@/data/campaigns";
 import { buildAudience } from "@/lib/campaigns";
 import { useCampaignsStore, type EditorStep } from "@/stores/campaigns-store";
 import { useCompaniesStore } from "@/stores/companies-store";
@@ -32,11 +39,12 @@ export default function CampaignEditor({ campaign }: CampaignEditorProps) {
   const contacts = useContactsStore((state) => state.contacts);
 
   const audience = useMemo(
-    () => buildAudience(campaign.audience, companies, contacts),
-    [campaign.audience, companies, contacts],
+    () => buildAudience(campaign.audience, companies, contacts, campaign.channel),
+    [campaign.audience, campaign.channel, companies, contacts],
   );
 
   const readOnly = campaign.status !== "Rascunho";
+  const sent = campaign.status === "Enviada";
 
   return (
     <section className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -69,26 +77,38 @@ export default function CampaignEditor({ campaign }: CampaignEditorProps) {
             onChange={(event) => updateDetails(campaign.id, { name: event.target.value })}
             className="h-[30px] max-w-[320px] min-w-0 flex-1 border-transparent bg-transparent px-2 font-medium disabled:opacity-100"
           />
+          <Tag tone={CHANNEL_TONES[campaign.channel]} className="hidden shrink-0 sm:inline-flex">
+            {CHANNEL_LABELS[campaign.channel]}
+          </Tag>
           <Tag tone={STATUS_TONES[campaign.status]} className="shrink-0">
             {campaign.status}
           </Tag>
         </div>
 
         <Tabs value={step} onValueChange={(value) => setStep(value as EditorStep)}>
-          <TabsList className="border-border overflow-x-auto border-b px-4">
+          <TabsList className="border-border overflow-x-auto border-b px-4 *:whitespace-nowrap">
             <TabsTrigger value="conteudo">1. Conteúdo</TabsTrigger>
             <TabsTrigger value="destinatarios">2. Destinatários</TabsTrigger>
             <TabsTrigger value="revisao">3. Revisão e envio</TabsTrigger>
+            <TabsTrigger value="resultados" disabled={!sent} className="disabled:cursor-not-allowed disabled:opacity-40">
+              4. Resultados
+            </TabsTrigger>
           </TabsList>
         </Tabs>
       </header>
 
       <ScrollArea className="min-h-0 flex-1">
-        {step === "conteudo" && <ContentStep campaign={campaign} readOnly={readOnly} />}
+        {step === "conteudo" &&
+          (campaign.channel === "SMS" ? (
+            <SmsContentStep campaign={campaign} readOnly={readOnly} />
+          ) : (
+            <ContentStep campaign={campaign} readOnly={readOnly} />
+          ))}
         {step === "destinatarios" && (
           <AudienceStep campaign={campaign} audience={audience} readOnly={readOnly} />
         )}
         {step === "revisao" && <ReviewStep campaign={campaign} audience={audience} />}
+        {step === "resultados" && sent && <ResultsStep campaign={campaign} />}
       </ScrollArea>
     </section>
   );

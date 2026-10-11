@@ -4,9 +4,10 @@ import { motion } from "motion/react";
 import Tag from "@/components/_ui/tag";
 import FilterMenu from "@/components/_common/filter-menu";
 import StatTile from "@/components/_common/stat-tile";
-import { ABC_CLASSES, ANY, type Campaign } from "@/data/campaigns";
+import { ABC_CLASSES, ANY, type Campaign, type Channel } from "@/data/campaigns";
 import { ACTIVITY_WINDOWS, SEGMENTS, ZONES } from "@/data/companies";
 import { EXCLUSION_TONES, type Audience, type AudienceEntry } from "@/lib/campaigns";
+import { formatAngolanPhone } from "@/lib/phone";
 import { useCampaignsStore } from "@/stores/campaigns-store";
 
 type AudienceStepProps = {
@@ -47,14 +48,22 @@ function labelFor(options: { value: string; label: string }[], value: string) {
   return options.find((option) => option.value === value)?.label ?? value;
 }
 
+function contactLine(entry: AudienceEntry, channel: Channel) {
+  if (channel === "Email") return entry.contact.email;
+  if (!entry.phone) return entry.contact.phone;
+  return `${formatAngolanPhone(entry.phone)} · ${entry.operator}`;
+}
+
 function EntryList({
   title,
   entries,
   empty,
+  channel,
 }: {
   title: string;
   entries: AudienceEntry[];
   empty: string;
+  channel: Channel;
 }) {
   return (
     <section className="border-border flex min-w-0 flex-col gap-3 rounded-xl border p-5">
@@ -75,7 +84,7 @@ function EntryList({
                   {entry.contact.name}
                 </span>
                 <span className="caption-style text-subtle truncate">
-                  {entry.contact.companyName} · {entry.contact.email}
+                  {entry.contact.companyName} · {contactLine(entry, channel)}
                 </span>
               </span>
               {entry.reason && (
@@ -178,11 +187,13 @@ export default function AudienceStep({ campaign, audience, readOnly }: AudienceS
         <EntryList
           title="Destinatários elegíveis"
           entries={audience.eligible}
+          channel={campaign.channel}
           empty="Nenhum contacto elegível neste segmento."
         />
         <EntryList
           title="Excluídos automaticamente"
           entries={audience.excluded}
+          channel={campaign.channel}
           empty="Nenhuma exclusão — todos os contactos podem receber."
         />
       </div>
