@@ -13,7 +13,15 @@ import FallbacksSection from "./fallbacks-section";
 import { usePreviewContact } from "./use-preview-contact";
 import type { Campaign } from "@/data/campaigns";
 import { renderVariables, smsText } from "@/lib/campaigns";
-import { OPT_OUT_SUFFIX, analyzeSms, isValidSenderId, toGsm } from "@/lib/sms";
+import { formatMoney } from "@/lib/format";
+import {
+  OPT_OUT_SUFFIX,
+  SMS_MESSAGE_UNITS,
+  SMS_PRICE,
+  analyzeSms,
+  isValidSenderId,
+  removeAccents,
+} from "@/lib/sms";
 import { useCampaignsStore } from "@/stores/campaigns-store";
 import { cn } from "@/lib/utils";
 
@@ -22,8 +30,8 @@ type SmsContentStepProps = {
   readOnly: boolean;
 };
 
-function segmentLabel(count: number) {
-  return count === 1 ? "1 segmento" : `${count} segmentos`;
+function messageLabel(count: number) {
+  return count === 1 ? "1 mensagem" : `${count} mensagens`;
 }
 
 export default function SmsContentStep({ campaign, readOnly }: SmsContentStepProps) {
@@ -33,8 +41,8 @@ export default function SmsContentStep({ campaign, readOnly }: SmsContentStepPro
 
   const rendered = renderVariables(smsText(campaign), preview.values, campaign.fallbacks);
   const analysis = analyzeSms(rendered);
-  const gsmAnalysis = analyzeSms(toGsm(rendered));
-  const isUnicode = analysis.encoding === "Unicode";
+  const plainAnalysis = analyzeSms(removeAccents(rendered));
+  const hasAccents = analysis.doubleChars.length > 0;
   const senderValid = isValidSenderId(campaign.senderId);
   const windowValid = campaign.sendWindow.start < campaign.sendWindow.end;
 
@@ -77,53 +85,57 @@ export default function SmsContentStep({ campaign, readOnly }: SmsContentStepPro
           </Field>
 
           <div className="flex flex-wrap items-center gap-2" aria-live="polite">
-            <Tag tone={isUnicode ? "amber" : "green"} size="sm">
-              {analysis.encoding}
+            <Tag tone={analysis.messages > 1 ? "amber" : "green"} size="sm">
+              {messageLabel(analysis.messages)}
             </Tag>
             <span className="caption-style text-soft tabular-nums">
-              {analysis.units} caracteres · {segmentLabel(analysis.segments)} ·{" "}
-              {analysis.remaining} livres no segmento
+              {analysis.units} unidades · {analysis.remaining} livres até à próxima
+              mensagem · {formatMoney(analysis.messages * SMS_PRICE)} por destinatário
             </span>
           </div>
           <div className="flex h-1.5 w-full gap-1" aria-hidden>
-            {Array.from({ length: Math.max(analysis.segments, 1) }, (_, index) => {
+            {Array.from({ length: Math.max(analysis.messages, 1) }, (_, index) => {
               const used = Math.min(
-                Math.max(analysis.units - index * analysis.perSegment, 0),
-                analysis.perSegment,
+                Math.max(analysis.units - index * SMS_MESSAGE_UNITS, 0),
+                SMS_MESSAGE_UNITS,
               );
               return (
                 <span key={index} className="flex-1 overflow-hidden rounded-full bg-white/6">
                   <span
                     className={cn(
                       "block h-full rounded-full",
-                      isUnicode ? "bg-warning" : "bg-primary",
+                      analysis.messages > 1 ? "bg-warning" : "bg-primary",
                     )}
-                    style={{ width: `${(used / analysis.perSegment) * 100}%` }}
+                    style={{ width: `${(used / SMS_MESSAGE_UNITS) * 100}%` }}
                   />
                 </span>
               );
             })}
           </div>
+          <span className="caption-style text-subtle">
+            Cada mensagem leva {SMS_MESSAGE_UNITS} unidades. Letras simples contam 1;
+            letras com acento e outros caracteres especiais contam 2.
+          </span>
 
-          {isUnicode && (
+          {hasAccents && (
             <div className="flex flex-col gap-3 rounded-lg border border-(--tag-amber-border) bg-(--tag-amber-bg) px-4 py-3">
               <span className="lead-style text-(--tag-amber-text)">
-                Os acentos encarecem este SMS
+                Os acentos contam a dobrar
               </span>
               <span className="caption-style text-soft">
-                Por causa de{" "}
-                {analysis.unicodeChars.map((char) => (
+                Contam 2 unidades cada:{" "}
+                {analysis.doubleChars.map((char) => (
                   <span
                     key={char}
                     className="mx-0.5 rounded bg-white/8 px-1 font-mono text-foreground"
                   >
-                    {char === " " ? "espaço" : char}
+                    {char}
                   </span>
                 ))}
-                , cada segmento leva 70 caracteres em vez de 160.{" "}
-                {gsmAnalysis.segments < analysis.segments
-                  ? `Sem acentos: ${segmentLabel(gsmAnalysis.segments)} em vez de ${analysis.segments} por destinatário.`
-                  : "Sem acentos o número de segmentos mantém-se, mas sobra mais espaço."}
+                . Sem eles, esta mensagem teria {plainAnalysis.units} unidades
+                {plainAnalysis.messages < analysis.messages
+                  ? ` e seria ${messageLabel(plainAnalysis.messages)} em vez de ${analysis.messages} — poupa ${formatMoney((analysis.messages - plainAnalysis.messages) * SMS_PRICE)} por destinatário.`
+                  : " (o número de mensagens não muda)."}
               </span>
               {!readOnly && (
                 <Button
@@ -131,7 +143,7 @@ export default function SmsContentStep({ campaign, readOnly }: SmsContentStepPro
                   size="sm"
                   className="self-start"
                   onClick={() =>
-                    updateDetails(campaign.id, { smsBody: toGsm(campaign.smsBody) })
+                    updateDetails(campaign.id, { smsBody: removeAccents(campaign.smsBody) })
                   }
                 >
                   Substituir acentos
@@ -245,8 +257,9 @@ export default function SmsContentStep({ campaign, readOnly }: SmsContentStepPro
           </div>
         </div>
         <span className="caption-style text-subtle">
-          Este contacto recebe {segmentLabel(analysis.segments)} em {analysis.encoding}.
-          O custo de todos os destinatários aparece em Revisão e envio.
+          Este contacto recebe {messageLabel(analysis.messages)} (
+          {formatMoney(analysis.messages * SMS_PRICE)}). O custo de todos os
+          destinatários aparece em Revisão e envio.
         </span>
       </section>
     </div>

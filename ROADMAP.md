@@ -85,6 +85,8 @@ Decisão a tomar no início da fase: **fornecedor de e-mail**. Candidatos a aval
 
 Decisão a tomar no início da fase: **agregador de SMS com cobertura Unitel / Africell / Movicel**, e registo do sender ID alfanumérico junto das operadoras. O registo tem prazos próprios — tratar disso antes de construir a UI.
 
+**Decisão registada:** agregador **Umoja Global** (subcontrata a **MIMOSMS**). Pacote único a **20 Kz por mensagem**, pré-pago com carregamento de crédito. Contagem: cada 120 unidades = 1 mensagem; letras com acento contam 2 unidades. Prefixos: Unitel 92/93/94/97, Movicel 91/99, Africell 95/96. O registo do sender ID continua por confirmar.
+
 1. Adaptador de SMS em `lib/messaging/`, com as mesmas garantias de sandbox
 2. Composição com contagem de segmentos GSM-7 / Unicode e aviso de custo dos acentos
 3. Estimativa de custo antes da confirmação, por operadora
@@ -124,7 +126,7 @@ Decisão a tomar no início da fase: **agregador de SMS com cobertura Unitel / A
 | Decisão                             | Quando decidir | Notas                                                      |
 | ----------------------------------- | -------------- | ---------------------------------------------------------- |
 | Fornecedor de e-mail                | Fase 4         | Entregabilidade em Angola, preço, webhooks                 |
-| Agregador de SMS e sender ID        | Fase 5         | Cobertura das três operadoras; registo tem prazo próprio   |
+| Agregador de SMS e sender ID        | Fase 5         | Decidido: Umoja Global / MIMOSMS, 20 Kz/mensagem. Sender ID por registar |
 | Alojamento (Vercel vs outro)        | Fase 1         | Latência a partir de Luanda conta                          |
 | Região do projecto Supabase         | Fase 1         | A mais próxima com boa latência para Angola                |
 | Integração com facturação/ERP       | Pós-Fase 7     | Depende do sistema que a empresa já usa                    |

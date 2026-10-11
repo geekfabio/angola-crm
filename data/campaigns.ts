@@ -294,25 +294,25 @@ export const SMS_TEMPLATES: SmsTemplate[] = [
     id: "sms-promocao",
     name: "Promoção relâmpago",
     description: "Desconto curto, válido poucos dias.",
-    body: "Alimenta Angola: {{nome}}, só esta semana -15% em óleo e arroz no armazém de {{zona}}. Fale com {{gestor}}.",
+    body: "Alimenta Angola: {{nome}}, -15% em óleo e arroz esta semana em {{zona}}.",
   },
   {
     id: "sms-entrega",
     name: "Aviso de entrega",
     description: "Encomenda a caminho do cliente.",
-    body: "Alimenta Angola: {{nome}}, a sua encomenda sai hoje para entrega em {{zona}}. Obrigado pela preferencia!",
+    body: "Alimenta Angola: {{nome}}, a sua encomenda sai hoje para {{zona}}. Obrigado!",
   },
   {
     id: "sms-pagamento",
     name: "Lembrete de pagamento",
     description: "Fatura a vencer, com o saldo em conta.",
-    body: "Alimenta Angola: {{nome}}, a sua fatura vence esta semana. Saldo: {{saldo}}. Dúvidas? Fale com {{gestor}}.",
+    body: "Alimenta Angola: {{nome}}, a sua fatura vence esta semana. Saldo: {{saldo}}.",
   },
   {
     id: "sms-rutura",
     name: "Aviso de rutura",
     description: "Produto sem stock e prazo de reposição.",
-    body: "Alimenta Angola: o óleo alimentar 5 L está sem stock em {{zona}} até à próxima semana. Alternativas: {{gestor}}.",
+    body: "Alimenta Angola: óleo 5 L sem stock em {{zona}} até dia 20. Fale com {{gestor}}.",
   },
 ];
 

@@ -23,7 +23,7 @@ import {
   formatPercentDecimal,
   luandaLocalToDate,
 } from "@/lib/format";
-import { SMS_TARIFFS, analyzeSms, isWithinWindow } from "@/lib/sms";
+import { SMS_MESSAGE_UNITS, SMS_PRICE, analyzeSms, isWithinWindow } from "@/lib/sms";
 import { useCampaignsStore } from "@/stores/campaigns-store";
 import { cn } from "@/lib/utils";
 
@@ -135,7 +135,7 @@ export default function ReviewStep({ campaign, audience }: ReviewStepProps) {
                 {formatMoney(cost.cost)}
               </span>
               <span className="caption-style text-subtle">
-                {formatNumber(cost.segments)} segmentos no total
+                {formatNumber(cost.messages)} mensagens a {formatMoney(SMS_PRICE)}
               </span>
             </div>
             {cost.byOperator.length > 0 && (
@@ -149,8 +149,7 @@ export default function ReviewStep({ campaign, audience }: ReviewStepProps) {
                       <span className="lead-style">{item.operator}</span>
                       <span className="caption-style text-subtle tabular-nums">
                         {formatNumber(item.recipients)} destinatários ·{" "}
-                        {formatNumber(item.segments)} segmentos ·{" "}
-                        {formatMoney(SMS_TARIFFS[item.operator])}/segmento
+                        {formatNumber(item.messages)} mensagens
                       </span>
                     </span>
                     <span className="lead-style tabular-nums">{formatMoney(item.cost)}</span>
@@ -158,18 +157,20 @@ export default function ReviewStep({ campaign, audience }: ReviewStepProps) {
                 ))}
               </ul>
             )}
-            {cost.cost > cost.gsmCost && (
+            {cost.cost > cost.plainCost && (
               <span className="caption-style rounded-lg border border-(--tag-amber-border) bg-(--tag-amber-bg) px-3 py-2 text-(--tag-amber-text)">
-                Os acentos acrescentam {formatMoney(cost.cost - cost.gsmCost)} a esta
-                campanha ({cost.unicodeRecipients} de {audience.eligible.length}{" "}
-                mensagens em Unicode).
-                {analyzeSms(smsText(campaign)).encoding === "GSM-7" &&
+                Os acentos acrescentam {formatMoney(cost.cost - cost.plainCost)} a esta
+                campanha ({cost.accentRecipients} de {audience.eligible.length}{" "}
+                destinatários recebem texto com acentos).
+                {analyzeSms(smsText(campaign)).doubleChars.length === 0 &&
                   " O texto não tem acentos — vêm dos valores das variáveis, como nomes de gestores com ã ou ç."}
               </span>
             )}
             <span className="caption-style text-subtle">
-              Calculado por destinatário, com as variáveis já preenchidas. Tarifas de
-              referência fictícias, a confirmar com o agregador de SMS.
+              Calculado por destinatário, com as variáveis já preenchidas: cada{" "}
+              {SMS_MESSAGE_UNITS} unidades contam como uma mensagem e as letras com
+              acento contam 2. Pacote único a {formatMoney(SMS_PRICE)} por mensagem,
+              igual para todas as operadoras.
             </span>
           </section>
         )}

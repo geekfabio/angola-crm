@@ -15,13 +15,15 @@ import {
   BLANK_SMS_TEMPLATE,
   BLANK_TEMPLATE,
   CHANNEL_LABELS,
+  DEFAULT_FALLBACKS,
   SMS_TEMPLATES,
   TEMPLATES,
   type CampaignTemplate,
   type Channel,
   type SmsTemplate,
 } from "@/data/campaigns";
-import { analyzeSms } from "@/lib/sms";
+import { renderVariables } from "@/lib/campaigns";
+import { OPT_OUT_SUFFIX, analyzeSms } from "@/lib/sms";
 import { useCampaignsStore } from "@/stores/campaigns-store";
 import { cn } from "@/lib/utils";
 
@@ -63,18 +65,20 @@ function EmailThumb({ template }: { template: CampaignTemplate }) {
 }
 
 function SmsThumb({ template }: { template: SmsTemplate }) {
-  const analysis = analyzeSms(template.body);
+  const analysis = analyzeSms(
+    renderVariables(template.body + OPT_OUT_SUFFIX, {}, DEFAULT_FALLBACKS),
+  );
   return (
     <div aria-hidden className="bg-background flex h-[132px] flex-col gap-2 rounded-md border border-line-strong p-3">
       <div className="bg-secondary line-clamp-4 rounded-xl rounded-bl-sm px-2.5 py-2 text-[11px] leading-[1.35] text-foreground">
         {template.body}
       </div>
       <Tag
-        tone={analysis.encoding === "Unicode" ? "amber" : "green"}
+        tone={analysis.messages > 1 ? "amber" : "green"}
         size="sm"
         className="mt-auto self-start"
       >
-        {analysis.encoding}
+        {analysis.messages === 1 ? "1 mensagem" : `${analysis.messages} mensagens`}
       </Tag>
     </div>
   );

@@ -138,7 +138,8 @@ Módulo central do pedido. Enviar campanhas a listas segmentadas de clientes e c
 
 Em Angola o SMS chega onde o e-mail não chega. Tratado como canal de primeira classe, não como extra.
 
-- Composição com contagem de caracteres e de segmentos (GSM-7 vs Unicode — acentos custam dinheiro, o editor avisa)
+- Composição com contagem de unidades e de mensagens (120 unidades por mensagem; letras com acento contam 2 — custam dinheiro, o editor avisa)
+- Saldo pré-pago e carregamento de crédito (Umoja Global / MIMOSMS, 20 Kz por mensagem)
 - Mesmo motor de segmentos e de variáveis do Email Marketing
 - Remetente alfanumérico (sender ID) configurável, com nota sobre o registo necessário junto da operadora
 - Normalização de números para E.164 e deteção de operadora (Unitel / Africell / Movicel) — `lib/phone.ts`

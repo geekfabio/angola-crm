@@ -1,4 +1,4 @@
-# Roteiro de UI — 16 fases
+# Roteiro de UI — 17 fases
 
 Enquanto o `ROADMAP.md` ordena o produto por fases de negócio (fundação, dados reais, Supabase), este ficheiro ordena a **construção da interface** dos módulos que já têm rota mas ainda são esqueleto visual — tabela de leitura, sem store, sem diálogos, sem painel de detalhe.
 
@@ -97,11 +97,11 @@ Módulo `FEATURES.md` §2. Pré-requisito de Email/SMS — nenhuma campanha pode
 
 `FEATURES.md` §6. Campanhas SMS usam o mesmo editor, segmentos e variáveis do e-mail, com passo de conteúdo próprio (`sms-content-step.tsx`) e quatro modelos na biblioteca (alternador E-mail/SMS).
 
-- `lib/sms.ts`: contagem GSM-7 (com tabela de extensão a 2 septetos) vs. Unicode, segmentos de 160/153 e 70/67, transliteração para GSM-7 ("Substituir acentos"), validação do remetente (3–11 caracteres) e da janela de envio.
-- `lib/phone.ts` (previsto no `CLAUDE.md`): normalização para E.164 (+244) e operadora pelo prefixo — Unitel 92/93/94, Movicel 91/99, Africell 95. A confirmar com o agregador.
-- Aviso em tempo real quando há acentos, com os caracteres culpados e quantos segmentos se poupam; instrução de remoção «Resp. PARAR p/ sair» opcional e incluída na contagem.
+- `lib/sms.ts`: regra de contagem do fornecedor (Umoja Global / MIMOSMS) — cada 120 unidades contam como uma mensagem (121 = 2, 241 = 3…), letras simples contam 1 unidade e letras com acento (ã, ç, é…) e outros caracteres especiais contam 2. Inclui "Substituir acentos", validação do remetente (3–11 caracteres) e da janela de envio.
+- `lib/phone.ts` (previsto no `CLAUDE.md`): normalização para E.164 (+244) e operadora pelo prefixo — Unitel 92/93/94/97, Movicel 91/99, Africell 95/96.
+- Aviso em tempo real quando há acentos, com os caracteres que contam a dobrar e quantas mensagens (e Kz) se poupam sem eles; instrução de remoção «Resp. PARAR p/ sair» opcional e incluída na contagem.
 - Audiência por canal: exclui quem não tem consentimento de SMS ou tem número inválido, e mostra telefone + operadora.
-- Revisão e envio: custo estimado por operadora **antes de confirmar**, calculado por destinatário com as variáveis preenchidas (os nomes também podem trazer acentos), e quanto custam os acentos. Tarifas de referência fictícias.
+- Revisão e envio: custo estimado **antes de confirmar**, calculado por destinatário com as variáveis preenchidas (os nomes também podem trazer acentos), repartido por operadora, e quanto custam os acentos. Pacote único a 20 Kz por mensagem, igual para todas as operadoras.
 - O agendamento recusa horas fora da janela de envio (hora de Luanda). Nada é enviado — sandbox, como no e-mail.
 - Fora de âmbito: estados por mensagem via webhook, SMS transacional e `PARAR` a retirar o consentimento automaticamente (dependem do agregador).
 
@@ -149,6 +149,19 @@ Módulo novo, fora da lista original de `FEATURES.md` — pedido explícito do u
 - **Sem ligação a uma caixa de entrada real.** O diálogo "Criar a partir de E-mail" pede campos explícitos (Remetente, Assunto, Mensagem) — não analisa texto livre nem liga a um fornecedor. Ler e-mails reais para abrir tickets automaticamente depende de Supabase (continua sem ligar nesta sessão) e de autenticação OAuth com um fornecedor de e-mail; fica para quando essas duas peças existirem.
 
 **Pronto quando:** criar um ticket manual ou a partir de "e-mail" aparece na tabela, mudar o estado ou a prioridade regista um evento no cronograma, e adicionar um comentário aparece na thread.
+
+---
+
+## Fase 17 — Mensagens funcionais: saldo e crédito de SMS `⬜`
+
+Pedido do utilizador, separado das campanhas: o envio de SMS é pré-pago. O fornecedor é a **Umoja Global**, que subcontrata a **MIMOSMS**, com **pacote único a 20 Kz por mensagem** (mesma regra de contagem da Fase 10: 120 unidades por mensagem, acentos contam 2).
+
+- Saldo de SMS visível no CRM (em Kz e em mensagens disponíveis), com aviso quando uma campanha agendada custa mais do que o saldo.
+- "Carregar crédito": compra de pacotes de SMS pagos à Umoja Global, com histórico de carregamentos.
+- Envio real via o adaptador de SMS em `lib/messaging/`, com estados por mensagem por webhook, SMS transacional (encomenda, entrega, pagamento) e resposta `PARAR` a retirar o consentimento.
+- Depende de Supabase (saldo e histórico persistidos) e das credenciais do fornecedor em Supabase secrets — nunca no repositório (`AGENTS.md`).
+
+**Pronto quando:** carregar crédito aumenta o saldo, e agendar uma campanha mais cara do que o saldo é bloqueado com o valor em falta.
 
 ---
 

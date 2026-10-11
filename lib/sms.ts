@@ -1,59 +1,39 @@
-import type { Operator } from "./phone";
+export const SMS_MESSAGE_UNITS = 120;
 
-const GSM_BASIC = new Set(
-  "@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ !\"#¤%&'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà",
-);
-
-const GSM_EXTENDED = new Set("^{}\\[~]|€\f");
-
-const LIMITS = {
-  "GSM-7": { single: 160, multi: 153 },
-  Unicode: { single: 70, multi: 67 },
-} as const;
-
-export type SmsEncoding = keyof typeof LIMITS;
+export const SMS_PRICE = 20;
 
 export type SmsAnalysis = {
-  encoding: SmsEncoding;
   units: number;
-  segments: number;
-  perSegment: number;
+  messages: number;
   remaining: number;
-  unicodeChars: string[];
+  doubleChars: string[];
 };
 
-export function isGsmChar(char: string) {
-  return GSM_BASIC.has(char) || GSM_EXTENDED.has(char);
+export function charUnits(char: string) {
+  return (char.codePointAt(0) ?? 0) <= 0x7f ? 1 : 2;
 }
 
 export function analyzeSms(text: string): SmsAnalysis {
-  const unicodeChars = new Set<string>();
-  let septets = 0;
+  const doubleChars = new Set<string>();
+  let units = 0;
 
   for (const char of text) {
-    if (GSM_BASIC.has(char)) septets += 1;
-    else if (GSM_EXTENDED.has(char)) septets += 2;
-    else unicodeChars.add(char);
+    const cost = charUnits(char);
+    units += cost;
+    if (cost === 2) doubleChars.add(char);
   }
 
-  const encoding: SmsEncoding = unicodeChars.size > 0 ? "Unicode" : "GSM-7";
-  const units = encoding === "Unicode" ? text.length : septets;
-  const limit = LIMITS[encoding];
-  const segments = units === 0 ? 0 : units <= limit.single ? 1 : Math.ceil(units / limit.multi);
-  const perSegment = segments > 1 ? limit.multi : limit.single;
-  const capacity = Math.max(segments, 1) * perSegment;
+  const messages = units === 0 ? 0 : Math.ceil(units / SMS_MESSAGE_UNITS);
 
   return {
-    encoding,
     units,
-    segments,
-    perSegment,
-    remaining: capacity - units,
-    unicodeChars: [...unicodeChars],
+    messages,
+    remaining: Math.max(messages, 1) * SMS_MESSAGE_UNITS - units,
+    doubleChars: [...doubleChars],
   };
 }
 
-const TYPOGRAPHIC: Record<string, string> = {
+const PLAIN_REPLACEMENTS: Record<string, string> = {
   "“": '"',
   "”": '"',
   "‘": "'",
@@ -61,30 +41,24 @@ const TYPOGRAPHIC: Record<string, string> = {
   "–": "-",
   "—": "-",
   "…": "...",
-  "ç": "c",
   "º": "o",
   "ª": "a",
+  "€": "EUR",
 };
 
-export function toGsm(text: string) {
+export function removeAccents(text: string) {
   let result = "";
   for (const char of text) {
-    if (isGsmChar(char)) {
+    if (charUnits(char) === 1) {
       result += char;
       continue;
     }
     const mapped =
-      TYPOGRAPHIC[char] ?? char.normalize("NFD").replace(/[̀-ͯ]/g, "");
-    result += [...mapped].every(isGsmChar) ? mapped : "?";
+      PLAIN_REPLACEMENTS[char] ?? char.normalize("NFD").replace(/[̀-ͯ]/g, "");
+    result += [...mapped].every((item) => charUnits(item) === 1) ? mapped : char;
   }
   return result;
 }
-
-export const SMS_TARIFFS: Record<Operator, number> = {
-  Unitel: 12,
-  Africell: 10,
-  Movicel: 11,
-};
 
 export const OPT_OUT_SUFFIX = " Resp. PARAR p/ sair";
 

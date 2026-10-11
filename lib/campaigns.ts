@@ -23,10 +23,10 @@ import type { Contact, ContactabilityStatus } from "@/data/contacts";
 import { normalizeAngolanPhone, operatorFor, type Operator } from "./phone";
 import {
   OPT_OUT_SUFFIX,
-  SMS_TARIFFS,
+  SMS_PRICE,
   analyzeSms,
   isValidSenderId,
-  toGsm,
+  removeAccents,
 } from "./sms";
 
 export type CampaignFilters = {
@@ -285,16 +285,16 @@ export function canSubmitForReview(checks: ReviewCheck[]) {
 export type OperatorCost = {
   operator: Operator;
   recipients: number;
-  segments: number;
+  messages: number;
   cost: number;
 };
 
 export type SmsCostEstimate = {
   byOperator: OperatorCost[];
-  segments: number;
+  messages: number;
   cost: number;
-  gsmCost: number;
-  unicodeRecipients: number;
+  plainCost: number;
+  accentRecipients: number;
 };
 
 export function estimateSmsCost(
@@ -303,8 +303,8 @@ export function estimateSmsCost(
   fallbacks: Fallbacks,
 ): SmsCostEstimate {
   const totals = new Map<Operator, OperatorCost>();
-  let gsmCost = 0;
-  let unicodeRecipients = 0;
+  let plainCost = 0;
+  let accentRecipients = 0;
 
   for (const entry of entries) {
     if (!entry.operator) continue;
@@ -314,28 +314,27 @@ export function estimateSmsCost(
       fallbacks,
     );
     const analysis = analyzeSms(rendered);
-    const tariff = SMS_TARIFFS[entry.operator];
     const current = totals.get(entry.operator) ?? {
       operator: entry.operator,
       recipients: 0,
-      segments: 0,
+      messages: 0,
       cost: 0,
     };
     current.recipients += 1;
-    current.segments += analysis.segments;
-    current.cost += analysis.segments * tariff;
+    current.messages += analysis.messages;
+    current.cost += analysis.messages * SMS_PRICE;
     totals.set(entry.operator, current);
-    gsmCost += analyzeSms(toGsm(rendered)).segments * tariff;
-    if (analysis.encoding === "Unicode") unicodeRecipients += 1;
+    plainCost += analyzeSms(removeAccents(rendered)).messages * SMS_PRICE;
+    if (analysis.doubleChars.length > 0) accentRecipients += 1;
   }
 
   const byOperator = [...totals.values()].sort((a, b) => b.cost - a.cost);
   return {
     byOperator,
-    segments: byOperator.reduce((sum, item) => sum + item.segments, 0),
+    messages: byOperator.reduce((sum, item) => sum + item.messages, 0),
     cost: byOperator.reduce((sum, item) => sum + item.cost, 0),
-    gsmCost,
-    unicodeRecipients,
+    plainCost,
+    accentRecipients,
   };
 }
 

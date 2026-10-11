@@ -8,6 +8,8 @@ const OPERATOR_PREFIXES: Record<string, Operator> = {
   "93": "Unitel",
   "94": "Unitel",
   "95": "Africell",
+  "96": "Africell",
+  "97": "Unitel",
   "99": "Movicel",
 };
 
