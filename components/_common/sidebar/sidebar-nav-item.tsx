@@ -11,6 +11,7 @@ type SidebarNavItemProps = {
   active?: boolean;
   tone?: "default" | "quiet";
   iconClassName?: string;
+  onClick?: () => void;
 };
 
 export default function SidebarNavItem({
@@ -21,6 +22,7 @@ export default function SidebarNavItem({
   active = false,
   tone = "default",
   iconClassName,
+  onClick,
 }: SidebarNavItemProps) {
   return (
     <li className={cn(active && "mb-0.75")}>
@@ -28,6 +30,7 @@ export default function SidebarNavItem({
         variant="nav"
         size="md"
         href={href}
+        onClick={onClick}
         data-active={active}
         aria-current={active ? "page" : undefined}
         className={cn(

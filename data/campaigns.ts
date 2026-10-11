@@ -33,8 +33,6 @@ export const STATUS_TONES: Record<
 
 export const BRAND_LOGO = "/assets/images/_common/brand/alimenta-angola-logo.png";
 
-export const SENDER = "Alimenta Angola <promocoes@alimentaangola.co.ao>";
-
 export const SANDBOX_ADDRESS = "teste@alimentaangola.co.ao";
 
 export const SANDBOX_PHONE = "+244 900 000 000";

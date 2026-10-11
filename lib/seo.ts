@@ -84,6 +84,13 @@ export const SITE_ROUTES: SiteRoute[] = [
     priority: 0.6,
   },
   {
+    path: "/definicoes",
+    title: "Definições",
+    description: "Dados da empresa, remetentes, modelos de mensagem, equipas, zonas e acessos.",
+    changeFrequency: "monthly",
+    priority: 0.3,
+  },
+  {
     path: "/tickets",
     title: "Tickets",
     description: "Pedidos e incidentes de clientes, com cronograma e comentários.",

@@ -10,6 +10,8 @@ import { byTeam, byZoneLive, performanceCsvRows, type ReportDimension } from "@/
 import { downloadCsv } from "@/lib/csv";
 import { TODAY } from "@/lib/companies";
 import { ease } from "@/lib/easings";
+import { useCompaniesStore } from "@/stores/companies-store";
+import { useSettingsStore } from "@/stores/settings-store";
 import ShareIcon from "@/public/assets/images/companies/toolbar/share.svg";
 
 type PerformancePanelProps = {
@@ -24,10 +26,14 @@ const DIMENSIONS: { key: ReportDimension; label: string; csvLabel: string }[] = 
 
 export default function PerformancePanel({ opportunities }: PerformancePanelProps) {
   const [dimension, setDimension] = useState<ReportDimension>("gestor");
+  const companies = useCompaniesStore((state) => state.companies);
+  const zones = useSettingsStore((state) => state.zones);
+  const teams = useSettingsStore((state) => state.teams);
+  const memberships = useSettingsStore((state) => state.memberships);
 
   const items = useMemo(() => {
-    if (dimension === "zona") return byZoneLive(opportunities);
-    if (dimension === "equipa") return byTeam(opportunities);
+    if (dimension === "zona") return byZoneLive(opportunities, companies, zones);
+    if (dimension === "equipa") return byTeam(opportunities, teams, memberships);
     return byManager(opportunities).map((manager) => ({
       key: manager.name,
       label: manager.name,
@@ -35,7 +41,7 @@ export default function PerformancePanel({ opportunities }: PerformancePanelProp
       amount: manager.amount,
       quota: manager.quota,
     }));
-  }, [dimension, opportunities]);
+  }, [dimension, opportunities, companies, zones, teams, memberships]);
 
   const active = DIMENSIONS.find((item) => item.key === dimension)!;
 

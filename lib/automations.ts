@@ -7,7 +7,7 @@ import {
   type AutomationStep,
   type Trigger,
 } from "@/data/automations";
-import { SMS_TEMPLATES, TEMPLATES } from "@/data/campaigns";
+import type { CampaignTemplate, SmsTemplate } from "@/data/campaigns";
 import type { Company } from "@/data/companies";
 import { abcClasses } from "./campaigns";
 
@@ -69,18 +69,23 @@ export function conditionsSummary(conditions: AutomationConditions) {
   return parts.length === 0 ? "Todos os clientes" : `Só ${parts.join(", ")}`;
 }
 
-function templateName(step: AutomationStep) {
+export type TemplateLists = {
+  email: CampaignTemplate[];
+  sms: SmsTemplate[];
+};
+
+function templateName(step: AutomationStep, templates: TemplateLists) {
   if (step.action === "enviar-email") {
-    return TEMPLATES.find((template) => template.id === step.emailTemplateId)?.name;
+    return templates.email.find((template) => template.id === step.emailTemplateId)?.name;
   }
-  return SMS_TEMPLATES.find((template) => template.id === step.smsTemplateId)?.name;
+  return templates.sms.find((template) => template.id === step.smsTemplateId)?.name;
 }
 
-export function stepSummary(step: AutomationStep) {
+export function stepSummary(step: AutomationStep, templates: TemplateLists) {
   switch (step.action) {
     case "enviar-email":
     case "enviar-sms":
-      return `${ACTION_LABELS[step.action]} «${templateName(step) ?? "sem modelo"}»`;
+      return `${ACTION_LABELS[step.action]} «${templateName(step, templates) ?? "modelo eliminado"}»`;
     case "criar-tarefa":
       return `Criar tarefa «${step.taskTitle || "sem título"}» para o gestor`;
     case "mudar-fase":

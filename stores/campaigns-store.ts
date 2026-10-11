@@ -7,8 +7,6 @@ import {
   DEFAULT_FALLBACKS,
   EMAIL_DEFAULTS,
   SMS_DEFAULTS,
-  SMS_TEMPLATES,
-  TEMPLATES,
   blocksFromTemplate,
   type AudienceFilters,
   type BlockType,
@@ -18,6 +16,7 @@ import {
   type VariableKey,
 } from "@/data/campaigns";
 import { DEFAULT_CAMPAIGN_FILTERS, createBlock } from "@/lib/campaigns";
+import { useSettingsStore } from "./settings-store";
 
 export type EditorStep = "conteudo" | "destinatarios" | "revisao" | "resultados";
 
@@ -129,15 +128,25 @@ export const useCampaignsStore = create<CampaignsState>((set, get) => {
         recipients: 0,
         updatedAt: today(),
       };
+      const settings = useSettingsStore.getState();
+      const smsDefaults = {
+        ...SMS_DEFAULTS,
+        senderId: settings.senders.smsSenderId,
+        sendWindow: {
+          start: settings.senders.windowStart,
+          end: settings.senders.windowEnd,
+        },
+      };
       let campaign: Campaign;
 
       if (channel === "SMS") {
         const template =
-          SMS_TEMPLATES.find((item) => item.id === templateId) ?? BLANK_SMS_TEMPLATE;
+          settings.smsTemplates.find((item) => item.id === templateId) ??
+          BLANK_SMS_TEMPLATE;
         campaign = {
           ...base,
           ...EMAIL_DEFAULTS,
-          ...SMS_DEFAULTS,
+          ...smsDefaults,
           name:
             template.id === BLANK_SMS_TEMPLATE.id ? "Nova campanha SMS" : template.name,
           templateId: template.id,
@@ -145,10 +154,11 @@ export const useCampaignsStore = create<CampaignsState>((set, get) => {
         };
       } else {
         const template =
-          TEMPLATES.find((item) => item.id === templateId) ?? BLANK_TEMPLATE;
+          settings.emailTemplates.find((item) => item.id === templateId) ??
+          BLANK_TEMPLATE;
         campaign = {
           ...base,
-          ...SMS_DEFAULTS,
+          ...smsDefaults,
           name: template.id === BLANK_TEMPLATE.id ? "Nova campanha" : template.name,
           templateId: template.id,
           subject: template.subject,

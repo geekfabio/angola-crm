@@ -1,7 +1,6 @@
 import Asset from "@/components/_ui/asset";
 import {
   BRAND_LOGO,
-  SENDER,
   type CampaignBlock,
   type Fallbacks,
 } from "@/data/campaigns";
@@ -17,6 +16,8 @@ type EmailPreviewProps = {
   values: VariableValues;
   fallbacks: Fallbacks;
   device: PreviewDevice;
+  sender: string;
+  footer: string;
 };
 
 function PreviewBlock({
@@ -89,13 +90,15 @@ export default function EmailPreview({
   values,
   fallbacks,
   device,
+  sender,
+  footer,
 }: EmailPreviewProps) {
   const render = (text: string) => renderVariables(text, values, fallbacks);
 
   return (
     <div className="flex flex-col gap-3">
       <div className="caption-style flex flex-col gap-1 rounded-lg border border-border px-3 py-2">
-        <span className="text-subtle truncate">De: {SENDER}</span>
+        <span className="text-subtle truncate">De: {sender}</span>
         <span className="text-foreground truncate font-medium">
           {render(subject) || "Sem assunto"}
         </span>
@@ -140,7 +143,7 @@ export default function EmailPreview({
         </div>
 
         <div className="bg-brand-ink/5 text-brand-ink/60 flex flex-col gap-1 px-6 py-5 text-center text-[12px] leading-[1.5]">
-          <span>Alimenta Angola — Cash and Carry · Luanda, Angola</span>
+          <span>{footer}</span>
           <span>
             Recebe este e-mail por ser cliente da Alimenta Angola.{" "}
             <span className="underline">Remover subscrição</span>

@@ -52,7 +52,7 @@ Módulo `FEATURES.md` §2. Pré-requisito de Email/SMS — nenhuma campanha pode
 
 ## Fase 5 — Previsão: Painel de Direção `✅`
 
-`components/forecast/` passou a ler `useOpportunitiesStore` diretamente: figura principal (carteira ponderada), cartões de KPI (carteira aberta, oportunidades abertas, taxa de conversão, ticket médio), funil por fase, gráfico de tendência com tooltip ao passar o rato, e ranking por gestor/zona — tudo derivado em `lib/dashboard.ts` a partir de `data/opportunities.ts`. Entrada em cascata e gráficos desenhados com Motion (`components/forecast/charts/`). As metas (`quota`) continuam a vir de `data/forecast.ts`, ainda não editáveis — fica para quando houver um ecrã de Definições (Fase 12/13).
+`components/forecast/` passou a ler `useOpportunitiesStore` diretamente: figura principal (carteira ponderada), cartões de KPI (carteira aberta, oportunidades abertas, taxa de conversão, ticket médio), funil por fase, gráfico de tendência com tooltip ao passar o rato, e ranking por gestor/zona — tudo derivado em `lib/dashboard.ts` a partir de `data/opportunities.ts`. Entrada em cascata e gráficos desenhados com Motion (`components/forecast/charts/`). As metas (`quota`) do painel continuam a vir de `data/forecast.ts`; as metas por zona e por equipa passaram a ser editáveis em Definições (Fase 13), mas para já só o painel de Relatórios as usa.
 
 **Pronto quando:** mudar a fase de uma oportunidade em `/oportunidades` muda o número em `/previsao`. ✅ Confirmado.
 
@@ -121,17 +121,25 @@ Módulo `FEATURES.md` §2. Pré-requisito de Email/SMS — nenhuma campanha pode
 
 **Pronto quando:** criar uma regra simples (ex.: "N dias sem comprar → enviar SMS") aparece na lista de automações ativas. ✅ Confirmado.
 
-## Fase 12 — Definições: Empresa e Modelos `⬜`
+## Fase 12 — Definições: Empresa e Modelos `✅`
 
-`FEATURES.md` §9. Dados da empresa, remetentes de e-mail/SMS, modelos de mensagem — formulários simples, sem ligação real a fornecedores (continua em modo sandbox conforme `AGENTS.md`).
+`FEATURES.md` §9. Módulo novo (`/definicoes`, `components/settings/`, `stores/settings-store.ts`, dados de exemplo em `data/settings.ts`), aberto pelo item "Definições" no rodapé da sidebar, com separadores:
 
-**Pronto quando:** um modelo criado em Definições aparece na biblioteca da Fase 7.
+- **Empresa** — nome comercial, denominação social, NIF, contactos e morada, validados em `lib/settings.ts` (telefone via `lib/phone.ts`); alimentam o rodapé dos e-mails, com pré-visualização.
+- **Remetentes** — nome e endereço de envio (só `@alimentaangola.co.ao`), endereço de resposta, identificador de SMS e janela de envio por omissão. Novas campanhas de SMS herdam estes valores; a pré-visualização de e-mail mostra o remetente e o rodapé configurados. Aviso de modo sandbox — o modo real não se liga a partir da UI.
+- **Modelos** — modelos de e-mail (editor por blocos e pré-visualização reaproveitados da Fase 7) e de SMS (com o contador de unidades da Fase 10): novo, editar, duplicar, eliminar. Um modelo usado numa automação não pode ser eliminado. A biblioteca de Campanhas e os passos das Automações passaram a ler os modelos do store de Definições.
 
-## Fase 13 — Definições: Equipas, Zonas e Acessos `⬜`
+Tudo em memória — sem Supabase nem ligação real a fornecedores.
 
-Gestão de equipas comerciais e zonas (hoje só decorativas na sidebar — ver `components/_common/sidebar/sidebar-content.tsx`); perfis de acesso (Administrador, Gestor comercial, Comercial, Marketing, Leitura) como UI de permissões, sem RLS real ainda.
+**Pronto quando:** um modelo criado em Definições aparece na biblioteca da Fase 7. ✅ Confirmado.
 
-**Pronto quando:** as "Zonas" e "Equipas Comerciais" da sidebar deixam de ser texto fixo e vêm desta área de Definições.
+## Fase 13 — Definições: Equipas, Zonas e Acessos `✅`
+
+- **Equipas** — nome, descrição, ícone, meta trimestral e "mostrar na barra lateral"; membros (cada gestor numa equipa). Uma equipa com membros não pode ser removida. O relatório por equipa (Fase 6) usa estas equipas, membros e metas.
+- **Zonas** — nome, cor, meta e "mostrar na barra lateral", com contagem de clientes. Mudar o nome propaga-se a clientes, atividades, campanhas e automações (`stores/rename-zone.ts`); só se removem zonas sem clientes. Os seletores de zona (novo cliente, nova atividade, rota do dia, segmentação de campanhas, condições de automações) e o relatório por zona leem esta lista.
+- **Acessos** — matriz de permissões por perfil (Administrador, Gestor comercial, Comercial, Marketing, Leitura) e âmbito de clientes visíveis; utilizadores com perfil editável (não o próprio) e convites pendentes. "Convidar Equipa" na sidebar abre este separador com o diálogo de convite. É a especificação das políticas — **sem RLS real ainda**, nada é aplicado até haver Supabase.
+
+**Pronto quando:** as "Zonas" e "Equipas Comerciais" da sidebar deixam de ser texto fixo e vêm desta área de Definições. ✅ Confirmado.
 
 ## Fase 14 — Auditoria e Notificações Transversais `⬜`
 

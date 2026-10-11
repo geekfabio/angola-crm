@@ -16,8 +16,6 @@ import {
   BLANK_TEMPLATE,
   CHANNEL_LABELS,
   DEFAULT_FALLBACKS,
-  SMS_TEMPLATES,
-  TEMPLATES,
   type CampaignTemplate,
   type Channel,
   type SmsTemplate,
@@ -25,6 +23,7 @@ import {
 import { renderVariables } from "@/lib/campaigns";
 import { OPT_OUT_SUFFIX, analyzeSms } from "@/lib/sms";
 import { useCampaignsStore } from "@/stores/campaigns-store";
+import { useSettingsStore } from "@/stores/settings-store";
 import { cn } from "@/lib/utils";
 
 const CHANNELS: Channel[] = ["Email", "SMS"];
@@ -121,6 +120,8 @@ export default function TemplateLibraryDialog() {
   const setOpen = useCampaignsStore((state) => state.setLibraryOpen);
   const createFromTemplate = useCampaignsStore((state) => state.createFromTemplate);
   const [channel, setChannel] = useState<Channel>("Email");
+  const emailTemplates = useSettingsStore((state) => state.emailTemplates);
+  const smsTemplates = useSettingsStore((state) => state.smsTemplates);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -149,7 +150,7 @@ export default function TemplateLibraryDialog() {
         <ScrollArea className="max-h-[65dvh]">
           <div className="grid gap-3 p-6 sm:grid-cols-2 lg:grid-cols-3">
             {channel === "Email"
-              ? [...TEMPLATES, BLANK_TEMPLATE].map((template) => (
+              ? [...emailTemplates, BLANK_TEMPLATE].map((template) => (
                   <TemplateCard
                     key={template.id}
                     name={template.name}
@@ -159,7 +160,7 @@ export default function TemplateLibraryDialog() {
                     onUse={() => createFromTemplate("Email", template.id)}
                   />
                 ))
-              : [...SMS_TEMPLATES, BLANK_SMS_TEMPLATE].map((template) => (
+              : [...smsTemplates, BLANK_SMS_TEMPLATE].map((template) => (
                   <TemplateCard
                     key={template.id}
                     name={template.name}

@@ -5,7 +5,8 @@ import Tag from "@/components/_ui/tag";
 import FilterMenu from "@/components/_common/filter-menu";
 import StatTile from "@/components/_common/stat-tile";
 import { ABC_CLASSES, ANY, type Campaign, type Channel } from "@/data/campaigns";
-import { ACTIVITY_WINDOWS, SEGMENTS, ZONES } from "@/data/companies";
+import { ACTIVITY_WINDOWS, SEGMENTS } from "@/data/companies";
+import { useSettingsStore } from "@/stores/settings-store";
 import { EXCLUSION_TONES, type Audience, type AudienceEntry } from "@/lib/campaigns";
 import { formatAngolanPhone } from "@/lib/phone";
 import { useCampaignsStore } from "@/stores/campaigns-store";
@@ -16,10 +17,6 @@ type AudienceStepProps = {
   readOnly: boolean;
 };
 
-const ZONE_OPTIONS = [
-  { value: ANY, label: "Todas as zonas" },
-  ...ZONES.map((zone) => ({ value: zone, label: zone })),
-];
 
 const SEGMENT_OPTIONS = [
   { value: ANY, label: "Todos os segmentos" },
@@ -102,6 +99,11 @@ function EntryList({
 
 export default function AudienceStep({ campaign, audience, readOnly }: AudienceStepProps) {
   const setAudience = useCampaignsStore((state) => state.setAudience);
+  const zones = useSettingsStore((state) => state.zones);
+  const zoneOptions = [
+    { value: ANY, label: "Todas as zonas" },
+    ...zones.map((zone) => ({ value: zone.name, label: zone.name })),
+  ];
   const filters = campaign.audience;
   const found = audience.eligible.length + audience.excluded.length;
 
@@ -115,7 +117,7 @@ export default function AudienceStep({ campaign, audience, readOnly }: AudienceS
         </span>
         {readOnly ? (
           <div className="flex flex-wrap gap-1.5">
-            <Tag tone="neutral">{labelFor(ZONE_OPTIONS, filters.zone)}</Tag>
+            <Tag tone="neutral">{labelFor(zoneOptions, filters.zone)}</Tag>
             <Tag tone="neutral">{labelFor(SEGMENT_OPTIONS, filters.segment)}</Tag>
             <Tag tone="neutral">{labelFor(ABC_OPTIONS, filters.abc)}</Tag>
             <Tag tone="neutral">
@@ -127,7 +129,7 @@ export default function AudienceStep({ campaign, audience, readOnly }: AudienceS
             <FilterMenu
               label="Zona"
               value={filters.zone}
-              options={ZONE_OPTIONS}
+              options={zoneOptions}
               onChange={(zone) => setAudience(campaign.id, { zone })}
             />
             <FilterMenu

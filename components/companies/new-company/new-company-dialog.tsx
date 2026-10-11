@@ -31,7 +31,6 @@ import {
   OWNERS,
   SEGMENTS,
   STAGES,
-  ZONES,
   type Company,
   type Segment,
   type Stage,
@@ -40,6 +39,7 @@ import {
 import { TODAY, daysSince } from "@/lib/companies";
 import { slugify } from "@/lib/utils";
 import { useCompaniesStore } from "@/stores/companies-store";
+import { useSettingsStore } from "@/stores/settings-store";
 import PlusIcon from "@/public/assets/images/_common/plus.svg";
 
 type FormState = {
@@ -62,7 +62,7 @@ const EMPTY_FORM: FormState = {
   segment: SEGMENTS[0],
   stage: STAGES[0],
   owner: OWNERS[0].name,
-  zone: ZONES[0],
+  zone: "",
   pipelineValue: "",
   openDeals: "1",
   winProbability: 50,
@@ -75,6 +75,8 @@ export default function NewCompanyDialog() {
   const setOpen = useCompaniesStore((state) => state.setNewCompanyOpen);
   const addCompany = useCompaniesStore((state) => state.addCompany);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const zones = useSettingsStore((state) => state.zones);
+  const zone = form.zone || zones[0]?.name || "";
   const [nameError, setNameError] = useState<string | null>(null);
   const nameRef = useRef<HTMLInputElement>(null);
 
@@ -97,7 +99,7 @@ export default function NewCompanyDialog() {
       logo: form.logo ?? undefined,
       tags: [form.segment, form.stage],
       owner: form.owner,
-      zone: form.zone,
+      zone,
       openDeals: Math.max(0, Math.round(Number(form.openDeals) || 0)),
       pipelineValue: Math.max(0, Math.round(Number(form.pipelineValue) || 0)),
       winProbability: form.winProbability,
@@ -221,16 +223,16 @@ export default function NewCompanyDialog() {
               </Field>
               <Field label="Zona" htmlFor="company-zone">
                 <Select
-                  value={form.zone}
+                  value={zone}
                   onValueChange={(value) => update("zone", value as Zone)}
                 >
                   <SelectTrigger id="company-zone">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {ZONES.map((zone) => (
-                      <SelectItem key={zone} value={zone}>
-                        {zone}
+                    {zones.map((item) => (
+                      <SelectItem key={item.name} value={item.name}>
+                        {item.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

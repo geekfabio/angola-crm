@@ -18,6 +18,8 @@ import FallbacksSection from "./fallbacks-section";
 import { usePreviewContact } from "./use-preview-contact";
 import { BLOCK_LABELS, type BlockType, type Campaign } from "@/data/campaigns";
 import { useCampaignsStore } from "@/stores/campaigns-store";
+import { useSettingsStore } from "@/stores/settings-store";
+import { emailFooter, emailSender } from "@/lib/settings";
 import PlusIcon from "@/public/assets/images/_common/plus.svg";
 
 type ContentStepProps = {
@@ -38,6 +40,8 @@ export default function ContentStep({ campaign, readOnly }: ContentStepProps) {
   const moveBlock = useCampaignsStore((state) => state.moveBlock);
   const [device, setDevice] = useState<PreviewDevice>("desktop");
   const preview = usePreviewContact();
+  const senders = useSettingsStore((state) => state.senders);
+  const company = useSettingsStore((state) => state.company);
   const subjectRef = useRef<HTMLInputElement>(null);
 
   function insertInSubject(token: string) {
@@ -186,6 +190,8 @@ export default function ContentStep({ campaign, readOnly }: ContentStepProps) {
           values={preview.values}
           fallbacks={campaign.fallbacks}
           device={device}
+          sender={emailSender(senders)}
+          footer={emailFooter(company)}
         />
       </section>
     </div>

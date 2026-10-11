@@ -22,7 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/_ui/select";
-import { COMPANIES, OWNERS, ZONES } from "@/data/companies";
+import { COMPANIES, OWNERS } from "@/data/companies";
+import { useSettingsStore } from "@/stores/settings-store";
 import { ACTIVITY_TYPES, type Activity, type ActivityType } from "@/data/activities";
 import { useActivitiesStore } from "@/stores/activities-store";
 import PlusIcon from "@/public/assets/images/_common/plus.svg";
@@ -36,7 +37,7 @@ type FormState = {
   companyId: string;
   contactName: string;
   owner: string;
-  zone: (typeof ZONES)[number];
+  zone: string;
   date: string;
   note: string;
 };
@@ -46,7 +47,7 @@ const EMPTY_FORM: FormState = {
   companyId: COMPANIES[0].id,
   contactName: "",
   owner: OWNERS[0].name,
-  zone: ZONES[0],
+  zone: "",
   date: today(),
   note: "",
 };
@@ -56,6 +57,8 @@ export default function NewActivityDialog() {
   const setOpen = useActivitiesStore((state) => state.setNewActivityOpen);
   const addActivity = useActivitiesStore((state) => state.addActivity);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const zones = useSettingsStore((state) => state.zones);
+  const zone = form.zone || zones[0]?.name || "";
   const [noteError, setNoteError] = useState<string | null>(null);
   const noteRef = useRef<HTMLTextAreaElement>(null);
 
@@ -82,7 +85,7 @@ export default function NewActivityDialog() {
       companyName: company.name,
       contactName: form.contactName.trim() || undefined,
       owner: form.owner,
-      zone: form.zone,
+      zone,
       date: form.date || today(),
       note,
     };
@@ -168,18 +171,18 @@ export default function NewActivityDialog() {
               </Field>
               <Field label="Zona" htmlFor="activity-zone">
                 <Select
-                  value={form.zone}
+                  value={zone}
                   onValueChange={(value) =>
-                    update("zone", value as (typeof ZONES)[number])
+                    update("zone", value)
                   }
                 >
                   <SelectTrigger id="activity-zone">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {ZONES.map((zone) => (
-                      <SelectItem key={zone} value={zone}>
-                        {zone}
+                    {zones.map((item) => (
+                      <SelectItem key={item.name} value={item.name}>
+                        {item.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

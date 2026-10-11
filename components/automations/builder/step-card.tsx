@@ -17,8 +17,8 @@ import {
   type ActionType,
   type AutomationStep,
 } from "@/data/automations";
-import { SMS_TEMPLATES, TEMPLATES } from "@/data/campaigns";
 import { STAGES, type Stage } from "@/data/companies";
+import { useSettingsStore } from "@/stores/settings-store";
 import ChevronIcon from "@/public/assets/images/_common/chevron-down.svg";
 import XIcon from "@/public/assets/images/companies/detail/x.svg";
 
@@ -69,8 +69,6 @@ function SelectField({
 }
 
 const ACTION_OPTIONS = ACTION_TYPES.map((type) => ({ value: type, label: ACTION_LABELS[type] }));
-const EMAIL_OPTIONS = TEMPLATES.map((template) => ({ value: template.id, label: template.name }));
-const SMS_OPTIONS = SMS_TEMPLATES.map((template) => ({ value: template.id, label: template.name }));
 const STAGE_OPTIONS = STAGES.map((stage) => ({ value: stage, label: stage }));
 
 export default function StepCard({
@@ -83,6 +81,16 @@ export default function StepCard({
   onMove,
   onRemove,
 }: StepCardProps) {
+  const emailTemplates = useSettingsStore((state) => state.emailTemplates);
+  const smsTemplates = useSettingsStore((state) => state.smsTemplates);
+  const emailOptions = emailTemplates.map((template) => ({
+    value: template.id,
+    label: template.name,
+  }));
+  const smsOptions = smsTemplates.map((template) => ({
+    value: template.id,
+    label: template.name,
+  }));
   const fieldId = (name: string) => `${step.id}-${name}`;
 
   return (
@@ -151,7 +159,7 @@ export default function StepCard({
           id={fieldId("email")}
           label="Modelo de e-mail"
           value={step.emailTemplateId}
-          options={EMAIL_OPTIONS}
+          options={emailOptions}
           disabled={readOnly}
           onChange={(emailTemplateId) => onChange({ ...step, emailTemplateId })}
         />
@@ -161,7 +169,7 @@ export default function StepCard({
           id={fieldId("sms")}
           label="Modelo de SMS"
           value={step.smsTemplateId}
-          options={SMS_OPTIONS}
+          options={smsOptions}
           disabled={readOnly}
           onChange={(smsTemplateId) => onChange({ ...step, smsTemplateId })}
         />

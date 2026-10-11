@@ -431,7 +431,7 @@ export const ZONES = [
   "Resto do país",
 ] as const;
 
-export type Zone = (typeof ZONES)[number];
+export type Zone = string;
 
 export const TREND_WINDOWS = ["Últimos 7 dias", "Últimos 30 dias", "Últimos 90 dias"];
 

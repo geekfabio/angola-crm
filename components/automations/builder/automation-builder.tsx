@@ -34,7 +34,7 @@ import {
   type TriggerType,
 } from "@/data/automations";
 import { ABC_CLASSES } from "@/data/campaigns";
-import { SEGMENTS, ZONES } from "@/data/companies";
+import { SEGMENTS } from "@/data/companies";
 import { OPPORTUNITY_STAGES, type OpportunityStage } from "@/data/opportunities";
 import {
   automationIssues,
@@ -48,6 +48,7 @@ import {
 } from "@/lib/automations";
 import { useAutomationsStore } from "@/stores/automations-store";
 import { useCompaniesStore } from "@/stores/companies-store";
+import { useSettingsStore } from "@/stores/settings-store";
 import { useUiStore } from "@/stores/ui-store";
 import ChevronIcon from "@/public/assets/images/_common/chevron-down.svg";
 import MenuIcon from "@/public/assets/images/_common/menu.svg";
@@ -57,10 +58,6 @@ type AutomationBuilderProps = {
   automation: Automation;
 };
 
-const ZONE_OPTIONS = [
-  { value: ANY_CONDITION, label: "Todas as zonas" },
-  ...ZONES.map((zone) => ({ value: zone, label: zone })),
-];
 const SEGMENT_OPTIONS = [
   { value: ANY_CONDITION, label: "Todos os segmentos" },
   ...SEGMENTS.map((segment) => ({ value: segment, label: segment })),
@@ -117,6 +114,13 @@ export default function AutomationBuilder({ automation }: AutomationBuilderProps
   const weeklyCap = useAutomationsStore((state) => state.weeklyCap);
   const setSidebarOpen = useUiStore((state) => state.setSidebarOpen);
   const companies = useCompaniesStore((state) => state.companies);
+  const emailTemplates = useSettingsStore((state) => state.emailTemplates);
+  const smsTemplates = useSettingsStore((state) => state.smsTemplates);
+  const zones = useSettingsStore((state) => state.zones);
+  const zoneOptions = [
+    { value: ANY_CONDITION, label: "Todas as zonas" },
+    ...zones.map((zone) => ({ value: zone.name, label: zone.name })),
+  ];
 
   const readOnly = automation.status === "Ativa";
   const { trigger, conditions, steps } = automation;
@@ -275,7 +279,7 @@ export default function AutomationBuilder({ automation }: AutomationBuilderProps
                   <FilterMenu
                     label="Zona"
                     value={conditions.zone}
-                    options={ZONE_OPTIONS}
+                    options={zoneOptions}
                     onChange={(zone) => updateConditions(automation.id, { zone })}
                   />
                   <FilterMenu
@@ -353,7 +357,7 @@ export default function AutomationBuilder({ automation }: AutomationBuilderProps
                     <span className="caption-style text-subtle w-12 shrink-0 tabular-nums">
                       Dia {days[index]}
                     </span>
-                    <span className="caption-style text-soft">{stepSummary(step)}</span>
+                    <span className="caption-style text-soft">{stepSummary(step, { email: emailTemplates, sms: smsTemplates })}</span>
                   </li>
                 ))}
               </ol>

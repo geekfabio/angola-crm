@@ -1,6 +1,6 @@
-import { COMPANIES, ownerByName, type Company } from "@/data/companies";
-import { TEAM_FORECAST, ZONE_FORECAST } from "@/data/forecast";
+import type { Company } from "@/data/companies";
 import type { Opportunity } from "@/data/opportunities";
+import type { TeamSetting, ZoneSetting } from "@/data/settings";
 import type { RankedItem } from "@/components/_common/ranked-bar-list";
 import { openOpportunities, type AtRiskClient } from "./dashboard";
 import { stageTotal } from "./opportunities";
@@ -10,28 +10,37 @@ export const REPORT_DIMENSIONS = ["gestor", "zona", "equipa"] as const;
 
 export type ReportDimension = (typeof REPORT_DIMENSIONS)[number];
 
-function companyById(id: string) {
-  return COMPANIES.find((company) => company.id === id);
+export function byZoneLive(
+  opportunities: Opportunity[],
+  companies: Company[],
+  zones: ZoneSetting[],
+): RankedItem[] {
+  const open = openOpportunities(opportunities);
+  const zoneOf = new Map(companies.map((company) => [company.id, company.zone]));
+  return zones
+    .map((zone) => ({
+      key: zone.name,
+      label: zone.name,
+      amount: stageTotal(open.filter((item) => zoneOf.get(item.companyId) === zone.name)),
+      quota: Math.max(zone.quota, 1),
+    }))
+    .sort((a, b) => b.amount - a.amount);
 }
 
-export function byZoneLive(opportunities: Opportunity[]): RankedItem[] {
+export function byTeam(
+  opportunities: Opportunity[],
+  teams: TeamSetting[],
+  memberships: Record<string, string>,
+): RankedItem[] {
   const open = openOpportunities(opportunities);
-  return ZONE_FORECAST.map((zone) => {
-    const amount = stageTotal(
-      open.filter((item) => companyById(item.companyId)?.zone === zone.zone),
-    );
-    return { key: zone.zone, label: zone.zone, amount, quota: zone.quota };
-  }).sort((a, b) => b.amount - a.amount);
-}
-
-export function byTeam(opportunities: Opportunity[]): RankedItem[] {
-  const open = openOpportunities(opportunities);
-  return TEAM_FORECAST.map((team) => {
-    const amount = stageTotal(
-      open.filter((item) => ownerByName(item.owner).team === team.team),
-    );
-    return { key: team.team, label: team.team, amount, quota: team.quota };
-  }).sort((a, b) => b.amount - a.amount);
+  return teams
+    .map((team) => ({
+      key: team.id,
+      label: team.name,
+      amount: stageTotal(open.filter((item) => memberships[item.owner] === team.id)),
+      quota: Math.max(team.quota, 1),
+    }))
+    .sort((a, b) => b.amount - a.amount);
 }
 
 export function atRiskClients(

@@ -7,7 +7,8 @@ import Tag from "@/components/_ui/tag";
 import Avatar from "@/components/_ui/avatar";
 import DetailSection from "@/components/_common/detail-section";
 import { ACTIVITY_TONES, type Activity } from "@/data/activities";
-import { ownerByName, ZONES } from "@/data/companies";
+import { ownerByName } from "@/data/companies";
+import { useSettingsStore } from "@/stores/settings-store";
 import type { Task } from "@/data/tasks";
 import { groupActivitiesByZone } from "@/lib/activities";
 import { formatDateLong } from "@/lib/format";
@@ -24,6 +25,7 @@ function today() {
 
 export default function DailyRoute({ activities, tasks }: DailyRouteProps) {
   const moveTaskStatus = useActivitiesStore((state) => state.moveTaskStatus);
+  const zones = useSettingsStore((state) => state.zones);
   const todayIso = today();
 
   const todaysActivities = useMemo(
@@ -36,6 +38,11 @@ export default function DailyRoute({ activities, tasks }: DailyRouteProps) {
   );
 
   const byZone = groupActivitiesByZone(todaysActivities);
+  const zoneNames = zones.map((zone) => zone.name);
+  const zoneOrder = [
+    ...zoneNames,
+    ...[...byZone.keys()].filter((zone) => !zoneNames.includes(zone)),
+  ];
 
   return (
     <ScrollArea className="min-h-0 flex-1">
@@ -44,7 +51,7 @@ export default function DailyRoute({ activities, tasks }: DailyRouteProps) {
         <h2 className="truncate">{formatDateLong(todayIso)}</h2>
       </div>
 
-      {ZONES.map((zone) => {
+      {zoneOrder.map((zone) => {
         const zoneActivities = byZone.get(zone) ?? [];
         if (zoneActivities.length === 0) return null;
 
