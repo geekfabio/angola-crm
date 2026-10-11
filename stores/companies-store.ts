@@ -25,8 +25,23 @@ const COMPANY_FORMATTERS = {
   winProbability: (value: number) => formatPercent(value),
 };
 
+export type CompaniesView = "lista" | "grelha";
+
+const VIEW_STORAGE_KEY = "clientes-vista";
+
+export function readStoredView(): CompaniesView | null {
+  try {
+    const value = window.localStorage.getItem(VIEW_STORAGE_KEY);
+    return value === "lista" || value === "grelha" ? value : null;
+  } catch {
+    return null;
+  }
+}
+
 type CompaniesState = CompanyFilters & {
   companies: Company[];
+  view: CompaniesView;
+  setView: (view: CompaniesView) => void;
   selectedIds: string[];
   detailId: string | null;
   detailOpen: boolean;
@@ -65,6 +80,13 @@ export const useCompaniesStore = create<CompaniesState>((set, get) => {
 
   return {
     companies: COMPANIES,
+    view: "lista",
+    setView: (view) => {
+      set({ view });
+      try {
+        window.localStorage.setItem(VIEW_STORAGE_KEY, view);
+      } catch {}
+    },
     ...DEFAULT_FILTERS,
     selectedIds: [],
     detailId: null,

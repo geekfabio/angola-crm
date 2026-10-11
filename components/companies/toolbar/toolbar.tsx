@@ -13,6 +13,7 @@ import type { SortKey } from "@/data/companies";
 import { TODAY, companiesCsvRows } from "@/lib/companies";
 import { useVisibleCompanies } from "../use-visible-companies";
 import ActiveFilters from "./active-filters";
+import ViewToggle from "./view-toggle";
 import { downloadCsv } from "@/lib/csv";
 import { useCompaniesStore } from "@/stores/companies-store";
 import ShareIcon from "@/public/assets/images/companies/toolbar/share.svg";
@@ -72,6 +73,7 @@ export default function CompaniesToolbar() {
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
+        <ViewToggle />
         <Button variant="secondary" size="sm" onClick={exportCsv}>
           <ShareIcon aria-hidden className="size-3" />
           Exportar

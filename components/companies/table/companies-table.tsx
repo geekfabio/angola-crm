@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/_ui/table";
 import CompanyRow from "./company-row";
+import CompanyCard from "../grid/company-card";
 import TableFooter from "./table-footer";
 import BulkActions from "./bulk-actions";
 import Button from "@/components/_ui/button";
@@ -32,6 +33,7 @@ export default function CompaniesTable() {
   const openDetail = useCompaniesStore((state) => state.openDetail);
   const openProfile = useCompaniesStore((state) => state.openProfile);
   const resetFilters = useCompaniesStore((state) => state.resetFilters);
+  const view = useCompaniesStore((state) => state.view);
 
   const visible = useVisibleCompanies();
 
@@ -48,6 +50,45 @@ export default function CompaniesTable() {
 
   return (
     <div className="border-border relative flex min-h-0 flex-1 flex-col border-t">
+      {view === "grelha" ? (
+        <ScrollArea className="min-h-0 flex-1">
+          <div className="caption-style text-subtle flex items-center gap-3 px-4 pt-4">
+            <Checkbox
+              checked={allSelected ? true : someSelected ? "indeterminate" : false}
+              onCheckedChange={toggleAll}
+              aria-label="Selecionar todos os clientes"
+              disabled={visible.length === 0}
+            />
+            Selecionar todos
+          </div>
+          {visible.length > 0 ? (
+            <ul
+              aria-label="Clientes"
+              className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,260px),1fr))] gap-3 p-4 pb-24"
+            >
+              {visible.map((company) => (
+                <li key={company.id} className="flex">
+                  <CompanyCard
+                    company={company}
+                    selected={selectedIds.includes(company.id)}
+                    active={detailOpen && detailId === company.id}
+                    onToggle={() => toggleSelected(company.id)}
+                    onOpen={() => openDetail(company.id)}
+                    onOpenOwner={() => openProfile(company.owner)}
+                  />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="caption-style text-muted-foreground flex h-[160px] flex-col items-center justify-center gap-2">
+              Nenhum cliente corresponde aos filtros atuais.
+              <Button variant="secondary" size="sm" onClick={resetFilters}>
+                Limpar filtros
+              </Button>
+            </div>
+          )}
+        </ScrollArea>
+      ) : (
       <ScrollArea orientation="both" className="min-h-0 flex-1">
         <Table role="table" className={cn(TABLE_GRID_CLASS, "w-full")}>
           <TableHeader role="rowgroup" className="contents">
@@ -110,6 +151,7 @@ export default function CompaniesTable() {
           </TableBody>
         </Table>
       </ScrollArea>
+      )}
       <TableFooter
         companies={selectedVisible.length > 0 ? selectedVisible : visible}
         selectedCount={selectedVisible.length}
