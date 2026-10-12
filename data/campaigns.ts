@@ -295,6 +295,12 @@ export const SMS_TEMPLATES: SmsTemplate[] = [
     body: "Alimenta Angola: {{nome}}, -15% em óleo e arroz esta semana em {{zona}}.",
   },
   {
+    id: "sms-desconto",
+    name: "Desconto de reativação",
+    description: "Proposta de desconto a clientes sem compras.",
+    body: "Alimenta Angola: {{nome}}, tem {{desconto}} de desconto na próxima compra até {{validade}}. Esperamos por si!",
+  },
+  {
     id: "sms-entrega",
     name: "Aviso de entrega",
     description: "Encomenda a caminho do cliente.",

@@ -63,6 +63,7 @@ export const ACTION_TYPES = [
   "mudar-fase",
   "notificar-gestor",
   "adicionar-segmento",
+  "propor-desconto",
 ] as const;
 
 export type ActionType = (typeof ACTION_TYPES)[number];
@@ -74,7 +75,14 @@ export const ACTION_LABELS: Record<ActionType, string> = {
   "mudar-fase": "Mudar fase do cliente",
   "notificar-gestor": "Notificar gestor",
   "adicionar-segmento": "Adicionar a segmento",
+  "propor-desconto": "Propor desconto",
 };
+
+export const DISCOUNT_SCOPES = ["Categorias habituais", "Toda a encomenda"] as const;
+
+export type DiscountScope = (typeof DISCOUNT_SCOPES)[number];
+
+export const MAX_DISCOUNT_PERCENT = 30;
 
 export const MESSAGE_ACTIONS: ActionType[] = ["enviar-email", "enviar-sms"];
 
@@ -88,6 +96,9 @@ export type AutomationStep = {
   stage: Stage;
   message: string;
   segmentName: string;
+  discountPercent: number;
+  discountValidDays: number;
+  discountScope: DiscountScope;
 };
 
 export type AutomationConditions = {
@@ -106,6 +117,7 @@ export type Automation = {
   enrolled: number;
   completed: number;
   lastRunAt?: string;
+  activatedAt?: string;
   updatedAt: string;
 };
 
@@ -128,6 +140,9 @@ export function blankStep(id: string, action: ActionType = "enviar-sms"): Automa
     stage: STAGES[STAGES.length - 1],
     message: "",
     segmentName: "",
+    discountPercent: 5,
+    discountValidDays: 15,
+    discountScope: "Categorias habituais",
   };
 }
 
@@ -157,6 +172,7 @@ export const AUTOMATIONS: Automation[] = [
     enrolled: 38,
     completed: 31,
     lastRunAt: "2026-10-10T09:00",
+    activatedAt: "2026-09-15",
     updatedAt: "2026-09-15",
   },
   {
@@ -176,7 +192,32 @@ export const AUTOMATIONS: Automation[] = [
     enrolled: 12,
     completed: 4,
     lastRunAt: "2026-10-11T08:00",
+    activatedAt: "2026-10-05",
     updatedAt: "2026-10-02",
+  },
+  {
+    id: "aut-5",
+    name: "Desconto para clientes sem compras",
+    status: "Ativa",
+    trigger: { ...DEFAULT_TRIGGER, type: "dias-sem-comprar", days: 30 },
+    conditions: { ...DEFAULT_CONDITIONS },
+    steps: [
+      step("aut-5-s1", "propor-desconto", { discountPercent: 5, discountValidDays: 14 }),
+      step("aut-5-s2", "enviar-sms", { waitDays: 1, smsTemplateId: "sms-desconto" }),
+      step("aut-5-s3", "propor-desconto", {
+        waitDays: 14,
+        discountPercent: 10,
+        discountValidDays: 14,
+      }),
+      step("aut-5-s4", "notificar-gestor", {
+        waitDays: 14,
+        message: "Não aproveitou as propostas de desconto — agendar visita.",
+      }),
+    ],
+    enrolled: 0,
+    completed: 0,
+    activatedAt: "2026-10-10",
+    updatedAt: "2026-10-10",
   },
   {
     id: "aut-3",

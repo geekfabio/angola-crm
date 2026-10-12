@@ -1,11 +1,12 @@
 import type { Company } from "@/data/companies";
+import { OPEN_OFFER_STATUSES, type DiscountOffer } from "@/data/discount-offers";
 import type { FollowUpType } from "@/data/follow-ups";
 import type { Opportunity } from "@/data/opportunities";
 import type { Sale } from "@/data/sales";
 import type { Task } from "@/data/tasks";
 import { purchaseStats } from "./sales";
 
-export type FollowUpKind = "agendado" | "tarefa" | "lembrete" | "sem-compras" | "proposta";
+export type FollowUpKind = "agendado" | "tarefa" | "lembrete" | "sem-compras" | "proposta" | "desconto";
 export type FollowUpBucket = "atrasado" | "hoje" | "semana" | "sugestao";
 
 export const FOLLOW_UP_KIND_LABELS: Record<FollowUpKind, string> = {
@@ -14,14 +15,16 @@ export const FOLLOW_UP_KIND_LABELS: Record<FollowUpKind, string> = {
   lembrete: "Lembrete",
   "sem-compras": "Sem compras",
   proposta: "Proposta parada",
+  desconto: "Proposta de desconto",
 };
 
-export const FOLLOW_UP_KIND_TONES: Record<FollowUpKind, "blue" | "purple" | "teal" | "amber" | "orange"> = {
+export const FOLLOW_UP_KIND_TONES: Record<FollowUpKind, "blue" | "purple" | "teal" | "amber" | "orange" | "green"> = {
   agendado: "blue",
   tarefa: "purple",
   lembrete: "teal",
   "sem-compras": "amber",
   proposta: "orange",
+  desconto: "green",
 };
 
 export const FOLLOW_UP_BUCKETS: { key: FollowUpBucket; label: string; empty: string }[] = [
@@ -42,6 +45,7 @@ export type FollowUpItem = {
   companyId?: string;
   taskId?: string;
   opportunityId?: string;
+  offerId?: string;
   contactType?: FollowUpType;
 };
 
@@ -69,13 +73,47 @@ type Sources = {
   tasks: Task[];
   opportunities: Opportunity[];
   sales: Sale[];
+  offers: DiscountOffer[];
   today: string;
 };
 
-export function buildFollowUps({ companies, tasks, opportunities, sales, today }: Sources): FollowUpItem[] {
+function percentLabel(value: number) {
+  return `${value}%`;
+}
+
+export function buildFollowUps({ companies, tasks, opportunities, sales, offers, today }: Sources): FollowUpItem[] {
   const active = companies.filter((company) => !company.archived);
   const names = new Map(active.map((company) => [company.id, company.name]));
   const items: FollowUpItem[] = [];
+  const openOffers = offers.filter(
+    (offer) => OPEN_OFFER_STATUSES.includes(offer.status) && offer.validUntil >= today && names.has(offer.companyId),
+  );
+  const withOffer = new Set(openOffers.map((offer) => offer.companyId));
+
+  for (const offer of openOffers) {
+    const created = offer.createdAt.slice(0, 10);
+    const expiresSoon = daysBetween(today, offer.validUntil) <= 2;
+    if (offer.status === "Apresentada" && !expiresSoon) continue;
+    const scope =
+      offer.scope === "Toda a encomenda" || offer.categories.length === 0
+        ? "em toda a encomenda"
+        : `em ${offer.categories.join(", ")}`;
+    items.push({
+      id: `desconto-${offer.id}`,
+      kind: "desconto",
+      bucket: offer.status === "Por apresentar" && created < today ? "atrasado" : "hoje",
+      due: offer.status === "Por apresentar" ? created : offer.validUntil,
+      owner: offer.owner,
+      title: names.get(offer.companyId)!,
+      detail:
+        offer.status === "Por apresentar"
+          ? `Apresentar ${percentLabel(offer.percent)} de desconto ${scope}, válido até ${offer.validUntil.split("-").reverse().slice(0, 2).join("/")}.`
+          : `Desconto de ${percentLabel(offer.percent)} apresentado expira ${offer.validUntil === today ? "hoje" : `a ${offer.validUntil.split("-").reverse().slice(0, 2).join("/")}`} — confirmar se vai comprar.`,
+      companyId: offer.companyId,
+      offerId: offer.id,
+      contactType: "Chamada",
+    });
+  }
 
   for (const company of active) {
     const followUp = company.nextFollowUp;
@@ -96,6 +134,7 @@ export function buildFollowUps({ companies, tasks, opportunities, sales, today }
       }
       continue;
     }
+    if (withOffer.has(company.id)) continue;
     const stats = purchaseStats(sales, company.id, today);
     if (stats.atRisk) {
       items.push({

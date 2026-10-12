@@ -7,11 +7,12 @@ import {
   type IdentifierType,
   type Sale,
 } from "@/data/sales";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, formatPercent } from "@/lib/format";
 import { mockSalesSource } from "@/lib/integrations/sales/mock-source";
 import type { IncomingSale } from "@/lib/integrations/sales/types";
 import { matchCustomer } from "@/lib/sales";
 import { recordEvent } from "./audit-store";
+import { useAutomationRunsStore } from "./automation-runs-store";
 import { useCompaniesStore } from "./companies-store";
 import { useOpportunitiesStore } from "./opportunities-store";
 
@@ -111,6 +112,7 @@ export const useSalesStore = create<SalesState>((set, get) => ({
 
     if (companyId) {
       touchCompany(companyId, sale);
+      const offer = useAutomationRunsStore.getState().registerPurchase(sale);
       const opportunity = openOpportunityFor(companyId);
       recordEvent({
         action: "registou uma compra de",
@@ -125,7 +127,9 @@ export const useSalesStore = create<SalesState>((set, get) => ({
         toast: options.announce
           ? {
               title: `Compra de ${companyName(companyId)}`,
-              description: `${sale.document} · ${formatMoney(sale.total)} · ${sale.payment}`,
+              description: offer
+                ? `${sale.document} · ${formatMoney(sale.total)} — aproveitou o desconto de ${formatPercent(offer.percent)} (${formatMoney(offer.discountValue ?? 0)}).`
+                : `${sale.document} · ${formatMoney(sale.total)} · ${sale.payment}`,
               tone: "success",
               action: opportunity
                 ? {
@@ -178,6 +182,7 @@ export const useSalesStore = create<SalesState>((set, get) => ({
           : state.identifiers,
     }));
     touchCompany(companyId, sale);
+    useAutomationRunsStore.getState().registerPurchase({ ...sale, companyId });
     recordEvent({
       action: `associou a compra ${sale.document} a`,
       target: { module: "Clientes", id: companyId, label: companyName(companyId) },

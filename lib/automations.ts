@@ -1,6 +1,7 @@
 import {
   ACTION_LABELS,
   ANY_CONDITION,
+  MAX_DISCOUNT_PERCENT,
   MESSAGE_ACTIONS,
   type Automation,
   type AutomationConditions,
@@ -9,7 +10,9 @@ import {
 } from "@/data/automations";
 import type { CampaignTemplate, SmsTemplate } from "@/data/campaigns";
 import type { Company } from "@/data/companies";
-import { abcClasses } from "./campaigns";
+import type { Sale } from "@/data/sales";
+import { formatPercent } from "./format";
+import { abcBySales, purchaseStats } from "./sales";
 
 export type AutomationFilters = {
   status: string;
@@ -94,6 +97,10 @@ export function stepSummary(step: AutomationStep, templates: TemplateLists) {
       return `Notificar o gestor: ${step.message || "sem mensagem"}`;
     case "adicionar-segmento":
       return `Adicionar ao segmento «${step.segmentName || "sem nome"}»`;
+    case "propor-desconto":
+      return `Propor ${formatPercent(step.discountPercent)} de desconto ${
+        step.discountScope === "Toda a encomenda" ? "em toda a encomenda" : "nas categorias habituais"
+      }, válido ${step.discountValidDays} ${step.discountValidDays === 1 ? "dia" : "dias"}`;
   }
 }
 
@@ -133,6 +140,15 @@ export function automationIssues(automation: Automation) {
     if (step.action === "adicionar-segmento" && !step.segmentName.trim()) {
       issues.push(`${label}: indique o nome do segmento.`);
     }
+    if (
+      step.action === "propor-desconto" &&
+      (step.discountPercent < 1 || step.discountPercent > MAX_DISCOUNT_PERCENT)
+    ) {
+      issues.push(`${label}: o desconto tem de estar entre 1% e ${MAX_DISCOUNT_PERCENT}%.`);
+    }
+    if (step.action === "propor-desconto" && step.discountValidDays < 1) {
+      issues.push(`${label}: a validade tem de ser de pelo menos 1 dia.`);
+    }
   });
   return issues;
 }
@@ -152,14 +168,27 @@ export function matchesConditions(
   return true;
 }
 
-export function simulateEntries(automation: Automation, companies: Company[]) {
+export type SimulatedEntry = { company: Company; days: number };
+
+export function simulateEntries(
+  automation: Automation,
+  companies: Company[],
+  sales: Sale[],
+  today: string,
+): { entries: SimulatedEntry[]; withoutHistory: number } | null {
   if (automation.trigger.type !== "dias-sem-comprar") return null;
-  const abc = abcClasses(companies);
-  return companies
-    .filter(
-      (company) =>
-        company.activityDays >= automation.trigger.days &&
-        matchesConditions(company, automation.conditions, abc),
-    )
-    .sort((a, b) => b.activityDays - a.activityDays);
+  const active = companies.filter((company) => !company.archived);
+  const abc = abcBySales(active, sales, today);
+  const entries: SimulatedEntry[] = [];
+  let withoutHistory = 0;
+  for (const company of active) {
+    if (!matchesConditions(company, automation.conditions, abc)) continue;
+    const { daysSincePurchase } = purchaseStats(sales, company.id, today);
+    if (daysSincePurchase === undefined) {
+      withoutHistory += 1;
+      continue;
+    }
+    if (daysSincePurchase >= automation.trigger.days) entries.push({ company, days: daysSincePurchase });
+  }
+  return { entries: entries.sort((a, b) => b.days - a.days), withoutHistory };
 }

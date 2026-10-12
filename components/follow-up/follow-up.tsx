@@ -29,6 +29,7 @@ import {
 } from "@/lib/follow-up";
 import { cn } from "@/lib/utils";
 import { useActivitiesStore } from "@/stores/activities-store";
+import { useAutomationRunsStore } from "@/stores/automation-runs-store";
 import { useCompaniesStore } from "@/stores/companies-store";
 import { useFollowUps } from "./use-follow-ups";
 import ChevronIcon from "@/public/assets/images/_common/chevron-down.svg";
@@ -72,6 +73,7 @@ function FollowUpRow({ item, today }: { item: FollowUpItem; today: string }) {
   const startActivity = useActivitiesStore((state) => state.startActivity);
   const moveTaskStatus = useActivitiesStore((state) => state.moveTaskStatus);
   const postponeTask = useActivitiesStore((state) => state.postponeTask);
+  const setOfferStatus = useAutomationRunsStore((state) => state.setOfferStatus);
   const scheduleFollowUp = useCompaniesStore((state) => state.scheduleFollowUp);
   const company = useCompaniesStore((state) => state.companies.find((entry) => entry.id === item.companyId));
   const owner = profileByName(item.owner);
@@ -139,7 +141,29 @@ function FollowUpRow({ item, today }: { item: FollowUpItem; today: string }) {
       </div>
 
       <div className="flex shrink-0 flex-wrap items-center gap-1 pl-10 sm:pl-0">
-        {item.taskId ? (
+        {item.offerId ? (
+          <>
+            <Button variant="primary" size="sm" onClick={register}>
+              Registar contacto
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  Resposta
+                  <ChevronIcon aria-hidden className="size-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={() => setOfferStatus(item.offerId!, "Apresentada")}>
+                  Apresentada ao cliente
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setOfferStatus(item.offerId!, "Recusada")}>
+                  Cliente recusou
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </>
+        ) : item.taskId ? (
           <>
             <Button variant="secondary" size="sm" onClick={() => moveTaskStatus(item.taskId!, "Feita")}>
               Concluir

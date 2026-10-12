@@ -4,6 +4,7 @@ import GlobalShortcuts from "@/components/_common/command-palette/global-shortcu
 import Toaster from "@/components/_ui/toaster";
 import HelpDialog from "@/components/_common/help/help-dialog";
 import SalesSimulator from "@/components/_common/sales-simulator";
+import AutomationRunner from "@/components/_common/automation-runner";
 import AssociateDialog from "@/components/sales/associate-dialog";
 import NewActivityDialog from "@/components/activities/new-activity/new-activity-dialog";
 import FollowUpNotifier from "@/components/follow-up/follow-up-notifier";
@@ -29,6 +30,7 @@ export default function AppLayout({
       <GlobalShortcuts />
       <HelpDialog />
       <SalesSimulator />
+      <AutomationRunner />
       <AssociateDialog />
       <NewActivityDialog />
       <FollowUpNotifier />

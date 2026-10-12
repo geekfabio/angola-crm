@@ -13,6 +13,7 @@ import {
   type Trigger,
 } from "@/data/automations";
 import { DEFAULT_AUTOMATION_FILTERS, automationIssues } from "@/lib/automations";
+import { nowLuandaLocal } from "@/lib/format";
 import { recordEvent } from "./audit-store";
 
 function today() {
@@ -23,8 +24,12 @@ function newId(prefix: string) {
   return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
 }
 
+export type AutomationsView = "automacoes" | "propostas" | "execucoes";
+
 type AutomationsState = {
   automations: Automation[];
+  view: AutomationsView;
+  setView: (view: AutomationsView) => void;
   status: string;
   search: string;
   weeklyCap: number;
@@ -59,6 +64,8 @@ export const useAutomationsStore = create<AutomationsState>((set, get) => {
 
   return {
     automations: AUTOMATIONS,
+    view: "automacoes",
+    setView: (view) => set({ view, editorId: null }),
     ...DEFAULT_AUTOMATION_FILTERS,
     weeklyCap: DEFAULT_WEEKLY_CAP,
     editorId: null,
@@ -134,7 +141,14 @@ export const useAutomationsStore = create<AutomationsState>((set, get) => {
       if (automation.status === status) return;
       set((state) => ({
         automations: state.automations.map((item) =>
-          item.id === id ? { ...item, status, updatedAt: today() } : item,
+          item.id === id
+            ? {
+                ...item,
+                status,
+                updatedAt: today(),
+                activatedAt: status === "Ativa" ? nowLuandaLocal().slice(0, 10) : item.activatedAt,
+              }
+            : item,
         ),
       }));
       recordEvent({

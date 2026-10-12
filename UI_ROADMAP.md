@@ -1,4 +1,4 @@
-# Roteiro de UI — 20 fases
+# Roteiro de UI — 21 fases
 
 Enquanto o `ROADMAP.md` ordena o produto por fases de negócio (fundação, dados reais, Supabase), este ficheiro ordena a **construção da interface** dos módulos que já têm rota mas ainda são esqueleto visual — tabela de leitura, sem store, sem diálogos, sem painel de detalhe.
 
@@ -117,7 +117,7 @@ Módulo `FEATURES.md` §2. Pré-requisito de Email/SMS — nenhuma campanha pode
 - **Travão global** de mensagens por contacto por semana (por omissão 2), com aviso quando uma sequência envia mais do que isso na mesma semana (`maxMessagesInWeek`).
 - **Simulação** para "N dias sem comprar": que clientes entrariam hoje, com as condições aplicadas.
 - Quatro automações de exemplo: boas-vindas, reativação de cliente inativo, seguimento de proposta sem resposta, aniversário.
-- Nada é executado: ativar só muda o estado (sandbox). "Aniversário" e "dívida vencida" dependem de dados que ainda não existem (data de início da relação; faturação/ERP) e o ecrã diz isso.
+- Nada é executado: ativar só muda o estado (sandbox). *Atualizado na Fase 21: "N dias sem comprar" passou a correr.* "Aniversário" e "dívida vencida" dependem de dados que ainda não existem (data de início da relação; faturação/ERP) e o ecrã diz isso.
 
 **Pronto quando:** criar uma regra simples (ex.: "N dias sem comprar → enviar SMS") aparece na lista de automações ativas. ✅ Confirmado.
 
@@ -251,6 +251,24 @@ Pedido do utilizador: o CRM tem de dizer **a quem ligar hoje** e não depender d
 **Fica para depois:** as Automações (Fase 11) continuam sem executar — criar tarefas de follow-up automaticamente depois de uma compra ou de uma campanha depende do motor correr no servidor.
 
 **Pronto quando:** qualquer gestor abre o Follow-up de manhã e vê o que está em atraso e para hoje, regista o contacto e deixa o próximo agendado sem sair do ecrã. ✅ Confirmado.
+
+---
+
+## Fase 21 — Automações em execução: desconto a clientes sem compras `✅`
+
+Pedido do utilizador: quando um cliente fica X dias sem comprar, o CRM apresenta-lhe uma proposta de desconto (e o resto da sequência), sem depender de alguém se lembrar.
+
+- **Motor** (`lib/automation-engine.ts`, `stores/automation-runs-store.ts`, `components/_common/automation-runner.tsx`): corre ao abrir o CRM, quando chega uma venda e quando uma automação é ativada ou pausada. Para cada automação ativa com gatilho "N dias sem comprar", conta os dias desde a **última compra em Vendas** (Fase 19), aplica as condições (zona, segmento, classe ABC) e executa os passos cujo dia já chegou. Cada passo corre uma vez por cliente e por ciclo; **quando o cliente volta a comprar, a sequência pára**. Uma automação ativada hoje só apanha clientes a partir de hoje — não dispara de uma vez os passos atrasados.
+- **Nova ação "Propor desconto"**: percentagem (1–30%), validade em dias e âmbito (categorias que o cliente costuma comprar, ou toda a encomenda). Cria uma proposta para o gestor de conta apresentar; uma proposta nova substitui a anterior (permite escalar, ex.: 5% no dia 0, 10% no dia 15).
+- **Exemplo ativo** "Desconto para clientes sem compras": 30 dias sem comprar → proposta de 5% → SMS «Desconto de reativação» no dia seguinte → 10% no dia 15 → notificar o gestor no dia 29.
+- **Proposta aproveitada**: quando o cliente compra dentro da validade e a compra inclui o que tem desconto, a proposta fica "Aproveitada" com o documento, o valor da venda e o desconto concedido; o aviso da compra diz que o desconto foi aproveitado. Comprar só outras coisas não conta — a proposta continua aberta.
+- **Onde aparece**: Automações ganhou os separadores **Propostas de desconto** (totais: abertas, aproveitadas e taxa, vendas com desconto, desconto concedido; "Registar" apresentada/recusada) e **Execuções** (cada passo com resultado, texto do SMS já preenchido, filtro por automação e resultado, "Executar agora"). O construtor mostra as execuções e os resultados da automação, e a simulação passou a usar os dias sem comprar reais. **Follow-up** mostra "Proposta de desconto" para apresentar hoje (em atraso se ficou de um dia para o outro) e as apresentadas a 2 dias de expirar. A **ficha do cliente** mostra a proposta em curso e permite propor um desconto à mão. Tudo fica na Auditoria com o autor "Automações".
+- **Outras ações também correm**: criar tarefa (atribuída ao gestor), mudar a fase do cliente, notificar o gestor.
+- **Travões mantidos**: e-mail e SMS ficam em **modo sandbox** — o passo regista o texto e o destinatário mas nada sai do CRM. Sem contacto válido com consentimento no canal, a mensagem fica "Não enviada"; o travão semanal por contacto também retém mensagens.
+
+**Fica para depois:** os outros gatilhos (cliente criado, mudança de fase, campanha aberta, aniversário, dívida vencida) continuam só guardados; "Adicionar a segmento" só fica registado (não há segmentos guardados). Em produção o motor corre no servidor (Supabase cron/Edge Function) e o envio real exige `MESSAGING_LIVE=true` e os fornecedores fechados. O desconto não é aplicado no sistema de vendas — fica registado no CRM; aplicá-lo na caixa depende da integração real.
+
+**Pronto quando:** um cliente que passa os X dias sem comprar recebe uma proposta de desconto sem intervenção, o gestor vê-a no Follow-up, e a compra seguinte com o desconto marca-a como aproveitada. ✅ Confirmado.
 
 ---
 

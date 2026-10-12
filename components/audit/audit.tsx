@@ -13,6 +13,7 @@ import Tag from "@/components/_ui/tag";
 import {
   AUDIT_MODULES,
   AUDIT_MODULE_TONES,
+  SYSTEM_ACTOR,
   type AuditEvent,
 } from "@/data/audit";
 import { profileByName } from "@/data/companies";
@@ -48,7 +49,16 @@ function AuditRow({ event }: { event: AuditEvent }) {
 
   return (
     <li className="flex gap-3 px-5 py-4">
-      <Avatar src={actor.avatar} alt="" className="mt-0.5 size-7" />
+      {event.actor === SYSTEM_ACTOR ? (
+        <span
+          aria-hidden
+          className="bg-muted caption-style text-soft mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full shadow-[0px_0px_0px_1px_#232323]"
+        >
+          A
+        </span>
+      ) : (
+        <Avatar src={actor.avatar} alt="" className="mt-0.5 size-7" />
+      )}
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <p className="p-style text-soft min-w-0">

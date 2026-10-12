@@ -17,6 +17,7 @@ import { abcBySales, purchaseStats } from "@/lib/sales";
 import { cn } from "@/lib/utils";
 import { useCompaniesStore } from "@/stores/companies-store";
 import { useSalesStore } from "@/stores/sales-store";
+import DiscountOffer from "./discount-offer";
 
 function Stat({ label, value, hint, tone }: { label: string; value: string; hint?: string; tone?: "danger" | "warning" }) {
   return (
@@ -82,6 +83,8 @@ export default function Purchases({ companyId, companyName }: { companyId: strin
           candidato a um contacto de seguimento.
         </p>
       )}
+
+      <DiscountOffer companyId={companyId} />
 
       {stats.topCategories.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5">

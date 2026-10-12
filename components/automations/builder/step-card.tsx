@@ -14,8 +14,11 @@ import {
 import {
   ACTION_LABELS,
   ACTION_TYPES,
+  DISCOUNT_SCOPES,
+  MAX_DISCOUNT_PERCENT,
   type ActionType,
   type AutomationStep,
+  type DiscountScope,
 } from "@/data/automations";
 import { STAGES, type Stage } from "@/data/companies";
 import { useSettingsStore } from "@/stores/settings-store";
@@ -70,6 +73,7 @@ function SelectField({
 
 const ACTION_OPTIONS = ACTION_TYPES.map((type) => ({ value: type, label: ACTION_LABELS[type] }));
 const STAGE_OPTIONS = STAGES.map((stage) => ({ value: stage, label: stage }));
+const SCOPE_OPTIONS = DISCOUNT_SCOPES.map((scope) => ({ value: scope, label: scope }));
 
 export default function StepCard({
   step,
@@ -227,6 +231,60 @@ export default function StepCard({
             onChange={(event) => onChange({ ...step, segmentName: event.target.value })}
           />
         </Field>
+      )}
+      {step.action === "propor-desconto" && (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label="Desconto (%)"
+              htmlFor={fieldId("percent")}
+              error={
+                !readOnly && (step.discountPercent < 1 || step.discountPercent > MAX_DISCOUNT_PERCENT)
+                  ? `Entre 1 e ${MAX_DISCOUNT_PERCENT}.`
+                  : undefined
+              }
+            >
+              <Input
+                id={fieldId("percent")}
+                type="number"
+                min={1}
+                max={MAX_DISCOUNT_PERCENT}
+                inputMode="numeric"
+                value={step.discountPercent}
+                disabled={readOnly}
+                className="tabular-nums"
+                onChange={(event) => onChange({ ...step, discountPercent: Number(event.target.value) || 0 })}
+              />
+            </Field>
+            <Field
+              label="Válido durante (dias)"
+              htmlFor={fieldId("valid")}
+              error={!readOnly && step.discountValidDays < 1 ? "Mínimo 1 dia." : undefined}
+            >
+              <Input
+                id={fieldId("valid")}
+                type="number"
+                min={1}
+                inputMode="numeric"
+                value={step.discountValidDays}
+                disabled={readOnly}
+                className="tabular-nums"
+                onChange={(event) => onChange({ ...step, discountValidDays: Number(event.target.value) || 0 })}
+              />
+            </Field>
+          </div>
+          <SelectField
+            id={fieldId("scope")}
+            label="Aplica-se a"
+            value={step.discountScope}
+            options={SCOPE_OPTIONS}
+            disabled={readOnly}
+            onChange={(value) => onChange({ ...step, discountScope: value as DiscountScope })}
+          />
+          <span className="caption-style text-subtle">
+            Cria a proposta para o gestor de conta apresentar (aparece em Follow-up). Uma proposta nova substitui a anterior; quando o cliente compra dentro da validade, fica como aproveitada.
+          </span>
+        </>
       )}
     </div>
   );

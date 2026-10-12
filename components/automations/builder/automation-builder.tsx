@@ -48,6 +48,9 @@ import {
 } from "@/lib/automations";
 import { useAutomationsStore } from "@/stores/automations-store";
 import { useCompaniesStore } from "@/stores/companies-store";
+import { useSalesStore } from "@/stores/sales-store";
+import { useToday } from "@/hooks/use-today";
+import AutomationResults from "./automation-results";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useUiStore } from "@/stores/ui-store";
 import ChevronIcon from "@/public/assets/images/_common/chevron-down.svg";
@@ -68,6 +71,8 @@ const ABC_OPTIONS = [
 ];
 
 const TRIGGER_NOTES: Partial<Record<TriggerType, string>> = {
+  "dias-sem-comprar":
+    "Conta a partir da última compra registada em Vendas. Quando o cliente volta a comprar, a sequência pára.",
   aniversario:
     "Precisa da data de início da relação com o cliente, que ainda não existe na ficha.",
   "divida-vencida":
@@ -114,6 +119,8 @@ export default function AutomationBuilder({ automation }: AutomationBuilderProps
   const weeklyCap = useAutomationsStore((state) => state.weeklyCap);
   const setSidebarOpen = useUiStore((state) => state.setSidebarOpen);
   const companies = useCompaniesStore((state) => state.companies);
+  const sales = useSalesStore((state) => state.sales);
+  const today = useToday();
   const emailTemplates = useSettingsStore((state) => state.emailTemplates);
   const smsTemplates = useSettingsStore((state) => state.smsTemplates);
   const zones = useSettingsStore((state) => state.zones);
@@ -127,10 +134,11 @@ export default function AutomationBuilder({ automation }: AutomationBuilderProps
   const days = stepDays(steps);
   const issues = automationIssues(automation);
   const weeklyMessages = maxMessagesInWeek(steps);
-  const entries = useMemo(
-    () => simulateEntries(automation, companies),
-    [automation, companies],
+  const simulation = useMemo(
+    () => simulateEntries(automation, companies, sales, today),
+    [automation, companies, sales, today],
   );
+  const entries = simulation?.entries ?? null;
 
   return (
     <section className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -386,18 +394,19 @@ export default function AutomationBuilder({ automation }: AutomationBuilderProps
               ) : (
                 <>
                   <span className="lead-style">
-                    Hoje entrariam {entries.length}{" "}
-                    {entries.length === 1 ? "cliente" : "clientes"}
+                    {entries.length === 1
+                      ? "1 cliente cumpre hoje o gatilho"
+                      : `${entries.length} clientes cumprem hoje o gatilho`}
                   </span>
                   <ul className="divide-border flex flex-col divide-y">
-                    {entries.slice(0, 6).map((company) => (
+                    {entries.slice(0, 6).map(({ company, days }) => (
                       <li
                         key={company.id}
                         className="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0"
                       >
                         <span className="caption-style text-soft truncate">{company.name}</span>
                         <span className="caption-style text-subtle shrink-0 tabular-nums">
-                          {company.activityDays} dias
+                          {days} dias sem comprar
                         </span>
                       </li>
                     ))}
@@ -407,9 +416,18 @@ export default function AutomationBuilder({ automation }: AutomationBuilderProps
                       e mais {entries.length - 6}.
                     </span>
                   )}
+                  {simulation && simulation.withoutHistory > 0 && (
+                    <span className="caption-style text-subtle">
+                      {simulation.withoutHistory === 1
+                        ? "1 cliente sem compras registadas fica de fora."
+                        : `${simulation.withoutHistory} clientes sem compras registadas ficam de fora.`}
+                    </span>
+                  )}
                 </>
               )}
             </section>
+
+            <AutomationResults automation={automation} />
 
             <section className="border-border flex flex-col gap-3 rounded-xl border p-5">
               <h2 className="eyebrow-style text-faint font-normal">Estado</h2>
@@ -421,8 +439,9 @@ export default function AutomationBuilder({ automation }: AutomationBuilderProps
                 </ul>
               )}
               <span className="caption-style text-subtle">
-                Modo sandbox: ativar não envia mensagens nem cria tarefas reais. A
-                execução depende de Supabase e dos fornecedores de e-mail e SMS.
+                {trigger.type === "dias-sem-comprar"
+                  ? "Ativa, corre sobre os dados do CRM: cria propostas de desconto, tarefas e notificações e muda a fase do cliente. E-mail e SMS ficam em modo sandbox — registados, nunca enviados."
+                  : "Este gatilho ainda não corre: depende de acontecimentos que só o servidor regista. Ativar guarda a regra; e-mail e SMS ficam sempre em modo sandbox."}
               </span>
               <div className="flex flex-wrap gap-2">
                 {automation.status === "Ativa" ? (

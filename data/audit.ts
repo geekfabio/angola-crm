@@ -138,3 +138,5 @@ export const AUDIT_EVENTS: AuditEvent[] = [
     sensitive: true,
   },
 ];
+
+export const SYSTEM_ACTOR = "Automações";
