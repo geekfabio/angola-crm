@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import Button from "@/components/_ui/button";
 import OpportunitiesHeader from "./header/header";
 import OpportunitiesToolbar from "./toolbar/toolbar";
+import OpportunitiesTotals from "./opportunities-totals";
 import KanbanBoard from "./kanban/kanban-board";
 import OpportunitiesTable from "./table/opportunities-table";
 import OpportunityDetail from "./detail/opportunity-detail";
@@ -38,6 +39,7 @@ export default function Opportunities() {
       className="flex min-h-0 min-w-0 flex-1 flex-col"
     >
       <OpportunitiesHeader count={visible.length} />
+      <OpportunitiesTotals opportunities={visible} />
       <OpportunitiesToolbar />
       {overdue && (
         <div

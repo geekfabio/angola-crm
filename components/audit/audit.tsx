@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import ModuleHeader from "@/components/_common/module-header";
+import TotalsBar from "@/components/_common/totals/totals-bar";
 import FilterMenu from "@/components/_common/filter-menu";
 import { useOpenTarget } from "@/components/_common/navigation/use-open-target";
 import Avatar from "@/components/_ui/avatar";
@@ -26,7 +27,7 @@ import {
   groupAuditByDay,
 } from "@/lib/audit";
 import { downloadCsv } from "@/lib/csv";
-import { formatDayHeading, formatTime, nowLuandaLocal } from "@/lib/format";
+import { formatDayHeading, formatNumber, formatTime, nowLuandaLocal, plural } from "@/lib/format";
 import { useAuditStore } from "@/stores/audit-store";
 import AlertIcon from "@/public/assets/images/companies/sidebar/alert-triangle.svg";
 import ShareIcon from "@/public/assets/images/companies/toolbar/share.svg";
@@ -124,6 +125,9 @@ export default function Audit() {
     [events],
   );
   const filtered = JSON.stringify(filters) !== JSON.stringify(DEFAULT_AUDIT_FILTERS);
+  const sensitiveCount = visible.filter((event) => event.sensitive).length;
+  const today = now === null ? null : nowLuandaLocal(new Date(now)).slice(0, 10);
+  const todayCount = visible.filter((event) => event.at.startsWith(today ?? "-")).length;
 
   function update<K extends keyof typeof filters>(key: K, value: (typeof filters)[K]) {
     setFilters((current) => ({ ...current, [key]: value }));
@@ -132,6 +136,25 @@ export default function Audit() {
   return (
     <section className="flex min-h-0 min-w-0 flex-1 flex-col">
       <ModuleHeader title="Auditoria" count={visible.length} />
+      <TotalsBar
+        id="auditoria"
+        summary={`${plural(visible.length, "alteração", "alterações")} · ${formatNumber(sensitiveCount)} em dados sensíveis`}
+        items={[
+          { key: "total", label: "Alterações", value: formatNumber(visible.length), hint: "com os filtros atuais" },
+          { key: "hoje", label: "Hoje", value: now === null ? "—" : formatNumber(todayCount) },
+          {
+            key: "sensiveis",
+            label: "Dados sensíveis",
+            value: formatNumber(sensitiveCount),
+            hint: "consentimentos, envios, acessos",
+            tone: sensitiveCount > 0 ? "warning" : undefined,
+            pressed: filters.sensitiveOnly,
+            onSelect: () => update("sensitiveOnly", !filters.sensitiveOnly),
+          },
+          { key: "pessoas", label: "Pessoas", value: formatNumber(new Set(visible.map((event) => event.actor)).size) },
+          { key: "modulos", label: "Módulos", value: formatNumber(new Set(visible.map((event) => event.target.module)).size) },
+        ]}
+      />
 
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 px-4 py-4">
         <div className="flex min-w-0 flex-wrap items-center gap-2">

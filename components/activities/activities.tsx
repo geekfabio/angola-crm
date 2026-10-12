@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import ActivitiesHeader from "./header/header";
 import ActivitiesToolbar from "./toolbar/toolbar";
+import ActivitiesTotals from "./activities-totals";
 import ActivityList from "./list/activity-list";
 import ActivityCalendar from "./calendar/activity-calendar";
 import TaskBoard from "./tasks/task-board";
@@ -47,6 +48,7 @@ export default function Activities() {
   return (
     <section className="flex min-h-0 min-w-0 flex-1 flex-col">
       <ActivitiesHeader count={visibleActivities.length} />
+      <ActivitiesTotals activities={visibleActivities} tasks={visibleTasks} today={todayIso} />
       <ActivitiesToolbar />
       {view === "lista" && <ActivityList activities={visibleActivities} />}
       {view === "calendario" && (

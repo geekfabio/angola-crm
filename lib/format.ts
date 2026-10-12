@@ -147,3 +147,14 @@ export function formatDayHeading(day: string, now: number | null) {
   }
   return formatDateLong(day);
 }
+
+const COMPACT_FORMATTER = new Intl.NumberFormat("pt-AO", { maximumFractionDigits: 1 });
+
+export function formatMoneyCompact(value: number) {
+  const { amount, suffix } = compactMoneyParts(value);
+  return `${COMPACT_FORMATTER.format(amount)} ${suffix}`;
+}
+
+export function plural(count: number, singular: string, pluralForm: string) {
+  return `${formatNumber(count)} ${count === 1 ? singular : pluralForm}`;
+}

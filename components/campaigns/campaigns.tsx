@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import ModuleHeader from "@/components/_common/module-header";
 import CampaignsToolbar from "./toolbar/toolbar";
+import CampaignsTotals from "./campaigns-totals";
 import CampaignsTable from "./table/campaigns-table";
 import CampaignEditor from "./editor/campaign-editor";
 import TemplateLibraryDialog from "./library/template-library-dialog";
@@ -30,6 +31,7 @@ export default function Campaigns() {
       ) : (
         <section className="flex min-h-0 min-w-0 flex-1 flex-col">
           <ModuleHeader title="Campanhas" count={visible.length} />
+          <CampaignsTotals campaigns={visible} />
           <CampaignsToolbar />
           <CampaignsTable campaigns={visible} />
         </section>

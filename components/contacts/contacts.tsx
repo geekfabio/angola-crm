@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import ModuleHeader from "@/components/_common/module-header";
 import ContactsToolbar from "./toolbar/toolbar";
+import ContactsTotals from "./contacts-totals";
 import ContactsTable from "./table/contacts-table";
 import ContactDetail from "./detail/contact-detail";
 import NewContactDialog from "./new-contact/new-contact-dialog";
@@ -24,6 +25,7 @@ export default function Contacts() {
   return (
     <section className="flex min-h-0 min-w-0 flex-1 flex-col">
       <ModuleHeader title="Contactos" count={visible.length} />
+      <ContactsTotals contacts={visible} />
       <ContactsToolbar />
       <ContactsTable contacts={visible} />
       <ContactDetail />

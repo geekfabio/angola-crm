@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import ModuleHeader from "@/components/_common/module-header";
 import AutomationsToolbar from "./toolbar/toolbar";
+import AutomationsTotals from "./automations-totals";
 import AutomationsTable from "./table/automations-table";
 import AutomationBuilder from "./builder/automation-builder";
 import { filterAutomations } from "@/lib/automations";
@@ -25,6 +26,7 @@ export default function Automations() {
   return (
     <section className="flex min-h-0 min-w-0 flex-1 flex-col">
       <ModuleHeader title="Automações" count={visible.length} />
+      <AutomationsTotals automations={visible} />
       <AutomationsToolbar />
       <AutomationsTable automations={visible} />
     </section>
