@@ -1,3 +1,4 @@
+import type { FollowUp } from "./follow-ups";
 export const SEGMENTS = ["Grossista", "Retalho", "HORECA", "Revendedor"] as const;
 
 export const STAGES = [
@@ -132,6 +133,7 @@ export type Company = {
   activityDays: number;
   logo?: string;
   archived?: boolean;
+  nextFollowUp?: FollowUp;
 };
 
 export const TREND_PATTERN = [

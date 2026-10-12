@@ -8,7 +8,6 @@ import ActivityList from "./list/activity-list";
 import ActivityCalendar from "./calendar/activity-calendar";
 import TaskBoard from "./tasks/task-board";
 import DailyRoute from "./route/daily-route";
-import NewActivityDialog from "./new-activity/new-activity-dialog";
 import NewTaskDialog from "./new-task/new-task-dialog";
 import { filterActivities } from "@/lib/activities";
 import { filterTasks } from "@/lib/tasks";
@@ -58,7 +57,6 @@ export default function Activities() {
       {view === "rota" && (
         <DailyRoute activities={activities} tasks={tasks} />
       )}
-      <NewActivityDialog />
       <NewTaskDialog />
     </section>
   );

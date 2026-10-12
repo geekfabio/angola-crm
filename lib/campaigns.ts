@@ -18,6 +18,8 @@ import {
   type CampaignEvent,
   type CampaignEventType,
 } from "@/data/campaign-events";
+import { SALES, SALES_ANCHOR, type Sale } from "@/data/sales";
+import { abcBySales } from "./sales";
 import type { Company } from "@/data/companies";
 import type { Contact, ContactabilityStatus } from "@/data/contacts";
 import { normalizeAngolanPhone, operatorFor, type Operator } from "./phone";
@@ -115,19 +117,12 @@ export function missingFallbacks(fallbacks: Fallbacks) {
   return VARIABLES.filter((variable) => !fallbacks[variable.key].trim());
 }
 
-export function abcClasses(companies: Company[]): Map<string, AbcClass> {
-  const sorted = [...companies].sort((a, b) => b.pipelineValue - a.pipelineValue);
-  const total = sorted.reduce((sum, company) => sum + company.pipelineValue, 0) || 1;
-  const classes = new Map<string, AbcClass>();
-  let cumulative = 0;
-
-  for (const company of sorted) {
-    const share = cumulative / total;
-    classes.set(company.id, share < 0.8 ? "A" : share < 0.95 ? "B" : "C");
-    cumulative += company.pipelineValue;
-  }
-
-  return classes;
+export function abcClasses(
+  companies: Company[],
+  sales: Sale[] = SALES,
+  today: string = SALES_ANCHOR.slice(0, 10),
+): Map<string, AbcClass> {
+  return abcBySales(companies, sales, today);
 }
 
 export type ExclusionReason =

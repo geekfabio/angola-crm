@@ -9,6 +9,7 @@ import SendersTab from "./senders/senders-tab";
 import TemplatesTab from "./templates/templates-tab";
 import TeamsTab from "./teams/teams-tab";
 import ZonesTab from "./zones/zones-tab";
+import IntegrationsTab from "./integrations/integrations-tab";
 import AccessTab from "./access/access-tab";
 import { useSettingsStore, type SettingsTab } from "@/stores/settings-store";
 
@@ -19,6 +20,7 @@ const TABS: { key: SettingsTab; label: string }[] = [
   { key: "equipas", label: "Equipas" },
   { key: "zonas", label: "Zonas" },
   { key: "acessos", label: "Acessos" },
+  { key: "integracoes", label: "Integrações" },
 ];
 
 const PANELS: Record<SettingsTab, ComponentType> = {
@@ -28,6 +30,7 @@ const PANELS: Record<SettingsTab, ComponentType> = {
   equipas: TeamsTab,
   zonas: ZonesTab,
   acessos: AccessTab,
+  integracoes: IntegrationsTab,
 };
 
 export default function Settings() {

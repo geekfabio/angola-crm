@@ -27,6 +27,8 @@ import { useSettingsStore } from "@/stores/settings-store";
 import { ACTIVITY_TYPES, type Activity, type ActivityType } from "@/data/activities";
 import { useActivitiesStore } from "@/stores/activities-store";
 import { useCompaniesStore } from "@/stores/companies-store";
+import { FOLLOW_UP_TYPES, type FollowUpType } from "@/data/follow-ups";
+import { formatDateShort } from "@/lib/format";
 import PlusIcon from "@/public/assets/images/_common/plus.svg";
 
 function today() {
@@ -41,6 +43,8 @@ type FormState = {
   zone: string;
   date: string;
   note: string;
+  nextDate: string;
+  nextType: FollowUpType;
 };
 
 const EMPTY_FORM: FormState = {
@@ -51,6 +55,8 @@ const EMPTY_FORM: FormState = {
   zone: "",
   date: today(),
   note: "",
+  nextDate: "",
+  nextType: "Chamada",
 };
 
 export default function NewActivityDialog() {
@@ -76,13 +82,34 @@ export default function NewActivityDialog() {
       zone: editing.zone,
       date: editing.date,
       note: editing.note,
+      nextDate: "",
+      nextType: "Chamada",
     });
   }
+  const prefill = useActivitiesStore((state) => state.prefill);
+  const prefillCompany = useCompaniesStore((state) =>
+    state.companies.find((company) => company.id === prefill?.companyId),
+  );
+  const prefillKey = prefill ? `prefill-${prefill.companyId}-${prefill.type}` : null;
+  if (open && !editing && prefill && prefillCompany && loadedFor !== prefillKey) {
+    setLoadedFor(prefillKey);
+    setForm({
+      ...EMPTY_FORM,
+      type: prefill.type,
+      companyId: prefill.companyId,
+      owner: prefillCompany.nextFollowUp?.owner ?? prefillCompany.owner,
+      zone: prefillCompany.zone,
+      date: today(),
+    });
+  }
+  const scheduleFollowUp = useCompaniesStore((state) => state.scheduleFollowUp);
   const zones = useSettingsStore((state) => state.zones);
   const companies = useCompaniesStore((state) => state.companies);
   const zone = form.zone || zones[0]?.name || "";
   const [noteError, setNoteError] = useState<string | null>(null);
   const noteRef = useRef<HTMLTextAreaElement>(null);
+
+  const pendingFollowUp = companies.find((item) => item.id === form.companyId)?.nextFollowUp;
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -127,6 +154,15 @@ export default function NewActivityDialog() {
     };
 
     addActivity(activity);
+    if (form.nextDate) {
+      scheduleFollowUp(
+        company.id,
+        { date: form.nextDate, type: form.nextType, note: "", owner: form.owner },
+        { silent: true },
+      );
+    } else if (company.nextFollowUp && company.nextFollowUp.date <= activity.date) {
+      scheduleFollowUp(company.id, null, { silent: true });
+    }
   }
 
   return (
@@ -268,6 +304,50 @@ export default function NewActivityDialog() {
               />
             </Field>
           </FormSection>
+
+          {!editingId && (
+            <FormSection title="Próximo passo">
+              {prefill?.followUpNote && (
+                <p className="caption-style text-subtle">Motivo do seguimento: {prefill.followUpNote}</p>
+              )}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field
+                  label="Voltar a contactar a"
+                  htmlFor="activity-next-date"
+                  hint="Opcional. Aparece em Follow-up nesse dia."
+                >
+                  <Input
+                    id="activity-next-date"
+                    type="date"
+                    min={today()}
+                    value={form.nextDate}
+                    onChange={(event) => update("nextDate", event.target.value)}
+                    className="tabular-nums"
+                  />
+                </Field>
+                <Field label="Como" htmlFor="activity-next-type">
+                  <Select value={form.nextType} onValueChange={(value) => update("nextType", value as FollowUpType)}>
+                    <SelectTrigger id="activity-next-type">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FOLLOW_UP_TYPES.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </div>
+              {pendingFollowUp && !form.nextDate && (
+                <p className="caption-style text-soft">
+                  Este registo dá por concluído o contacto agendado ({pendingFollowUp.type.toLowerCase()} a{" "}
+                  {formatDateShort(pendingFollowUp.date)}).
+                </p>
+              )}
+            </FormSection>
+          )}
 
           <DialogFooter>
             {editingId && (

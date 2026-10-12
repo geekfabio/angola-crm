@@ -9,6 +9,8 @@ import { useCompaniesStore } from "@/stores/companies-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useOpportunitiesStore } from "@/stores/opportunities-store";
 import { useUiStore } from "@/stores/ui-store";
+import { useSalesStore } from "@/stores/sales-store";
+import { useFollowUps } from "@/components/follow-up/use-follow-ups";
 import { ALL_TEAMS, ANY_ZONE } from "@/lib/companies";
 import { ZONE_DOTS } from "./zone-dots";
 import { TEAM_ICON_COMPONENTS } from "./team-icons";
@@ -24,14 +26,17 @@ import AlertTriangleIcon from "@/public/assets/images/companies/sidebar/alert-tr
 import UserPlusIcon from "@/public/assets/images/companies/sidebar/user-plus.svg";
 import MessageQuestionIcon from "@/public/assets/images/companies/sidebar/message-question.svg";
 import ClockIcon from "@/public/assets/images/companies/detail/clock.svg";
+import WalletIcon from "@/public/assets/images/companies/sidebar/wallet.svg";
 
 const NAV_ITEMS = [
   { href: "/", icon: BuildingIcon, label: "Clientes", withCount: true },
+  { href: "/follow-up", icon: ClockIcon, label: "Follow-up", withFollowUps: true },
   { href: "/oportunidades", icon: ClipboardIcon, label: "Oportunidades" },
   { href: "/previsao", icon: BarChartIcon, label: "Previsão" },
   { href: "/relatorios", icon: BarChartAltIcon, label: "Relatórios" },
   { href: "/atividades", icon: ListIcon, label: "Atividades" },
   { href: "/contactos", icon: BookClosedIcon, label: "Contactos" },
+  { href: "/vendas", icon: WalletIcon, label: "Vendas", withUnmatched: true },
   { href: "/campanhas", icon: MailIcon, label: "Campanhas" },
   { href: "/automacoes", icon: ClockIcon, label: "Automações" },
   { href: "/tickets", icon: MessageQuestionIcon, label: "Tickets" },
@@ -54,6 +59,9 @@ export default function SidebarContent() {
   const overdueFilter = useOpportunitiesStore((state) => state.overdue);
   const applyView = useCompaniesStore((state) => state.applyView);
   const setHelpOpen = useUiStore((state) => state.setHelpOpen);
+  const { items: followUps } = useFollowUps();
+  const dueFollowUps = followUps.filter((item) => item.bucket === "atrasado" || item.bucket === "hoje").length;
+  const unmatchedSales = useSalesStore((state) => state.sales.filter((sale) => !sale.companyId).length);
   const teams = useSettingsStore((state) => state.teams);
   const zones = useSettingsStore((state) => state.zones);
   const setSettingsTab = useSettingsStore((state) => state.setTab);
@@ -103,7 +111,13 @@ export default function SidebarContent() {
                       : undefined
                 }
                 count={
-                  "withCount" in item && item.withCount ? clientCount : undefined
+                  "withCount" in item && item.withCount
+                    ? clientCount
+                    : "withUnmatched" in item && item.withUnmatched && unmatchedSales > 0
+                      ? unmatchedSales
+                      : "withFollowUps" in item && item.withFollowUps && dueFollowUps > 0
+                        ? dueFollowUps
+                        : undefined
                 }
               />
             ))}

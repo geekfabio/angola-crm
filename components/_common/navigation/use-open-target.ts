@@ -8,6 +8,7 @@ import { useCompaniesStore } from "@/stores/companies-store";
 import { useContactsStore } from "@/stores/contacts-store";
 import { useOpportunitiesStore } from "@/stores/opportunities-store";
 import { useTicketsStore } from "@/stores/tickets-store";
+import { useSalesStore } from "@/stores/sales-store";
 
 function openEntity({ module, id }: EntityRef) {
   if (!id) return;
@@ -35,6 +36,11 @@ function openEntity({ module, id }: EntityRef) {
     case "Campanhas": {
       const store = useCampaignsStore.getState();
       if (store.campaigns.some((item) => item.id === id)) store.openEditor(id);
+      return;
+    }
+    case "Vendas": {
+      const store = useSalesStore.getState();
+      if (store.sales.some((item) => item.id === id && !item.companyId)) store.setAssociateId(id);
       return;
     }
     case "Automações": {

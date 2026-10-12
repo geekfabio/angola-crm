@@ -20,6 +20,8 @@ import PipelineHealth from "./pipeline-health";
 import ActivityTrend from "./activity-trend";
 import ScoreCard from "./score-card";
 import ClientTimeline from "./client-timeline";
+import Purchases from "./purchases";
+import NextFollowUp from "./next-follow-up";
 import CompanyEditForm, {
   COMPANY_FORM_ID,
   companyToDraft,
@@ -156,6 +158,14 @@ export default function CompanyDetail() {
                   {owner.phone}
                 </span>
               </div>
+            </DetailSection>
+
+            <DetailSection title="Próximo contacto">
+              <NextFollowUp company={company} />
+            </DetailSection>
+
+            <DetailSection title="Compras">
+              <Purchases companyId={company.id} companyName={company.name} />
             </DetailSection>
 
             <DetailSection title="Linha do tempo">

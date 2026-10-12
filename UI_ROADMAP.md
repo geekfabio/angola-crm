@@ -1,4 +1,4 @@
-# Roteiro de UI — 18 fases
+# Roteiro de UI — 20 fases
 
 Enquanto o `ROADMAP.md` ordena o produto por fases de negócio (fundação, dados reais, Supabase), este ficheiro ordena a **construção da interface** dos módulos que já têm rota mas ainda são esqueleto visual — tabela de leitura, sem store, sem diálogos, sem painel de detalhe.
 
@@ -216,6 +216,41 @@ Pedido do utilizador: antes de módulos novos, nenhum botão, separador ou núme
 - Diálogos de nova oportunidade, contacto, tarefa e atividade, e os indicadores da Previsão, passaram a ler os clientes do store (incluem clientes novos, excluem arquivados).
 
 **Pronto quando:** nenhum controlo visível fica sem efeito e qualquer registo criado pode ser corrigido sem o recriar. ✅ Confirmado.
+
+---
+
+## Fase 19 — Vendas e integração simulada com o sistema de vendas `✅`
+
+Pedido do utilizador: cada compra feita na loja (cartão Multicaixa, numerário, transferência ou a crédito) tem de chegar ao CRM e ficar na ficha do cliente. A ligação ao sistema de vendas real ainda não existe, por isso a fonte é **simulada** — mas atrás de uma interface (`lib/integrations/sales/types.ts` → `SalesSource`) que a integração real vai implementar sem tocar na UI.
+
+- **Fonte simulada** (`lib/integrations/sales/mock-source.ts`): gera compras com documento `FR 2026/N`, canal (Loja Viana, Loja Cazenga, Televendas, Entrega), pagamento, linhas por categoria e identificação do cliente. Histórico fictício de ~200 vendas em `data/sales.ts`, gerado de forma determinística (mesmo resultado no servidor e no browser).
+- **Identificação do cliente**: cartão de cliente, NIF ou telefone (+244), por ordem configurável. Compras sem correspondência ficam em **Vendas → Por associar**, geram um alerta no sino, e associam-se manualmente (com a opção de guardar o identificador para a próxima compra).
+- **Ecrã Vendas** (`/vendas`, atalho `G V`): separadores Todas / Por associar / Em dívida, totais (vendas de hoje, volume 30 dias, ticket médio, por associar, em dívida), filtros por pagamento e canal, pesquisa por documento, cliente ou NIF, exportação CSV, "Simular compra" e "Registar pagamento" nas vendas a crédito.
+- **Ao chegar uma compra**: o último contacto do cliente passa a "Compra" de hoje; se houver uma oportunidade em Proposta/Negociação, o aviso oferece "Marcar oportunidade como ganha".
+- **Ficha do cliente → Compras**: número de compras, volume 90 dias, ticket médio, intervalo habitual entre compras, aviso "Fora do ritmo habitual", categorias mais compradas, dívida e uso do limite de crédito, últimas compras.
+- **Definições → Integrações**: estado da ligação, chegada automática (15/30/60 s) ligar/parar, "Simular compra agora", ordem de identificação e lista das compras recebidas na sessão.
+- A classe ABC das Campanhas passou a ser calculada sobre o volume de compras real (90 dias) e não sobre a carteira.
+
+**Fica para depois:** a integração real — webhook do sistema de vendas para uma Edge Function do Supabase (ou sincronização periódica), com credenciais em Supabase secrets. Falta saber qual é o sistema de vendas e como o cliente é identificado na caixa. Os limites de crédito são fictícios.
+
+**Pronto quando:** uma compra simulada aparece em Vendas, atualiza a ficha do cliente e, sem cliente reconhecido, fica por associar até alguém a associar. ✅ Confirmado.
+
+---
+
+## Fase 20 — Follow-up `✅`
+
+Pedido do utilizador: o CRM tem de dizer **a quem ligar hoje** e não depender da memória do gestor.
+
+- **Próximo contacto por cliente** (`nextFollowUp`: data, como, motivo, responsável): agenda-se, adia-se, edita-se ou remove-se na ficha do cliente ("Próximo contacto"), com registo na Auditoria e "Anular".
+- **Ecrã Follow-up** (`/follow-up`, atalho `G F`, contador na sidebar): junta contactos agendados, tarefas com prazo e lembretes, agrupados em Em atraso / Hoje / Próximos 7 dias, mais **Sugestões do CRM** — clientes fora do ritmo habitual de compra (a partir das vendas da Fase 19) e propostas paradas há 21 dias ou com data de fecho ultrapassada. Filtro por gestor; os totais filtram por grupo.
+- **Ações em cada linha**: Registar contacto, Adiar (amanhã / 3 dias / 1 semana), Concluir tarefa, Agendar contacto a partir de uma sugestão.
+- **Registar contacto** abre o diálogo de atividade (agora global) já preenchido com o cliente e o tipo, e uma secção "Próximo passo": agendar o contacto seguinte no mesmo gesto, ou dar por concluído o contacto agendado. Registar uma atividade atualiza o último contacto do cliente.
+- Uma notificação por sessão no sino resume o que está em atraso e para hoje e abre o Follow-up.
+- Clientes ganhou o indicador "Fora do ritmo de compra" nos totais.
+
+**Fica para depois:** as Automações (Fase 11) continuam sem executar — criar tarefas de follow-up automaticamente depois de uma compra ou de uma campanha depende do motor correr no servidor.
+
+**Pronto quando:** qualquer gestor abre o Follow-up de manhã e vê o que está em atraso e para hoje, regista o contacto e deixa o próximo agendado sem sair do ecrã. ✅ Confirmado.
 
 ---
 

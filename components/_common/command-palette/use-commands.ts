@@ -21,6 +21,7 @@ import MessageQuestionIcon from "@/public/assets/images/companies/sidebar/messag
 import UserPlusIcon from "@/public/assets/images/companies/sidebar/user-plus.svg";
 import ClockIcon from "@/public/assets/images/companies/detail/clock.svg";
 import SettingsIcon from "@/public/assets/images/_common/filter.svg";
+import WalletIcon from "@/public/assets/images/companies/sidebar/wallet.svg";
 import PlusIcon from "@/public/assets/images/_common/plus.svg";
 
 type Icon = ComponentType<SVGProps<SVGSVGElement>>;
@@ -44,11 +45,13 @@ export type CreateCommand = {
 
 export const PAGES: PageCommand[] = [
   { href: "/", label: "Clientes", icon: BuildingIcon, shortcut: "C", keywords: ["carteira", "empresas"] },
+  { href: "/follow-up", label: "Follow-up", icon: ClockIcon, shortcut: "F", keywords: ["seguimento", "hoje", "agenda", "contactar", "lembretes"] },
   { href: "/oportunidades", label: "Oportunidades", icon: ClipboardIcon, shortcut: "O", keywords: ["negócios", "funil", "quadro"] },
   { href: "/previsao", label: "Previsão", icon: BarChartIcon, shortcut: "P", keywords: ["painel", "metas"] },
   { href: "/relatorios", label: "Relatórios", icon: BarChartAltIcon, shortcut: "R", keywords: ["desempenho", "risco"] },
   { href: "/atividades", label: "Atividades", icon: ListIcon, shortcut: "A", keywords: ["visitas", "tarefas", "calendário", "rota"] },
   { href: "/contactos", label: "Contactos", icon: BookClosedIcon, shortcut: "N", keywords: ["pessoas", "consentimento"] },
+  { href: "/vendas", label: "Vendas", icon: WalletIcon, shortcut: "V", keywords: ["compras", "faturas", "pagamentos", "dívida"] },
   { href: "/campanhas", label: "Campanhas", icon: MailIcon, shortcut: "M", keywords: ["e-mail", "sms", "mensagens"] },
   { href: "/automacoes", label: "Automações", icon: ClockIcon, shortcut: "U", keywords: ["regras", "sequências"] },
   { href: "/tickets", label: "Tickets", icon: MessageQuestionIcon, shortcut: "T", keywords: ["suporte", "sla", "reclamações"] },

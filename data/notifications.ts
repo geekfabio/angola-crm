@@ -16,6 +16,7 @@ export type Notification = {
   quote?: string;
   at: string;
   target?: EntityRef;
+  href?: string;
   unread: boolean;
 };
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Button from "@/components/_ui/button";
 import CountBadge from "@/components/_ui/count-badge";
 import {
@@ -29,6 +30,7 @@ export default function Notifications() {
   const markRead = useNotificationsStore((state) => state.markRead);
   const markAllRead = useNotificationsStore((state) => state.markAllRead);
   const openTarget = useOpenTarget();
+  const router = useRouter();
   const now = useNow();
 
   const unreadCount = notifications.filter((item) => item.unread).length;
@@ -36,6 +38,12 @@ export default function Notifications() {
 
   function handleSelect(notification: Notification) {
     markRead(notification.id);
+    if (notification.href) {
+      navigated.current = true;
+      setOpen(false);
+      router.push(notification.href);
+      return;
+    }
     if (!notification.target) return;
     navigated.current = true;
     setOpen(false);

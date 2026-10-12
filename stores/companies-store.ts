@@ -1,8 +1,9 @@
 import { create } from "zustand";
 import { COMPANIES, type Company, type SortKey } from "@/data/companies";
+import { FOLLOW_UPS, type FollowUp } from "@/data/follow-ups";
 import { diffRecord } from "@/lib/audit";
 import { DEFAULT_FILTERS, type CompanyFilters } from "@/lib/companies";
-import { formatMoney, formatPercent } from "@/lib/format";
+import { formatDateShort, formatMoney, formatPercent, nowLuandaLocal } from "@/lib/format";
 import { recordEvent } from "./audit-store";
 
 export type CompanyPatch = Partial<
@@ -67,6 +68,8 @@ type CompaniesState = CompanyFilters & {
   updateCompany: (id: string, patch: CompanyPatch) => void;
   updateMany: (ids: string[], patch: Pick<CompanyPatch, "owner" | "zone">) => void;
   archiveCompanies: (ids: string[]) => void;
+  scheduleFollowUp: (id: string, followUp: FollowUp | null, options?: { silent?: boolean }) => void;
+  registerContact: (id: string, date: string, label: string) => void;
 };
 
 export const useCompaniesStore = create<CompaniesState>((set, get) => {
@@ -79,7 +82,7 @@ export const useCompaniesStore = create<CompaniesState>((set, get) => {
   }
 
   return {
-    companies: COMPANIES,
+    companies: COMPANIES.map((company) => ({ ...company, nextFollowUp: FOLLOW_UPS[company.id] })),
     view: "lista",
     setView: (view) => {
       set({ view });
@@ -203,6 +206,52 @@ export const useCompaniesStore = create<CompaniesState>((set, get) => {
         },
       });
     },
+
+    scheduleFollowUp: (id, followUp, options = {}) => {
+      const company = get().companies.find((item) => item.id === id);
+      if (!company) return;
+      const previous = company.nextFollowUp;
+      set((state) => ({
+        companies: state.companies.map((item) => (item.id === id ? { ...item, nextFollowUp: followUp ?? undefined } : item)),
+      }));
+      recordEvent({
+        action: followUp ? (previous ? "reagendou o próximo contacto de" : "agendou o próximo contacto de") : "concluiu o follow-up de",
+        target: { module: "Clientes", id, label: company.name },
+        companyId: id,
+        notify: false,
+        changes: [
+          {
+            field: "Próximo contacto",
+            from: previous ? `${previous.type} · ${formatDateShort(previous.date)}` : undefined,
+            to: followUp ? `${followUp.type} · ${formatDateShort(followUp.date)}` : "—",
+          },
+        ],
+        toast: options.silent
+          ? undefined
+          : {
+              title: followUp ? "Próximo contacto agendado" : "Follow-up concluído",
+              description: followUp ? `${company.name} · ${followUp.type} a ${formatDateShort(followUp.date)}` : company.name,
+              tone: "success",
+              action: {
+                label: "Anular",
+                run: () =>
+                  set((state) => ({
+                    companies: state.companies.map((item) => (item.id === id ? { ...item, nextFollowUp: previous } : item)),
+                  })),
+              },
+            },
+      });
+    },
+
+    registerContact: (id, date, label) =>
+      set((state) => ({
+        companies: state.companies.map((company) => {
+          if (company.id !== id || date < company.lastInteraction.date) return company;
+          const today = nowLuandaLocal().slice(0, 10);
+          const days = Math.max(0, Math.round((Date.parse(`${today}T00:00:00Z`) - Date.parse(`${date}T00:00:00Z`)) / 86_400_000));
+          return { ...company, lastInteraction: { date, label }, activityDays: days };
+        }),
+      })),
 
     archiveCompanies: (ids) => {
       const snapshot = get().companies.filter((company) => ids.includes(company.id) && !company.archived);

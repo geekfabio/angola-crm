@@ -4,6 +4,7 @@ import { CURRENT_USER } from "@/data/companies";
 import { TASKS, type Task, type TaskStatus } from "@/data/tasks";
 import { DEFAULT_FILTERS } from "@/lib/activities";
 import { recordEvent } from "./audit-store";
+import { useCompaniesStore } from "./companies-store";
 import { diffRecord } from "@/lib/audit";
 import { formatDateShort } from "@/lib/format";
 
@@ -59,6 +60,9 @@ type ActivitiesState = {
   shiftCalendarMonth: (delta: number) => void;
   setNewActivityOpen: (open: boolean) => void;
   editingActivityId: string | null;
+  prefill: { companyId: string; type: ActivityType; followUpNote?: string } | null;
+  startActivity: (prefill: { companyId: string; type: ActivityType; followUpNote?: string }) => void;
+  postponeTask: (id: string, dueDate: string) => void;
   editActivity: (id: string) => void;
   updateActivity: (id: string, patch: Partial<Omit<Activity, "id">>) => void;
   removeActivity: (id: string) => void;
@@ -95,8 +99,34 @@ export const useActivitiesStore = create<ActivitiesState>((set, get) => ({
     }),
 
   setNewActivityOpen: (newActivityOpen) =>
-    set(newActivityOpen ? { newActivityOpen } : { newActivityOpen, editingActivityId: null }),
+    set(newActivityOpen ? { newActivityOpen } : { newActivityOpen, editingActivityId: null, prefill: null }),
   editingActivityId: null,
+  prefill: null,
+  startActivity: (prefill) => set({ prefill, editingActivityId: null, newActivityOpen: true }),
+  postponeTask: (id, dueDate) => {
+    const task = get().tasks.find((item) => item.id === id);
+    if (!task) return;
+    set((state) => ({
+      tasks: state.tasks.map((item) => (item.id === id ? { ...item, dueDate } : item)),
+    }));
+    recordEvent({
+      action: "adiou a tarefa",
+      target: { module: "Atividades", id, label: task.title },
+      notify: false,
+      changes: [{ field: "Prazo", from: formatDateShort(task.dueDate), to: formatDateShort(dueDate) }],
+      toast: {
+        title: "Tarefa adiada",
+        description: `${task.title} · ${formatDateShort(dueDate)}`,
+        action: {
+          label: "Anular",
+          run: () =>
+            set((state) => ({
+              tasks: state.tasks.map((item) => (item.id === id ? { ...item, dueDate: task.dueDate } : item)),
+            })),
+        },
+      },
+    });
+  },
   editActivity: (editingActivityId) => set({ editingActivityId, newActivityOpen: true }),
   updateActivity: (id, patch) => {
     const previous = get().activities.find((item) => item.id === id);
@@ -168,7 +198,9 @@ export const useActivitiesStore = create<ActivitiesState>((set, get) => ({
     set((state) => ({
       activities: [activity, ...state.activities],
       newActivityOpen: false,
+      prefill: null,
     }));
+    useCompaniesStore.getState().registerContact(activity.companyId, activity.date, activity.type);
     recordEvent({
       action: ACTIVITY_PHRASES[activity.type],
       target: { module: "Atividades", id: activity.id, label: activity.companyName },

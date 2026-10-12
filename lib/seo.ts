@@ -63,6 +63,20 @@ export const SITE_ROUTES: SiteRoute[] = [
     priority: 0.7,
   },
   {
+    path: "/follow-up",
+    title: "Follow-up",
+    description: "Contactos agendados, tarefas, lembretes e clientes a precisar de seguimento.",
+    changeFrequency: "daily",
+    priority: 0.8,
+  },
+  {
+    path: "/vendas",
+    title: "Vendas",
+    description: "Compras dos clientes recebidas do sistema de vendas, por associar e em dívida.",
+    changeFrequency: "daily",
+    priority: 0.7,
+  },
+  {
     path: "/campanhas",
     title: "Campanhas",
     description: "Campanhas de Email Marketing e SMS.",
