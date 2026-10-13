@@ -7,6 +7,20 @@ const MUNICIPALITIES: Record<string, string[]> = {
   Huíla: ["Lubango", "Chibia"],
 };
 
+const MUNICIPALITY_GEO: Record<string, { lat: number; lng: number }> = {
+  Talatona: { lat: -8.9164, lng: 13.1834 },
+  Viana: { lat: -8.9035, lng: 13.3741 },
+  Cazenga: { lat: -8.8333, lng: 13.2833 },
+  "Kilamba Kiaxi": { lat: -8.8892, lng: 13.2569 },
+  Maianga: { lat: -8.8236, lng: 13.2311 },
+  Ingombota: { lat: -8.8147, lng: 13.2302 },
+  Benguela: { lat: -12.5763, lng: 13.4055 },
+  Lobito: { lat: -12.3644, lng: 13.5361 },
+  Catumbela: { lat: -12.4318, lng: 13.5468 },
+  Lubango: { lat: -14.9172, lng: 13.4925 },
+  Chibia: { lat: -15.1879, lng: 13.6894 },
+};
+
 const STREETS = [
   "Rua Rainha Ginga",
   "Avenida 21 de Janeiro",
@@ -32,6 +46,10 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = Object.fromEntri
         municipality: municipalities[index % municipalities.length],
         paymentTerms: limit > 0 ? (index % 2 === 0 ? "Crédito a 30 dias" : "Crédito a 15 dias") : "Pronto pagamento",
         creditLimit: limit,
+        geo: (() => {
+          const base = MUNICIPALITY_GEO[municipalities[index % municipalities.length]];
+          return base ? { lat: base.lat + ((index % 5) - 2) * 0.004, lng: base.lng + ((index % 3) - 1) * 0.004 } : undefined;
+        })(),
         customerSince: `${2018 + (index % 7)}-${String((index % 12) + 1).padStart(2, "0")}-${String(((index * 5) % 27) + 1).padStart(2, "0")}`,
       },
     ];

@@ -28,7 +28,7 @@ const COMPANY_FORMATTERS = {
   winProbability: (value: number) => formatPercent(value),
 };
 
-const PROFILE_LABELS: Record<keyof CompanyProfile, string> = {
+const PROFILE_LABELS: Record<Exclude<keyof CompanyProfile, "geo">, string> = {
   nif: "NIF",
   card: "Cartão de cliente",
   phone: "Telefone",
@@ -285,7 +285,7 @@ export const useCompaniesStore = create<CompaniesState>((set, get) => {
       const company = get().companies.find((item) => item.id === id);
       if (!company) return;
       const previous = companyProfile(company);
-      const changes = (Object.keys(PROFILE_LABELS) as (keyof CompanyProfile)[])
+      const changes = (Object.keys(PROFILE_LABELS) as (keyof typeof PROFILE_LABELS)[])
         .filter((key) => previous[key] !== profile[key])
         .map((key) => ({
           field: PROFILE_LABELS[key],

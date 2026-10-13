@@ -138,6 +138,7 @@ export type CompanyProfile = {
   paymentTerms: PaymentTerm;
   creditLimit: number;
   customerSince: string;
+  geo?: { lat: number; lng: number };
 };
 
 export const EMPTY_PROFILE: CompanyProfile = {

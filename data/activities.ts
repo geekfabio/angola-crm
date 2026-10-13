@@ -42,6 +42,16 @@ export type Activity = {
   zone: Zone;
   date: string;
   note: string;
+  checkIn?: CheckIn;
+  pendingSync?: boolean;
+};
+
+export type CheckIn = {
+  at: string;
+  lat: number;
+  lng: number;
+  accuracy: number;
+  distance?: number;
 };
 
 function company(id: string) {

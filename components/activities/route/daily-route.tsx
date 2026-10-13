@@ -11,22 +11,21 @@ import { ownerByName } from "@/data/companies";
 import { useSettingsStore } from "@/stores/settings-store";
 import type { Task } from "@/data/tasks";
 import { groupActivitiesByZone } from "@/lib/activities";
-import { formatDateLong } from "@/lib/format";
+import { formatDateLong, formatTime } from "@/lib/format";
 import { useActivitiesStore } from "@/stores/activities-store";
+import { useToday } from "@/hooks/use-today";
+import { formatDistance } from "@/lib/geo";
+import PlannedVisits from "./planned-visits";
 
 type DailyRouteProps = {
   activities: Activity[];
   tasks: Task[];
 };
 
-function today() {
-  return new Date().toISOString().slice(0, 10);
-}
-
 export default function DailyRoute({ activities, tasks }: DailyRouteProps) {
   const moveTaskStatus = useActivitiesStore((state) => state.moveTaskStatus);
   const zones = useSettingsStore((state) => state.zones);
-  const todayIso = today();
+  const todayIso = useToday();
 
   const todaysActivities = useMemo(
     () => activities.filter((activity) => activity.date === todayIso),
@@ -51,6 +50,8 @@ export default function DailyRoute({ activities, tasks }: DailyRouteProps) {
         <h2 className="truncate">{formatDateLong(todayIso)}</h2>
       </div>
 
+      <PlannedVisits />
+
       {zoneOrder.map((zone) => {
         const zoneActivities = byZone.get(zone) ?? [];
         if (zoneActivities.length === 0) return null;
@@ -71,6 +72,18 @@ export default function DailyRoute({ activities, tasks }: DailyRouteProps) {
                   <span className="caption-style text-subtle">
                     {activity.owner} · {activity.note}
                   </span>
+                  {activity.checkIn && (
+                    <span className="caption-style text-soft">
+                      Check-in às {formatTime(activity.checkIn.at)}
+                      {activity.checkIn.distance !== undefined &&
+                        ` · a ${formatDistance(activity.checkIn.distance)} da morada`}
+                    </span>
+                  )}
+                  {activity.pendingSync && (
+                    <Tag tone="amber" size="sm" className="self-start">
+                      Por sincronizar
+                    </Tag>
+                  )}
                 </div>
               ))}
             </div>
@@ -80,7 +93,7 @@ export default function DailyRoute({ activities, tasks }: DailyRouteProps) {
 
       {todaysActivities.length === 0 && (
         <div className="caption-style text-subtle px-5 py-4">
-          Sem visitas registadas para hoje.
+          Sem visitas registadas hoje.
         </div>
       )}
 

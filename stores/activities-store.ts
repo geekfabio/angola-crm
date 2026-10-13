@@ -4,6 +4,7 @@ import { CURRENT_USER } from "@/data/companies";
 import { TASKS, type Task, type TaskStatus } from "@/data/tasks";
 import { DEFAULT_FILTERS } from "@/lib/activities";
 import { recordEvent } from "./audit-store";
+import { useFieldStore } from "./field-store";
 import { useCompaniesStore } from "./companies-store";
 import { diffRecord } from "@/lib/audit";
 import { formatDateShort } from "@/lib/format";
@@ -195,7 +196,12 @@ export const useActivitiesStore = create<ActivitiesState>((set, get) => ({
       },
     });
   },
-  addActivity: (activity) => {
+  addActivity: (input) => {
+    const field = useFieldStore.getState();
+    const offline = typeof navigator !== "undefined" && !navigator.onLine;
+    const checkIn = input.type === "Visita" ? field.todaysCheckIn(input.companyId) : undefined;
+    const activity = { ...input, checkIn: input.checkIn ?? checkIn, pendingSync: offline || undefined };
+    if (offline) field.enqueue(activity);
     set((state) => ({
       activities: [activity, ...state.activities],
       newActivityOpen: false,
@@ -206,7 +212,13 @@ export const useActivitiesStore = create<ActivitiesState>((set, get) => ({
       action: ACTIVITY_PHRASES[activity.type],
       target: { module: "Atividades", id: activity.id, label: activity.companyName },
       companyId: activity.companyId,
-      toast: { title: "Atividade registada", description: `${activity.type} · ${activity.companyName}`, tone: "success" },
+      toast: {
+        title: offline ? "Guardado sem rede" : "Atividade registada",
+        description: offline
+          ? `${activity.type} · ${activity.companyName}. Fica neste dispositivo e é enviado quando a rede voltar.`
+          : `${activity.type} · ${activity.companyName}`,
+        tone: "success",
+      },
     });
   },
 

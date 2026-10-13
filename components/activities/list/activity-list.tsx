@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/_ui/scroll-area";
 import { useActivitiesStore } from "@/stores/activities-store";
 import Tag from "@/components/_ui/tag";
 import { ACTIVITY_TONES, type Activity } from "@/data/activities";
+import { formatDistance } from "@/lib/geo";
 import { formatDateLong } from "@/lib/format";
 
 type ActivityListProps = {
@@ -35,6 +36,17 @@ export default function ActivityList({ activities }: ActivityListProps) {
                   <Tag tone="neutral" size="sm">
                     {activity.zone}
                   </Tag>
+                  {activity.checkIn && (
+                    <Tag tone="green" size="sm">
+                      Check-in
+                      {activity.checkIn.distance !== undefined && ` · ${formatDistance(activity.checkIn.distance)}`}
+                    </Tag>
+                  )}
+                  {activity.pendingSync && (
+                    <Tag tone="amber" size="sm">
+                      Por sincronizar
+                    </Tag>
+                  )}
                 </div>
                 <span className="flex items-center gap-2">
                   <span className="caption-style text-subtle">

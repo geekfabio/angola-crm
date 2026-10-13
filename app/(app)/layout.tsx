@@ -5,6 +5,8 @@ import Toaster from "@/components/_ui/toaster";
 import HelpDialog from "@/components/_common/help/help-dialog";
 import SalesSimulator from "@/components/_common/sales-simulator";
 import AutomationRunner from "@/components/_common/automation-runner";
+import ConnectionStatus from "@/components/_common/connection-status";
+import ServiceWorker from "@/components/_common/service-worker";
 import AssociateDialog from "@/components/sales/associate-dialog";
 import NewActivityDialog from "@/components/activities/new-activity/new-activity-dialog";
 import FollowUpNotifier from "@/components/follow-up/follow-up-notifier";
@@ -31,6 +33,8 @@ export default function AppLayout({
       <HelpDialog />
       <SalesSimulator />
       <AutomationRunner />
+      <ConnectionStatus />
+      <ServiceWorker />
       <AssociateDialog />
       <NewActivityDialog />
       <FollowUpNotifier />

@@ -327,14 +327,22 @@ html[data-sidebar-resizing] * {
   }
 }
 
-body:has([data-slot="sheet-content"][data-state="open"]) [data-toaster] {
-  bottom: 5rem;
+body:has([data-slot="sheet-content"][data-state="open"]) [data-toaster],
+body:has([data-slot="dialog-content"][data-state="open"]) [data-toaster] {
+  top: 1rem;
+  bottom: auto;
 }
 
 @media (width >= 40rem) {
   body:has([data-slot="sheet-content"][data-state="open"]) [data-toaster] {
+    top: auto;
     bottom: 1rem;
     left: 1rem;
     right: auto;
+  }
+
+  body:has([data-slot="dialog-content"][data-state="open"]):not(:has([data-slot="sheet-content"][data-state="open"])) [data-toaster] {
+    top: auto;
+    bottom: 1rem;
   }
 }
