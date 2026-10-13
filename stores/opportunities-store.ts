@@ -10,6 +10,7 @@ import { DEFAULT_FILTERS } from "@/lib/opportunities";
 import { formatDateShort, formatMoney } from "@/lib/format";
 import { diffRecord } from "@/lib/audit";
 import { recordEvent } from "./audit-store";
+import { useAutomationRunsStore } from "./automation-runs-store";
 
 type View = "kanban" | "tabela";
 
@@ -207,6 +208,9 @@ export const useOpportunitiesStore = create<OpportunitiesState>((set, get) => ({
       ),
     }));
     logStageMove(opportunity, stage);
+    const automationEvents = useAutomationRunsStore.getState();
+    automationEvents.emit("fase-alterada", opportunity.companyId, { stage });
+    if (stage === "Fechada - Ganha") automationEvents.emit("oportunidade-ganha", opportunity.companyId);
   },
 
   confirmLossMove: (reason) => {
@@ -237,6 +241,9 @@ export const useOpportunitiesStore = create<OpportunitiesState>((set, get) => ({
       pendingLossMove: null,
     }));
     logStageMove(opportunity, "Fechada - Perdida", reason);
+    const automationEvents = useAutomationRunsStore.getState();
+    automationEvents.emit("fase-alterada", opportunity.companyId, { stage: "Fechada - Perdida" });
+    automationEvents.emit("oportunidade-perdida", opportunity.companyId);
   },
 
   cancelLossMove: () => set({ pendingLossMove: null }),

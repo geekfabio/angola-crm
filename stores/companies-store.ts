@@ -7,6 +7,7 @@ import { DEFAULT_FILTERS, type CompanyFilters } from "@/lib/companies";
 import { formatDateShort, formatMoney, formatPercent, nowLuandaLocal } from "@/lib/format";
 import { recordEvent } from "./audit-store";
 import { useSalesStore } from "./sales-store";
+import { useAutomationRunsStore } from "./automation-runs-store";
 
 export type CompanyPatch = Partial<
   Pick<Company, "name" | "owner" | "zone" | "tags" | "pipelineValue" | "openDeals" | "winProbability">
@@ -159,6 +160,7 @@ export const useCompaniesStore = create<CompaniesState>((set, get) => {
     setNewCompanyOpen: (newCompanyOpen) => set({ newCompanyOpen }),
 
     addCompany: (company) => {
+      useAutomationRunsStore.getState().emit("cliente-criado", company.id);
       set((state) => ({
         companies: [company, ...state.companies],
         newCompanyOpen: false,
@@ -318,6 +320,7 @@ export const useCompaniesStore = create<CompaniesState>((set, get) => {
 
     importCompanies: (created, updated) => {
       const before = get().companies;
+      created.forEach((company) => useAutomationRunsStore.getState().emit("cliente-criado", company.id));
       const updates = new Map(updated);
       set((state) => ({
         companies: [

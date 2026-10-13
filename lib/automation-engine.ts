@@ -6,6 +6,22 @@ import { matchesConditions, stepDays } from "./automations";
 import { addDays } from "./follow-up";
 import { abcBySales, purchaseStats } from "./sales";
 
+export type AutomationEventType =
+  | "cliente-criado"
+  | "fase-alterada"
+  | "oportunidade-ganha"
+  | "oportunidade-perdida"
+  | "campanha-aberta";
+
+export type AutomationEvent = {
+  id: string;
+  type: AutomationEventType;
+  companyId: string;
+  date: string;
+  stage?: string;
+  engagement?: "Aberto" | "Clicou";
+};
+
 export type DueStep = {
   key: string;
   automation: Automation;
@@ -23,16 +39,67 @@ type EngineInput = {
   automations: Automation[];
   companies: Company[];
   sales: Sale[];
+  events?: AutomationEvent[];
   today: string;
   done: Set<string>;
 };
 
-export function evaluableTrigger(automation: Automation) {
-  return automation.trigger.type === "dias-sem-comprar";
+type Enrollment = { key: string; start: string };
+
+function eventMatches(automation: Automation, event: AutomationEvent) {
+  const { trigger } = automation;
+  if (trigger.type !== event.type) return false;
+  if (trigger.type === "fase-alterada") return event.stage === trigger.stage;
+  if (trigger.type === "campanha-aberta") return trigger.engagement === "Aberto" || event.engagement === "Clicou";
+  return true;
 }
 
-export function dueSteps({ automations, companies, sales, today, done }: EngineInput): DueStep[] {
-  const running = automations.filter((automation) => automation.status === "Ativa" && evaluableTrigger(automation));
+function anniversary(customerSince: string, today: string) {
+  if (!customerSince || customerSince.slice(0, 4) >= today.slice(0, 4)) return undefined;
+  const date = `${today.slice(0, 4)}${customerSince.slice(4)}`;
+  return date <= today ? date : undefined;
+}
+
+function enrollments(
+  automation: Automation,
+  company: Company,
+  context: { purchase: ReturnType<typeof purchaseStats>; sales: Sale[]; events: AutomationEvent[]; today: string },
+): Enrollment[] {
+  const { trigger } = automation;
+  const activated = automation.activatedAt ?? "0000-00-00";
+  const fromActivation = (date: string) => (date < activated ? activated : date);
+
+  switch (trigger.type) {
+    case "dias-sem-comprar": {
+      const { purchase } = context;
+      if (!purchase.lastPurchaseAt || purchase.daysSincePurchase === undefined) return [];
+      if (purchase.daysSincePurchase < trigger.days) return [];
+      const lastDate = purchase.lastPurchaseAt.slice(0, 10);
+      return [{ key: lastDate, start: fromActivation(addDays(lastDate, trigger.days)) }];
+    }
+    case "divida-vencida": {
+      const oldest = context.sales
+        .filter((sale) => sale.companyId === company.id && sale.payment === "Crédito" && !sale.paid)
+        .sort((a, b) => a.at.localeCompare(b.at))[0];
+      if (!oldest) return [];
+      const overdueFrom = addDays(oldest.at.slice(0, 10), trigger.days);
+      if (overdueFrom > context.today) return [];
+      return [{ key: oldest.id, start: fromActivation(overdueFrom) }];
+    }
+    case "aniversario": {
+      const date = anniversary(company.profile?.customerSince ?? "", context.today);
+      if (!date || date < activated) return [];
+      return [{ key: date.slice(0, 4), start: date }];
+    }
+    default:
+      return context.events
+        .filter((event) => event.companyId === company.id && event.date >= activated && eventMatches(automation, event))
+        .map((event) => ({ key: event.id, start: event.date }));
+  }
+}
+
+export function dueSteps({ automations, companies, sales, events = [], today, done }: EngineInput): DueStep[] {
+  const running = automations.filter((automation) => automation.status === "Ativa" && automation.steps.length > 0);
   if (running.length === 0) return [];
   const active = companies.filter((company) => !company.archived);
   const abc = abcBySales(active, sales, today);
@@ -42,31 +109,28 @@ export function dueSteps({ automations, companies, sales, today, done }: EngineI
   for (const automation of running) {
     const days = stepDays(automation.steps);
     for (const company of active) {
-      const purchase = stats.get(company.id)!;
-      if (!purchase.lastPurchaseAt || purchase.daysSincePurchase === undefined) continue;
-      if (purchase.daysSincePurchase < automation.trigger.days) continue;
       if (!matchesConditions(company, automation.conditions, abc)) continue;
-      const lastDate = purchase.lastPurchaseAt.slice(0, 10);
-      const threshold = addDays(lastDate, automation.trigger.days);
-      const start = automation.activatedAt && automation.activatedAt > threshold ? automation.activatedAt : threshold;
-      automation.steps.forEach((step, index) => {
-        const dueDate = addDays(start, days[index]);
-        if (dueDate > today) return;
-        const key = `${automation.id}|${company.id}|${lastDate}|${step.id}`;
-        if (done.has(key)) return;
-        due.push({
-          key,
-          automation,
-          company,
-          step,
-          stepIndex: index,
-          dueDate,
-          daysWithoutPurchase: purchase.daysSincePurchase!,
-          topCategories: purchase.topCategories,
-          firstStep: index === 0,
-          lastStep: index === automation.steps.length - 1,
+      const purchase = stats.get(company.id)!;
+      for (const enrollment of enrollments(automation, company, { purchase, sales, events, today })) {
+        automation.steps.forEach((step, index) => {
+          const dueDate = addDays(enrollment.start, days[index]);
+          if (dueDate > today) return;
+          const key = `${automation.id}|${company.id}|${enrollment.key}|${step.id}`;
+          if (done.has(key)) return;
+          due.push({
+            key,
+            automation,
+            company,
+            step,
+            stepIndex: index,
+            dueDate,
+            daysWithoutPurchase: purchase.daysSincePurchase ?? 0,
+            topCategories: purchase.topCategories,
+            firstStep: index === 0,
+            lastStep: index === automation.steps.length - 1,
+          });
         });
-      });
+      }
     }
   }
 

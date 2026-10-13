@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/_ui/scroll-area";
 import StatTile from "@/components/_common/stat-tile";
 import PerformancePanel from "./performance-panel";
 import AtRiskPanel from "./at-risk-panel";
+import CommissionsPanel from "./commissions-panel";
 import {
   activeVsInactive,
   conversionRate,
@@ -88,6 +89,13 @@ export default function Reports() {
               Desempenho por gestor, zona e equipa
             </h2>
             <PerformancePanel opportunities={opportunities} />
+          </div>
+
+          <div className="border-border flex flex-col gap-4 rounded-xl border p-5">
+            <h2 className="eyebrow-style text-faint font-normal">
+              Objetivos e comissões
+            </h2>
+            <CommissionsPanel />
           </div>
 
           <div className="border-border flex flex-col gap-4 rounded-xl border p-5">

@@ -12,8 +12,11 @@ import {
   offerDiscountValue,
   offerScopeLabel,
   renderTemplate,
+  type AutomationEvent,
+  type AutomationEventType,
   type DueStep,
 } from "@/lib/automation-engine";
+import { CAMPAIGN_EVENTS } from "@/data/campaign-events";
 import { addDays } from "@/lib/follow-up";
 import { formatDateShort, formatMoney, formatPercent, nowLuandaLocal, plural } from "@/lib/format";
 import { purchaseStats } from "@/lib/sales";
@@ -62,6 +65,8 @@ type ManualOffer = {
 
 type AutomationRunsState = {
   runs: AutomationRun[];
+  events: AutomationEvent[];
+  emit: (type: AutomationEventType, companyId: string, extra?: Pick<AutomationEvent, "stage" | "engagement">) => void;
   offers: DiscountOffer[];
   runDue: (today: string, options?: { manual?: boolean }) => number;
   createOffer: (input: ManualOffer, today: string) => void;
@@ -122,7 +127,16 @@ function supersede(offers: DiscountOffer[], companyId: string) {
 
 export const useAutomationRunsStore = create<AutomationRunsState>((set, get) => ({
   runs: [],
+  events: [],
   offers: DISCOUNT_OFFERS,
+
+  emit: (type, companyId, extra = {}) =>
+    set((state) => ({
+      events: [
+        ...state.events,
+        { id: `ev-${crypto.randomUUID().slice(0, 8)}`, type, companyId, date: nowLuandaLocal().slice(0, 10), ...extra },
+      ],
+    })),
 
   runDue: (today, options = {}) => {
     const { automations, weeklyCap } = useAutomationsStore.getState();
@@ -130,10 +144,27 @@ export const useAutomationRunsStore = create<AutomationRunsState>((set, get) => 
     const sales = useSalesStore.getState().sales;
     const contacts = useContactsStore.getState().contacts;
     const { emailTemplates, smsTemplates } = useSettingsStore.getState();
+    const campaignEvents: AutomationEvent[] = CAMPAIGN_EVENTS.filter(
+      (event) => event.type === "Aberto" || event.type === "Clicou",
+    ).flatMap((event) => {
+      const contact = contacts.find((item) => item.id === event.contactId);
+      return contact
+        ? [
+            {
+              id: event.id,
+              type: "campanha-aberta" as const,
+              companyId: contact.companyId,
+              date: event.date.slice(0, 10),
+              engagement: event.type as "Aberto" | "Clicou",
+            },
+          ]
+        : [];
+    });
     const due = dueSteps({
       automations,
       companies,
       sales,
+      events: [...campaignEvents, ...get().events],
       today,
       done: new Set(get().runs.map((run) => run.key)),
     });

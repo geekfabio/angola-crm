@@ -70,14 +70,18 @@ const ABC_OPTIONS = [
   ...ABC_CLASSES.map((abc) => ({ value: abc, label: `Classe ${abc}` })),
 ];
 
-const TRIGGER_NOTES: Partial<Record<TriggerType, string>> = {
+const TRIGGER_NOTES: Record<TriggerType, string> = {
   "dias-sem-comprar":
     "Conta a partir da última compra registada em Vendas. Quando o cliente volta a comprar, a sequência pára.",
-  aniversario:
-    "Precisa da data de início da relação com o cliente, que ainda não existe na ficha.",
   "divida-vencida":
-    "Depende da integração com a faturação/ERP (ROADMAP, decisões em aberto).",
-};
+    "Conta a partir da compra a crédito mais antiga por pagar em Vendas. Quando é paga, a sequência seguinte só começa com uma nova dívida.",
+  aniversario: "Usa a data «Cliente desde» dos dados fiscais do cliente; corre uma vez por ano.",
+  "cliente-criado": "Corre para cada cliente criado ou importado depois de a automação ser ativada.",
+  "fase-alterada": "Corre quando uma oportunidade do cliente passa para esta fase.",
+  "oportunidade-ganha": "Corre quando uma oportunidade do cliente é marcada como ganha.",
+  "oportunidade-perdida": "Corre quando uma oportunidade do cliente é marcada como perdida.",
+  "campanha-aberta": "Corre quando um contacto do cliente abre ou clica numa campanha de e-mail.",
+}
 
 function FlowSection({
   label,
@@ -272,9 +276,7 @@ export default function AutomationBuilder({ automation }: AutomationBuilderProps
                   </Field>
                 )}
               </div>
-              {TRIGGER_NOTES[trigger.type] && (
-                <span className="caption-style text-subtle">{TRIGGER_NOTES[trigger.type]}</span>
-              )}
+              <span className="caption-style text-subtle">{TRIGGER_NOTES[trigger.type]}</span>
             </FlowSection>
 
             <Connector />
@@ -388,8 +390,8 @@ export default function AutomationBuilder({ automation }: AutomationBuilderProps
               <h2 className="eyebrow-style text-faint font-normal">Simulação</h2>
               {entries === null ? (
                 <span className="caption-style text-subtle">
-                  Este gatilho dispara quando o acontecimento ocorrer — não há
-                  simulação possível com os dados atuais.
+                  Este gatilho corre quando o acontecimento ocorrer. As execuções
+                  aparecem abaixo e no separador Execuções.
                 </span>
               ) : (
                 <>
@@ -439,9 +441,7 @@ export default function AutomationBuilder({ automation }: AutomationBuilderProps
                 </ul>
               )}
               <span className="caption-style text-subtle">
-                {trigger.type === "dias-sem-comprar"
-                  ? "Ativa, corre sobre os dados do CRM: cria propostas de desconto, tarefas e notificações e muda a fase do cliente. E-mail e SMS ficam em modo sandbox — registados, nunca enviados."
-                  : "Este gatilho ainda não corre: depende de acontecimentos que só o servidor regista. Ativar guarda a regra; e-mail e SMS ficam sempre em modo sandbox."}
+                Ativa, corre sobre os dados do CRM a partir da data de ativação: cria propostas de desconto, tarefas e notificações e muda a fase do cliente. E-mail e SMS saem pela caixa de saída em modo sandbox — registados, nunca entregues a clientes reais.
               </span>
               <div className="flex flex-wrap gap-2">
                 {automation.status === "Ativa" ? (

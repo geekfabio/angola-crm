@@ -220,6 +220,24 @@ export const AUTOMATIONS: Automation[] = [
     updatedAt: "2026-10-10",
   },
   {
+    id: "aut-6",
+    name: "Cobrança de dívida vencida",
+    status: "Ativa",
+    trigger: { ...DEFAULT_TRIGGER, type: "divida-vencida", days: 30 },
+    conditions: { ...DEFAULT_CONDITIONS },
+    steps: [
+      step("aut-6-s1", "criar-tarefa", { taskTitle: "Contactar o cliente sobre a fatura vencida" }),
+      step("aut-6-s2", "notificar-gestor", {
+        waitDays: 7,
+        message: "Fatura a crédito continua por pagar uma semana depois do contacto.",
+      }),
+    ],
+    enrolled: 0,
+    completed: 0,
+    activatedAt: "2026-10-10",
+    updatedAt: "2026-10-10",
+  },
+  {
     id: "aut-3",
     name: "Seguimento de proposta sem resposta",
     status: "Pausada",
