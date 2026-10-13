@@ -1,4 +1,4 @@
-# Roteiro de UI — 21 fases
+# Roteiro de UI — 28 fases
 
 Enquanto o `ROADMAP.md` ordena o produto por fases de negócio (fundação, dados reais, Supabase), este ficheiro ordena a **construção da interface** dos módulos que já têm rota mas ainda são esqueleto visual — tabela de leitura, sem store, sem diálogos, sem painel de detalhe.
 
@@ -189,7 +189,7 @@ Simplificações assumidas: horas corridas (sem horário de expediente nem feria
 
 ---
 
-## Fase 17 — Mensagens funcionais: saldo e crédito de SMS `⬜`
+## Fase 17 — Mensagens funcionais: saldo e crédito de SMS `🔨`
 
 Pedido do utilizador, separado das campanhas: o envio de SMS é pré-pago. O fornecedor é a **Umoja Global**, que subcontrata a **MIMOSMS**, com **pacote único a 20 Kz por mensagem** (mesma regra de contagem da Fase 10: 120 unidades por mensagem, acentos contam 2).
 
@@ -198,7 +198,7 @@ Pedido do utilizador, separado das campanhas: o envio de SMS é pré-pago. O for
 - Envio real via o adaptador de SMS em `lib/messaging/`, com estados por mensagem por webhook, SMS transacional (encomenda, entrega, pagamento) e resposta `PARAR` a retirar o consentimento.
 - Depende de Supabase (saldo e histórico persistidos) e das credenciais do fornecedor em Supabase secrets — nunca no repositório (`AGENTS.md`).
 
-**Pronto quando:** carregar crédito aumenta o saldo, e agendar uma campanha mais cara do que o saldo é bloqueado com o valor em falta.
+**Pronto quando:** carregar crédito aumenta o saldo, e agendar uma campanha mais cara do que o saldo é bloqueado com o valor em falta. ✅ Interface feita na Fase 24 (saldo, carregamentos por referência Multicaixa, reservas, bloqueio do agendamento); falta o envio real e o webhook de estados do fornecedor.
 
 ---
 
@@ -269,6 +269,55 @@ Pedido do utilizador: quando um cliente fica X dias sem comprar, o CRM apresenta
 **Fica para depois:** os outros gatilhos (cliente criado, mudança de fase, campanha aberta, aniversário, dívida vencida) continuam só guardados; "Adicionar a segmento" só fica registado (não há segmentos guardados). Em produção o motor corre no servidor (Supabase cron/Edge Function) e o envio real exige `MESSAGING_LIVE=true` e os fornecedores fechados. O desconto não é aplicado no sistema de vendas — fica registado no CRM; aplicá-lo na caixa depende da integração real.
 
 **Pronto quando:** um cliente que passa os X dias sem comprar recebe uma proposta de desconto sem intervenção, o gestor vê-a no Follow-up, e a compra seguinte com o desconto marca-a como aproveitada. ✅ Confirmado.
+
+---
+
+## Fase 22 — Ficha fiscal, NIF e importação de clientes `✅`
+
+- **Dados fiscais e crédito** na ficha do cliente: NIF (validado — 10 dígitos para empresa, BI para pessoa singular — e único), cartão de cliente, telefone, e-mail de faturação, morada, município, condições de pagamento, limite de crédito editável e "cliente desde". NIF, cartão e telefone são os mesmos que identificam o cliente nas compras (Fase 19).
+- "Novo cliente" pede o NIF e avisa quando já existe ("Abrir ficha").
+- **Importação CSV** (Clientes → Importar): arrastar o ficheiro, mapeamento automático das colunas (editável), verificação linha a linha — criar, atualizar por NIF existente, ignorar (erros, NIF repetido no ficheiro, nome igual a um cliente) — com contacto opcional (sem consentimento até ser registado), modelo de ficheiro para descarregar e "Anular". A exportação de clientes inclui as mesmas colunas fiscais.
+
+**Pronto quando:** um ficheiro do Excel com os clientes atuais entra no CRM sem duplicar quem já lá está. ✅ Confirmado.
+
+## Fase 23 — Catálogo, preços, cotações e encomendas `✅`
+
+- **Catálogo e preços** (Definições): produtos com código, unidade e preço base; disponível ou não; desconto da tabela de preços por segmento (Grossista, Revendedor, HORECA, Retalho).
+- **Cotações** (`/cotacoes`, atalho `G Q`): cotação com linhas do catálogo, quantidade e desconto por linha, IVA 14%, validade; estados rascunho → enviada → aceite/recusada (expirada automaticamente); duplicar; impressão/PDF com a marca. A partir de uma oportunidade: "Criar cotação"; aceitar oferece marcar a oportunidade como ganha.
+- **Encomendas**: a cotação aceite converte em encomenda (entrega ou levantamento, data); pendente → em preparação → entregue; ao entregar, a fatura chega a Vendas como se viesse do sistema de vendas (a crédito para clientes com crédito). Guia de encomenda imprimível.
+- Os avisos deixam de tapar os botões dos painéis laterais.
+
+**Pronto quando:** uma cotação vira encomenda e a encomenda entregue aparece como compra do cliente. ✅ Confirmado.
+
+## Fase 24 — Mensagens: envio, saldo de SMS, conversas e chamadas `✅`
+
+- **Camada de envio** (`lib/messaging/`): adaptador sandbox (o único ligado), caixa de saída com o texto final, custo e destinatário de teste. Automações e conversas enviam por aqui.
+- **Saldo de SMS** (Definições → Mensagens e saldo): saldo, reservado para campanhas agendadas, disponível; carregamentos por referência Multicaixa; agendar uma campanha de SMS sem saldo é bloqueado com o valor em falta; aviso de saldo baixo.
+- **Conversas** (`/conversas`, `G W`): WhatsApp e SMS por contacto, respostas só com consentimento, regra das 24 h do WhatsApp (fora da janela só modelos aprovados), «PARAR» retira o consentimento, registar a conversa como atividade.
+- **Ligar**: telefones com `tel:` na ficha do contacto, do cliente e na conversa; ao ligar abre o registo da chamada.
+
+**Fica para depois:** fornecedores reais (Umoja Global/MIMOSMS, e-mail, WhatsApp Business API), webhooks de entrega e de mensagens recebidas.
+
+## Fase 25 — Equipa de rua: check-in e modo sem rede `✅`
+
+- **Rota do dia** com as visitas planeadas (follow-ups de visita e tarefas de hoje): check-in por GPS com distância à morada do cliente (aviso acima de 300 m), itinerário no mapa, registo da visita com o check-in anexado.
+- **Sem rede**: aviso no topo, os registos ficam no dispositivo (fila persistente) e sincronizam quando a rede volta; marcados "Por sincronizar".
+- Manifesto da aplicação (instalável no telemóvel) e service worker em produção para abrir sem rede.
+
+## Fase 26 — Documentos, calendário e proteção de dados `✅`
+
+- **Documentos** na ficha do cliente: contratos, alvarás, documentos fiscais, fotos; PDF ou imagem até 10 MB; validade com aviso a 30 dias.
+- **Calendário**: Follow-up exporta a agenda da equipa ou de um gestor em `.ics` (Google, Outlook, telemóvel).
+- **Lei n.º 22/11**: exportação dos dados pessoais de um contacto (JSON), anonimização definitiva com confirmação, revisão de retenção (pediu remoção, saiu da empresa, cliente inativo além do prazo).
+
+## Fase 27 — Objetivos, comissões e todos os gatilhos de automação `✅`
+
+- **Objetivos e comissões** (Relatórios): objetivo mensal por gestor (editável), cumprimento, projeção, taxa por escalão (editável), prémio acima de 120%, comissão só sobre o que foi recebido, exportação.
+- **Automações**: passam a correr todos os gatilhos — cliente criado/importado, oportunidade muda de fase, ganha, perdida, campanha aberta/clicada, aniversário do cliente e dívida vencida. Exemplo novo: "Cobrança de dívida vencida".
+
+## Fase 28 — Testes automáticos `✅`
+
+- `npm test` corre os testes da lógica de negócio com o `node:test` do próprio Node (sem bibliotecas novas): NIF, telefones, SMS, importação CSV, cotações e IVA, identificação nas vendas, estatísticas de compra, motor de automações, descontos, comissões, calendário e retenção. Entra na verificação de `AGENTS.md`.
 
 ---
 
