@@ -27,6 +27,7 @@ import UserPlusIcon from "@/public/assets/images/companies/sidebar/user-plus.svg
 import MessageQuestionIcon from "@/public/assets/images/companies/sidebar/message-question.svg";
 import ClockIcon from "@/public/assets/images/companies/detail/clock.svg";
 import WalletIcon from "@/public/assets/images/companies/sidebar/wallet.svg";
+import TargetIcon from "@/public/assets/images/companies/sidebar/target-05.svg";
 
 const NAV_ITEMS = [
   { href: "/", icon: BuildingIcon, label: "Clientes", withCount: true },
@@ -37,6 +38,7 @@ const NAV_ITEMS = [
   { href: "/atividades", icon: ListIcon, label: "Atividades" },
   { href: "/contactos", icon: BookClosedIcon, label: "Contactos" },
   { href: "/vendas", icon: WalletIcon, label: "Vendas", withUnmatched: true },
+  { href: "/cotacoes", icon: TargetIcon, label: "Cotações" },
   { href: "/campanhas", icon: MailIcon, label: "Campanhas" },
   { href: "/automacoes", icon: ClockIcon, label: "Automações" },
   { href: "/tickets", icon: MessageQuestionIcon, label: "Tickets" },

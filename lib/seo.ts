@@ -77,6 +77,13 @@ export const SITE_ROUTES: SiteRoute[] = [
     priority: 0.7,
   },
   {
+    path: "/cotacoes",
+    title: "Cotações",
+    description: "Cotações com a tabela de preços do cliente e encomendas até à entrega.",
+    changeFrequency: "daily",
+    priority: 0.7,
+  },
+  {
     path: "/campanhas",
     title: "Campanhas",
     description: "Campanhas de Email Marketing e SMS.",

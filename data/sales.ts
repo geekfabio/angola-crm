@@ -1,3 +1,4 @@
+import { CATALOG, CATALOG_CATEGORIES } from "./catalog";
 import { COMPANIES } from "./companies";
 
 export const SALE_CHANNELS = ["Loja Viana", "Loja Cazenga", "Televendas", "Entrega"] as const;
@@ -16,15 +17,7 @@ export const PAYMENT_TONES: Record<PaymentMethod, "blue" | "green" | "purple" | 
 export const IDENTIFIER_TYPES = ["Cartão de cliente", "NIF", "Telefone"] as const;
 export type IdentifierType = (typeof IDENTIFIER_TYPES)[number];
 
-export const PRODUCT_CATEGORIES = [
-  "Mercearia",
-  "Bebidas",
-  "Óleos e gorduras",
-  "Arroz e massas",
-  "Laticínios",
-  "Congelados",
-  "Higiene e limpeza",
-] as const;
+export const PRODUCT_CATEGORIES = CATALOG_CATEGORIES;
 export type ProductCategory = (typeof PRODUCT_CATEGORIES)[number];
 
 export type SaleLine = {
@@ -56,38 +49,15 @@ export type CustomerIdentifiers = {
 
 export const SALES_ANCHOR = "2026-10-11T18:00";
 
-const PRODUCTS: Record<ProductCategory, { description: string; price: number }[]> = {
-  Mercearia: [
-    { description: "Açúcar 25 kg", price: 32_500 },
-    { description: "Farinha de trigo 50 kg", price: 41_000 },
-    { description: "Feijão manteiga 25 kg", price: 38_000 },
-  ],
-  Bebidas: [
-    { description: "Água mineral 1,5 L (pack 6)", price: 1_900 },
-    { description: "Refrigerante 33 cl (grade 24)", price: 9_800 },
-    { description: "Sumo 1 L (caixa 12)", price: 14_400 },
-  ],
-  "Óleos e gorduras": [
-    { description: "Óleo alimentar 20 L", price: 46_000 },
-    { description: "Margarina 10 kg", price: 27_500 },
-  ],
-  "Arroz e massas": [
-    { description: "Arroz agulha 25 kg", price: 29_900 },
-    { description: "Massa esparguete 20 × 500 g", price: 12_600 },
-  ],
-  Laticínios: [
-    { description: "Leite UHT 1 L (caixa 12)", price: 13_200 },
-    { description: "Leite em pó 2,5 kg", price: 21_000 },
-  ],
-  Congelados: [
-    { description: "Coxas de frango 10 kg", price: 24_500 },
-    { description: "Carapau 20 kg", price: 36_000 },
-  ],
-  "Higiene e limpeza": [
-    { description: "Detergente 5 L", price: 6_800 },
-    { description: "Sabão em barra (caixa 40)", price: 15_400 },
-  ],
-};
+const PRODUCTS = Object.fromEntries(
+  PRODUCT_CATEGORIES.map((category) => [
+    category,
+    CATALOG.filter((product) => product.category === category).map((product) => ({
+      description: product.name,
+      price: product.price,
+    })),
+  ]),
+) as Record<ProductCategory, { description: string; price: number }[]>;
 
 function random(seed: number) {
   let state = seed >>> 0;

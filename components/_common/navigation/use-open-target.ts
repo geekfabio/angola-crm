@@ -9,6 +9,7 @@ import { useContactsStore } from "@/stores/contacts-store";
 import { useOpportunitiesStore } from "@/stores/opportunities-store";
 import { useTicketsStore } from "@/stores/tickets-store";
 import { useSalesStore } from "@/stores/sales-store";
+import { useQuotesStore } from "@/stores/quotes-store";
 
 function openEntity({ module, id }: EntityRef) {
   if (!id) return;
@@ -41,6 +42,17 @@ function openEntity({ module, id }: EntityRef) {
     case "Vendas": {
       const store = useSalesStore.getState();
       if (store.sales.some((item) => item.id === id && !item.companyId)) store.setAssociateId(id);
+      return;
+    }
+    case "Cotações": {
+      const store = useQuotesStore.getState();
+      if (store.quotes.some((item) => item.id === id)) {
+        store.setView("cotacoes");
+        store.openQuote(id);
+      } else if (store.orders.some((item) => item.id === id)) {
+        store.setView("encomendas");
+        store.openOrder(id);
+      }
       return;
     }
     case "Automações": {

@@ -77,6 +77,7 @@ export default function Toaster() {
     <section
       aria-label="Avisos"
       aria-live="polite"
+      data-toaster
       className="pointer-events-none fixed inset-x-4 bottom-4 z-[60] flex flex-col items-stretch gap-2 sm:left-auto sm:w-[380px]"
     >
       <AnimatePresence initial={false}>

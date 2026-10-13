@@ -38,7 +38,7 @@ type SalesState = {
   associateId: string | null;
   search: string;
   setSearch: (search: string) => void;
-  ingest: (incoming: IncomingSale, options?: { announce?: boolean }) => Sale;
+  ingest: (incoming: IncomingSale, options?: { announce?: boolean; companyId?: string }) => Sale;
   simulate: (announce?: boolean) => Sale;
   associate: (saleId: string, companyId: string, saveIdentifier: boolean) => void;
   markPaid: (saleId: string) => void;
@@ -88,7 +88,7 @@ export const useSalesStore = create<SalesState>((set, get) => ({
 
   ingest: (incoming, options = {}) => {
     const { identifiers, identificationOrder } = get();
-    const companyId = matchCustomer(incoming.identifier, identifiers, identificationOrder);
+    const companyId = options.companyId ?? matchCustomer(incoming.identifier, identifiers, identificationOrder);
     const sale: Sale = {
       ...incoming,
       id: `vd-${crypto.randomUUID().slice(0, 8)}`,
