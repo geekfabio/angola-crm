@@ -17,7 +17,7 @@ import {
 import { ScrollArea } from "@/components/_ui/scroll-area";
 import Tag from "@/components/_ui/tag";
 import { CURRENT_USER, OWNERS, profileByName } from "@/data/companies";
-import { formatNumber, plural } from "@/lib/format";
+import { formatNumber, nowLuandaLocal, plural } from "@/lib/format";
 import {
   FOLLOW_UP_BUCKETS,
   FOLLOW_UP_KIND_LABELS,
@@ -27,7 +27,8 @@ import {
   type FollowUpBucket,
   type FollowUpItem,
 } from "@/lib/follow-up";
-import { cn } from "@/lib/utils";
+import { cn, slugify } from "@/lib/utils";
+import { buildIcs, downloadIcs } from "@/lib/ics";
 import { useActivitiesStore } from "@/stores/activities-store";
 import { useAutomationRunsStore } from "@/stores/automation-runs-store";
 import { useCompaniesStore } from "@/stores/companies-store";
@@ -192,12 +193,33 @@ function FollowUpRow({ item, today }: { item: FollowUpItem; today: string }) {
 
 export default function FollowUp() {
   const { items, today } = useFollowUps();
+  const companies = useCompaniesStore((state) => state.companies);
   const [owner, setOwner] = useState<string>(ALL);
   const [bucket, setBucket] = useState<FollowUpBucket | null>(null);
 
   const mine = useMemo(() => items.filter((item) => owner === ALL || item.owner === owner), [items, owner]);
   const count = (key: FollowUpBucket) => mine.filter((item) => item.bucket === key).length;
   const sections = FOLLOW_UP_BUCKETS.filter((section) => !bucket || section.key === bucket);
+
+  function exportCalendar() {
+    const events = mine
+      .filter((item) => item.due && item.bucket !== "sugestao")
+      .map((item) => {
+        const company = companies.find((entry) => entry.id === item.companyId);
+        return {
+          uid: item.id,
+          date: item.due! < today ? today : item.due!,
+          title: `${FOLLOW_UP_KIND_LABELS[item.kind]}: ${item.title}`,
+          description: `${item.detail}\nResponsável: ${item.owner}`,
+          location: company?.profile ? [company.profile.address, company.profile.municipality].filter(Boolean).join(", ") : undefined,
+        };
+      });
+    const stamp = `${nowLuandaLocal().replace(/[-:]/g, "")}00`;
+    downloadIcs(
+      `follow-up-${owner === ALL ? "equipa" : slugify(owner)}-${today}.ics`,
+      buildIcs(events, owner === ALL ? "Follow-up — equipa" : `Follow-up — ${owner}`, stamp),
+    );
+  }
 
   function tile(key: FollowUpBucket, label: string, hint: string, tone?: "danger" | "warning") {
     return {
@@ -213,7 +235,15 @@ export default function FollowUp() {
 
   return (
     <section className="flex min-h-0 min-w-0 flex-1 flex-col">
-      <ModuleHeader title="Follow-up" count={count("atrasado") + count("hoje")} />
+      <ModuleHeader
+        title="Follow-up"
+        count={count("atrasado") + count("hoje")}
+        actions={
+          <Button variant="secondary" size="sm" onClick={exportCalendar} disabled={mine.every((item) => !item.due)}>
+            Exportar calendário
+          </Button>
+        }
+      />
       <TotalsBar
         id="follow-up"
         summary={`${plural(count("atrasado"), "em atraso", "em atraso")} · ${formatNumber(count("hoje"))} para hoje`}

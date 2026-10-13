@@ -7,6 +7,10 @@ import {
 } from "@/data/contacts";
 import { DEFAULT_FILTERS } from "@/lib/contacts";
 import { recordEvent } from "./audit-store";
+import { useConversationsStore } from "./conversations-store";
+import { useMessagingStore } from "./messaging-store";
+import { ANONYMIZED_NAME } from "@/lib/privacy";
+import { nowLuandaLocal } from "@/lib/format";
 import { diffRecord } from "@/lib/audit";
 
 const CHANNEL_LABELS: Record<ConsentChannel, string> = {
@@ -78,6 +82,7 @@ type ContactsState = {
   setMergeSecondaryId: (id: string | null) => void;
   setMergeChoice: (field: MergeFieldKey, winner: "primary" | "secondary") => void;
   confirmMerge: () => void;
+  anonymize: (id: string) => void;
 };
 
 export const useContactsStore = create<ContactsState>((set, get) => ({
@@ -289,6 +294,51 @@ export const useContactsStore = create<ContactsState>((set, get) => ({
           },
         },
       },
+    });
+  },
+
+  anonymize: (id) => {
+    const contact = get().contacts.find((item) => item.id === id);
+    if (!contact || contact.name === ANONYMIZED_NAME) return;
+    const today = nowLuandaLocal().slice(0, 10);
+    const revoked = { granted: false, date: today, origin: "Anonimização (Lei n.º 22/11)" };
+    set((state) => ({
+      contacts: state.contacts.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              name: ANONYMIZED_NAME,
+              role: "—",
+              phone: "",
+              whatsapp: "",
+              email: "",
+              contactability: "Pediu remoção",
+              consent: { email: revoked, sms: revoked, whatsapp: revoked },
+            }
+          : item,
+      ),
+    }));
+    useConversationsStore.setState((state) => ({
+      conversations: state.conversations.filter((item) => item.contactId !== id),
+      activeId: state.activeId && state.conversations.find((item) => item.id === state.activeId)?.contactId === id ? null : state.activeId,
+    }));
+    useMessagingStore.setState((state) => ({
+      outbox: state.outbox.map((record) =>
+        record.contactId === id ? { ...record, to: "—", toName: ANONYMIZED_NAME, body: "[conteúdo removido]" } : record,
+      ),
+    }));
+    recordEvent({
+      action: "anonimizou os dados pessoais de um contacto de",
+      target: { module: "Contactos", id, label: contact.companyName },
+      companyId: contact.companyId,
+      sensitive: true,
+      notify: false,
+      changes: [
+        { field: "Nome, telefone, e-mail, WhatsApp", to: "Removidos" },
+        { field: "Consentimentos", to: "Retirados" },
+        { field: "Conversas", to: "Apagadas" },
+      ],
+      toast: { title: "Contacto anonimizado", description: "Os dados pessoais foram removidos. Esta ação não se pode anular.", tone: "success" },
     });
   },
 }));

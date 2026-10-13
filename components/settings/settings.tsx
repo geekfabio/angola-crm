@@ -12,6 +12,7 @@ import ZonesTab from "./zones/zones-tab";
 import IntegrationsTab from "./integrations/integrations-tab";
 import CatalogTab from "./catalog/catalog-tab";
 import MessagingTab from "./messaging/messaging-tab";
+import PrivacyTab from "./privacy/privacy-tab";
 import AccessTab from "./access/access-tab";
 import { useSettingsStore, type SettingsTab } from "@/stores/settings-store";
 
@@ -25,6 +26,7 @@ const TABS: { key: SettingsTab; label: string }[] = [
   { key: "integracoes", label: "Integrações" },
   { key: "catalogo", label: "Catálogo e preços" },
   { key: "mensagens", label: "Mensagens e saldo" },
+  { key: "dados", label: "Proteção de dados" },
 ];
 
 const PANELS: Record<SettingsTab, ComponentType> = {
@@ -37,6 +39,7 @@ const PANELS: Record<SettingsTab, ComponentType> = {
   integracoes: IntegrationsTab,
   catalogo: CatalogTab,
   mensagens: MessagingTab,
+  dados: PrivacyTab,
 };
 
 export default function Settings() {

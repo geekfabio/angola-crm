@@ -40,6 +40,7 @@ import XIcon from "@/public/assets/images/companies/detail/x.svg";
 import MailIcon from "@/public/assets/images/companies/detail/mail-04.svg";
 import PhoneIcon from "@/public/assets/images/companies/detail/phone.svg";
 import CallButton from "@/components/_common/call-button";
+import PersonalData from "./personal-data";
 import { useConversationsStore } from "@/stores/conversations-store";
 import { useRouter } from "next/navigation";
 
@@ -168,7 +169,7 @@ export default function ContactDetail() {
               </Select>
             </DetailSection>
 
-            <DetailSection title="Consentimento por canal" className="shadow-none">
+            <DetailSection title="Consentimento por canal">
               <div className="flex flex-col gap-4">
                 {CHANNELS.map((channel) => {
                   const state = contact.consent[channel];
@@ -199,6 +200,10 @@ export default function ContactDetail() {
                   );
                 })}
               </div>
+            </DetailSection>
+
+            <DetailSection title="Dados pessoais" className="shadow-none">
+              <PersonalData contact={contact} />
             </DetailSection>
           </div>
         )}
