@@ -39,6 +39,9 @@ import BookClosedIcon from "@/public/assets/images/companies/sidebar/book-closed
 import XIcon from "@/public/assets/images/companies/detail/x.svg";
 import MailIcon from "@/public/assets/images/companies/detail/mail-04.svg";
 import PhoneIcon from "@/public/assets/images/companies/detail/phone.svg";
+import CallButton from "@/components/_common/call-button";
+import { useConversationsStore } from "@/stores/conversations-store";
+import { useRouter } from "next/navigation";
 
 const CHANNELS = Object.keys(CONSENT_CHANNEL_LABELS) as ConsentChannel[];
 
@@ -47,6 +50,7 @@ export default function ContactDetail() {
   const detailOpen = useContactsStore((state) => state.detailOpen);
   const contacts = useContactsStore((state) => state.contacts);
   const closeDetail = useContactsStore((state) => state.closeDetail);
+  const router = useRouter();
   const updateContactability = useContactsStore(
     (state) => state.updateContactability,
   );
@@ -122,6 +126,22 @@ export default function ContactDetail() {
                   <PhoneIcon aria-hidden className="text-soft size-3" />
                   {contact.phone}
                 </span>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                <CallButton phone={contact.phone} companyId={contact.companyId} label="Ligar" variant="secondary" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    useConversationsStore
+                      .getState()
+                      .start(contact.id, contact.consent.whatsapp.granted ? "WhatsApp" : "SMS");
+                    closeDetail();
+                    router.push("/conversas");
+                  }}
+                >
+                  {contact.consent.whatsapp.granted ? "Conversa WhatsApp" : "Conversa SMS"}
+                </Button>
               </div>
             </div>
 

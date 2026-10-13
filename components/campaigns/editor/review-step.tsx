@@ -25,7 +25,14 @@ import {
 } from "@/lib/format";
 import { SMS_MESSAGE_UNITS, SMS_PRICE, analyzeSms, isWithinWindow } from "@/lib/sms";
 import { useCampaignsStore } from "@/stores/campaigns-store";
+import { useMessagingStore } from "@/stores/messaging-store";
+import { useSettingsStore } from "@/stores/settings-store";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+
+function isPast(local: string) {
+  return luandaLocalToDate(local).getTime() <= Date.now();
+}
 
 type ReviewStepProps = {
   campaign: Campaign;
@@ -38,6 +45,13 @@ export default function ReviewStep({ campaign, audience }: ReviewStepProps) {
   const recordTest = useCampaignsStore((state) => state.recordTest);
   const schedule = useCampaignsStore((state) => state.schedule);
   const cancelSchedule = useCampaignsStore((state) => state.cancelSchedule);
+  const balance = useMessagingStore((state) => state.balance);
+  const reservations = useMessagingStore((state) => state.reservations);
+  const router = useRouter();
+  const reservedElsewhere = Object.entries(reservations)
+    .filter(([campaignId]) => campaignId !== campaign.id)
+    .reduce((sum, [, value]) => sum + value, 0);
+  const availableCredit = balance - reservedElsewhere;
   const [scheduledAt, setScheduledAt] = useState("");
   const [scheduleError, setScheduleError] = useState<string | null>(null);
 
@@ -58,7 +72,7 @@ export default function ReviewStep({ campaign, audience }: ReviewStepProps) {
       setScheduleError("Escolha a data e a hora de envio.");
       return;
     }
-    if (luandaLocalToDate(scheduledAt).getTime() <= Date.now()) {
+    if (isPast(scheduledAt)) {
       setScheduleError("A data de envio tem de estar no futuro.");
       return;
     }
@@ -68,8 +82,14 @@ export default function ReviewStep({ campaign, audience }: ReviewStepProps) {
       );
       return;
     }
+    if (isSms && cost && cost.cost > availableCredit) {
+      setScheduleError(
+        `Saldo de SMS insuficiente: a campanha custa ${formatMoney(cost.cost)} e há ${formatMoney(Math.max(0, availableCredit))} disponíveis. Faltam ${formatMoney(cost.cost - availableCredit)}.`,
+      );
+      return;
+    }
     setScheduleError(null);
-    schedule(campaign.id, scheduledAt, audience.eligible.length);
+    schedule(campaign.id, scheduledAt, audience.eligible.length, cost?.cost);
   }
 
   return (
@@ -166,6 +186,30 @@ export default function ReviewStep({ campaign, audience }: ReviewStepProps) {
                   " O texto não tem acentos — vêm dos valores das variáveis, como nomes de gestores com ã ou ç."}
               </span>
             )}
+            <div
+              className={cn(
+                "caption-style flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2",
+                cost.cost > availableCredit
+                  ? "border-(--tag-red-border) bg-(--tag-red-bg) text-(--tag-red-text)"
+                  : "border-line-strong text-soft",
+              )}
+            >
+              <span>
+                Saldo disponível {formatMoney(Math.max(0, availableCredit))}
+                {reservedElsewhere > 0 && ` (já descontadas ${formatMoney(reservedElsewhere)} reservadas para outras campanhas)`}
+                {cost.cost > availableCredit && ` — faltam ${formatMoney(cost.cost - availableCredit)}`}.
+              </span>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  useSettingsStore.getState().setTab("mensagens");
+                  router.push("/definicoes");
+                }}
+              >
+                Carregar saldo
+              </Button>
+            </div>
             <span className="caption-style text-subtle">
               Calculado por destinatário, com as variáveis já preenchidas: cada{" "}
               {SMS_MESSAGE_UNITS} unidades contam como uma mensagem e as letras com

@@ -6,7 +6,8 @@ export type ActivityType =
   | "E-mail"
   | "Reunião"
   | "Entrega"
-  | "Reclamação";
+  | "Reclamação"
+  | "WhatsApp";
 
 export const ACTIVITY_TYPES: ActivityType[] = [
   "Visita",
@@ -15,6 +16,7 @@ export const ACTIVITY_TYPES: ActivityType[] = [
   "Reunião",
   "Entrega",
   "Reclamação",
+  "WhatsApp",
 ];
 
 export const ACTIVITY_TONES: Record<
@@ -27,6 +29,7 @@ export const ACTIVITY_TONES: Record<
   Reunião: "amber",
   Entrega: "green",
   Reclamação: "red",
+  WhatsApp: "green",
 };
 
 export type Activity = {

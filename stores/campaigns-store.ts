@@ -19,6 +19,7 @@ import {
 import { DEFAULT_CAMPAIGN_FILTERS, createBlock } from "@/lib/campaigns";
 import { useSettingsStore } from "./settings-store";
 import { recordEvent } from "./audit-store";
+import { useMessagingStore } from "./messaging-store";
 import type { AuditChange } from "@/data/audit";
 import { formatDateTime, formatNumber } from "@/lib/format";
 
@@ -76,7 +77,7 @@ type CampaignsState = {
   submitForReview: (id: string) => void;
   backToDraft: (id: string) => void;
   recordTest: (id: string) => void;
-  schedule: (id: string, scheduledAt: string, recipients: number) => void;
+  schedule: (id: string, scheduledAt: string, recipients: number, cost?: number) => void;
   cancelSchedule: (id: string) => void;
 };
 
@@ -259,9 +260,10 @@ export const useCampaignsStore = create<CampaignsState>((set, get) => {
         sensitive: true,
       });
     },
-    schedule: (id, scheduledAt, recipients) => {
+    schedule: (id, scheduledAt, recipients, cost) => {
       const campaign = get().campaigns.find((item) => item.id === id);
       if (campaign?.status !== "Em revisão" || !campaign.testSentAt) return;
+      if (campaign.channel === "SMS" && cost) useMessagingStore.getState().reserve(id, cost);
       transition(
         id,
         "Em revisão",
@@ -273,12 +275,14 @@ export const useCampaignsStore = create<CampaignsState>((set, get) => {
         ],
       );
     },
-    cancelSchedule: (id) =>
+    cancelSchedule: (id) => {
+      useMessagingStore.getState().release(id);
       transition(
         id,
         "Agendada",
         { status: "Em revisão", scheduledAt: undefined },
         "cancelou o agendamento da campanha",
-      ),
+      );
+    },
   };
 });

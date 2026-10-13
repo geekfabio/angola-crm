@@ -25,6 +25,7 @@ const ACTIVITY_PHRASES: Record<ActivityType, string> = {
   Reunião: "registou uma reunião com",
   Entrega: "registou uma entrega a",
   Reclamação: "registou uma reclamação de",
+  WhatsApp: "registou uma conversa por WhatsApp com",
 };
 
 export type ActivitiesView = "lista" | "calendario" | "tarefas" | "rota";

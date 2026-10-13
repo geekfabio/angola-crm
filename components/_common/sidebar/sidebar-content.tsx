@@ -28,6 +28,8 @@ import MessageQuestionIcon from "@/public/assets/images/companies/sidebar/messag
 import ClockIcon from "@/public/assets/images/companies/detail/clock.svg";
 import WalletIcon from "@/public/assets/images/companies/sidebar/wallet.svg";
 import TargetIcon from "@/public/assets/images/companies/sidebar/target-05.svg";
+import ChatIcon from "@/public/assets/images/companies/detail/phone-call.svg";
+import { useConversationsStore } from "@/stores/conversations-store";
 
 const NAV_ITEMS = [
   { href: "/", icon: BuildingIcon, label: "Clientes", withCount: true },
@@ -37,6 +39,7 @@ const NAV_ITEMS = [
   { href: "/relatorios", icon: BarChartAltIcon, label: "Relatórios" },
   { href: "/atividades", icon: ListIcon, label: "Atividades" },
   { href: "/contactos", icon: BookClosedIcon, label: "Contactos" },
+  { href: "/conversas", icon: ChatIcon, label: "Conversas", withUnread: true },
   { href: "/vendas", icon: WalletIcon, label: "Vendas", withUnmatched: true },
   { href: "/cotacoes", icon: TargetIcon, label: "Cotações" },
   { href: "/campanhas", icon: MailIcon, label: "Campanhas" },
@@ -64,6 +67,9 @@ export default function SidebarContent() {
   const { items: followUps } = useFollowUps();
   const dueFollowUps = followUps.filter((item) => item.bucket === "atrasado" || item.bucket === "hoje").length;
   const unmatchedSales = useSalesStore((state) => state.sales.filter((sale) => !sale.companyId).length);
+  const unreadMessages = useConversationsStore((state) =>
+    state.conversations.reduce((sum, conversation) => sum + conversation.unread, 0),
+  );
   const teams = useSettingsStore((state) => state.teams);
   const zones = useSettingsStore((state) => state.zones);
   const setSettingsTab = useSettingsStore((state) => state.setTab);
@@ -119,7 +125,9 @@ export default function SidebarContent() {
                       ? unmatchedSales
                       : "withFollowUps" in item && item.withFollowUps && dueFollowUps > 0
                         ? dueFollowUps
-                        : undefined
+                        : "withUnread" in item && item.withUnread && unreadMessages > 0
+                          ? unreadMessages
+                          : undefined
                 }
               />
             ))}

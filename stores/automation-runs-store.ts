@@ -22,6 +22,7 @@ import { useAuditStore, recordEvent } from "./audit-store";
 import { useAutomationsStore } from "./automations-store";
 import { useCompaniesStore } from "./companies-store";
 import { useContactsStore } from "./contacts-store";
+import { useMessagingStore } from "./messaging-store";
 import { useNotificationsStore } from "./notifications-store";
 import { useSalesStore } from "./sales-store";
 import { useSettingsStore } from "./settings-store";
@@ -201,10 +202,22 @@ export const useAutomationRunsStore = create<AutomationRunsState>((set, get) => 
           }
           if (channel === "email") {
             const template = emailTemplates.find((entry) => entry.id === step.emailTemplateId);
-            return {
-              outcome: "Envio simulado",
-              detail: `E-mail «${template?.name ?? "modelo eliminado"}» para ${contact.email}. Modo sandbox — não saiu do CRM.`,
-            };
+            const record = useMessagingStore.getState().send({
+              channel: "E-mail",
+              to: contact.email,
+              toName: contact.name,
+              subject: template?.name ?? "Modelo eliminado",
+              body: template?.description ?? "",
+              companyId: company.id,
+              contactId: contact.id,
+              source: `Automação «${automation.name}»`,
+            });
+            return record.status === "Bloqueado"
+              ? { outcome: "Não enviado", detail: record.reason ?? "Bloqueado pelo fornecedor." }
+              : {
+                  outcome: "Envio simulado",
+                  detail: `E-mail «${template?.name ?? "modelo eliminado"}» para ${contact.email}. Modo sandbox — reencaminhado para ${record.deliveredTo}.`,
+                };
           }
           const template = smsTemplates.find((entry) => entry.id === step.smsTemplateId);
           const offer = offers.find((entry) => entry.companyId === company.id && OPEN_OFFER_STATUSES.includes(entry.status));
@@ -214,10 +227,21 @@ export const useAutomationRunsStore = create<AutomationRunsState>((set, get) => 
             desconto: offer ? formatPercent(offer.percent) : "um desconto",
             validade: offer ? formatDateShort(offer.validUntil) : "ao fim do mês",
           });
-          return {
-            outcome: "Envio simulado",
-            detail: `SMS para ${contact.name} (${contact.phone}): “${text}” Modo sandbox — não saiu do CRM.`,
-          };
+          const record = useMessagingStore.getState().send({
+            channel: "SMS",
+            to: contact.phone,
+            toName: contact.name,
+            body: text,
+            companyId: company.id,
+            contactId: contact.id,
+            source: `Automação «${automation.name}»`,
+          });
+          return record.status === "Bloqueado"
+            ? { outcome: "Não enviado", detail: record.reason ?? "Bloqueado pelo fornecedor." }
+            : {
+                outcome: "Envio simulado",
+                detail: `SMS para ${contact.name} (${contact.phone}): “${text}” ${formatMoney(record.cost)} · modo sandbox — reencaminhado para ${record.deliveredTo}.`,
+              };
         }
         case "criar-tarefa": {
           tasks.push({

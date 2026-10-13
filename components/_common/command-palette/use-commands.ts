@@ -25,6 +25,7 @@ import SettingsIcon from "@/public/assets/images/_common/filter.svg";
 import WalletIcon from "@/public/assets/images/companies/sidebar/wallet.svg";
 import PlusIcon from "@/public/assets/images/_common/plus.svg";
 import TargetIcon from "@/public/assets/images/companies/sidebar/target-05.svg";
+import ChatIcon from "@/public/assets/images/companies/detail/phone-call.svg";
 
 type Icon = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -53,6 +54,7 @@ export const PAGES: PageCommand[] = [
   { href: "/relatorios", label: "Relatórios", icon: BarChartAltIcon, shortcut: "R", keywords: ["desempenho", "risco"] },
   { href: "/atividades", label: "Atividades", icon: ListIcon, shortcut: "A", keywords: ["visitas", "tarefas", "calendário", "rota"] },
   { href: "/contactos", label: "Contactos", icon: BookClosedIcon, shortcut: "N", keywords: ["pessoas", "consentimento"] },
+  { href: "/conversas", label: "Conversas", icon: ChatIcon, shortcut: "W", keywords: ["whatsapp", "sms", "mensagens", "chat", "responder"] },
   { href: "/vendas", label: "Vendas", icon: WalletIcon, shortcut: "V", keywords: ["compras", "faturas", "pagamentos", "dívida"] },
   { href: "/cotacoes", label: "Cotações", icon: TargetIcon, shortcut: "Q", keywords: ["orçamentos", "propostas", "encomendas", "preços", "catálogo"] },
   { href: "/campanhas", label: "Campanhas", icon: MailIcon, shortcut: "M", keywords: ["e-mail", "sms", "mensagens"] },

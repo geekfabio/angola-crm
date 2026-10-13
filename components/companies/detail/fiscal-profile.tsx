@@ -15,6 +15,7 @@ import { PAYMENT_TERMS, type Company, type CompanyProfile, type PaymentTerm } fr
 import { cleanProfile, profileErrors, type ProfileErrors } from "@/lib/company-profile";
 import { formatDateLong, formatMoney } from "@/lib/format";
 import { companyProfile, useCompaniesStore } from "@/stores/companies-store";
+import CallButton from "@/components/_common/call-button";
 
 function Item({ label, value }: { label: string; value: string }) {
   return (
@@ -65,9 +66,12 @@ export default function FiscalProfile({ company }: { company: Company }) {
         <span className="caption-style text-subtle">
           NIF, cartão e telefone identificam o cliente nas compras que chegam do sistema de vendas.
         </span>
-        <Button variant="secondary" size="sm" className="self-start" onClick={() => setDraft(profile)}>
-          Editar dados fiscais
-        </Button>
+        <div className="flex flex-wrap gap-1">
+          <Button variant="secondary" size="sm" onClick={() => setDraft(profile)}>
+            Editar dados fiscais
+          </Button>
+          {profile.phone && <CallButton phone={profile.phone} companyId={company.id} label="Ligar ao cliente" />}
+        </div>
       </div>
     );
   }

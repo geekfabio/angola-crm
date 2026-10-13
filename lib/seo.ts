@@ -77,6 +77,13 @@ export const SITE_ROUTES: SiteRoute[] = [
     priority: 0.7,
   },
   {
+    path: "/conversas",
+    title: "Conversas",
+    description: "Mensagens de WhatsApp e SMS com os contactos, com consentimento e janela de 24 horas.",
+    changeFrequency: "daily",
+    priority: 0.6,
+  },
+  {
     path: "/cotacoes",
     title: "Cotações",
     description: "Cotações com a tabela de preços do cliente e encomendas até à entrega.",

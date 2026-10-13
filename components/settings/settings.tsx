@@ -11,6 +11,7 @@ import TeamsTab from "./teams/teams-tab";
 import ZonesTab from "./zones/zones-tab";
 import IntegrationsTab from "./integrations/integrations-tab";
 import CatalogTab from "./catalog/catalog-tab";
+import MessagingTab from "./messaging/messaging-tab";
 import AccessTab from "./access/access-tab";
 import { useSettingsStore, type SettingsTab } from "@/stores/settings-store";
 
@@ -23,6 +24,7 @@ const TABS: { key: SettingsTab; label: string }[] = [
   { key: "acessos", label: "Acessos" },
   { key: "integracoes", label: "Integrações" },
   { key: "catalogo", label: "Catálogo e preços" },
+  { key: "mensagens", label: "Mensagens e saldo" },
 ];
 
 const PANELS: Record<SettingsTab, ComponentType> = {
@@ -34,6 +36,7 @@ const PANELS: Record<SettingsTab, ComponentType> = {
   acessos: AccessTab,
   integracoes: IntegrationsTab,
   catalogo: CatalogTab,
+  mensagens: MessagingTab,
 };
 
 export default function Settings() {

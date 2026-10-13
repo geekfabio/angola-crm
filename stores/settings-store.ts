@@ -37,6 +37,7 @@ export const SETTINGS_TABS = [
   "acessos",
   "integracoes",
   "catalogo",
+  "mensagens",
 ] as const;
 
 export type SettingsTab = (typeof SETTINGS_TABS)[number];
