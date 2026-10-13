@@ -43,7 +43,11 @@ export default function Purchases({ companyId, companyName }: { companyId: strin
   const router = useRouter();
   const today = useToday();
 
-  const stats = useMemo(() => purchaseStats(sales, companyId, today), [sales, companyId, today]);
+  const creditLimit = companies.find((company) => company.id === companyId)?.profile?.creditLimit;
+  const stats = useMemo(
+    () => purchaseStats(sales, companyId, today, creditLimit),
+    [sales, companyId, today, creditLimit],
+  );
   const abc = useMemo(() => abcBySales(companies, sales, today).get(companyId), [companies, sales, companyId, today]);
   const recent = useMemo(
     () => sales.filter((sale) => sale.companyId === companyId).slice(0, 5),

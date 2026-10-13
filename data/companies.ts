@@ -119,6 +119,39 @@ export function profileByName(name: string): Owner {
   return name === CURRENT_USER.name ? CURRENT_USER : ownerByName(name);
 }
 
+export const PAYMENT_TERMS = [
+  "Pronto pagamento",
+  "Crédito a 15 dias",
+  "Crédito a 30 dias",
+  "Crédito a 60 dias",
+] as const;
+
+export type PaymentTerm = (typeof PAYMENT_TERMS)[number];
+
+export type CompanyProfile = {
+  nif: string;
+  card: string;
+  phone: string;
+  billingEmail: string;
+  address: string;
+  municipality: string;
+  paymentTerms: PaymentTerm;
+  creditLimit: number;
+  customerSince: string;
+};
+
+export const EMPTY_PROFILE: CompanyProfile = {
+  nif: "",
+  card: "",
+  phone: "",
+  billingEmail: "",
+  address: "",
+  municipality: "",
+  paymentTerms: "Pronto pagamento",
+  creditLimit: 0,
+  customerSince: "",
+};
+
 export type Company = {
   id: string;
   name: string;
@@ -134,6 +167,7 @@ export type Company = {
   logo?: string;
   archived?: boolean;
   nextFollowUp?: FollowUp;
+  profile?: CompanyProfile;
 };
 
 export const TREND_PATTERN = [

@@ -22,6 +22,7 @@ import ScoreCard from "./score-card";
 import ClientTimeline from "./client-timeline";
 import Purchases from "./purchases";
 import NextFollowUp from "./next-follow-up";
+import FiscalProfile from "./fiscal-profile";
 import CompanyEditForm, {
   COMPANY_FORM_ID,
   companyToDraft,
@@ -166,6 +167,10 @@ export default function CompanyDetail() {
 
             <DetailSection title="Compras">
               <Purchases companyId={company.id} companyName={company.name} />
+            </DetailSection>
+
+            <DetailSection title="Dados fiscais e crédito">
+              <FiscalProfile key={company.id} company={company} />
             </DetailSection>
 
             <DetailSection title="Linha do tempo">

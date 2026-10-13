@@ -5,6 +5,7 @@ import CompaniesTable from "./table/companies-table";
 import CompanyDetail from "./detail/company-detail";
 import Profile from "./profile/profile";
 import NewCompanyDialog from "./new-company/new-company-dialog";
+import ImportDialog from "./import/import-dialog";
 
 export default function Companies() {
   return (
@@ -16,6 +17,7 @@ export default function Companies() {
       <CompanyDetail />
       <Profile />
       <NewCompanyDialog />
+      <ImportDialog />
     </section>
   );
 }

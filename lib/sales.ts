@@ -1,7 +1,6 @@
 import type { AbcClass } from "@/data/campaigns";
 import type { Company } from "@/data/companies";
 import {
-  CREDIT_LIMITS,
   type CustomerIdentifiers,
   type IdentifierType,
   type ProductCategory,
@@ -49,7 +48,7 @@ export type PurchaseStats = {
   topCategories: ProductCategory[];
 };
 
-export function purchaseStats(sales: Sale[], companyId: string, today: string): PurchaseStats {
+export function purchaseStats(sales: Sale[], companyId: string, today: string, creditLimit?: number): PurchaseStats {
   const own = sales
     .filter((sale) => sale.companyId === companyId)
     .sort((a, b) => a.at.localeCompare(b.at));
@@ -87,7 +86,7 @@ export function purchaseStats(sales: Sale[], companyId: string, today: string): 
       ((usualInterval !== undefined && daysSincePurchase > Math.max(usualInterval * 2, 14)) || daysSincePurchase > 45),
     debt,
     overdueDebt,
-    creditLimit: CREDIT_LIMITS[companyId],
+    creditLimit: creditLimit || undefined,
     topCategories: [...categoryTotals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([category]) => category),
   };
 }

@@ -74,6 +74,9 @@ export default function CompaniesToolbar() {
 
       <div className="flex shrink-0 items-center gap-1">
         <ViewToggle />
+        <Button variant="secondary" size="sm" onClick={() => useCompaniesStore.getState().setImportOpen(true)}>
+          Importar
+        </Button>
         <Button variant="secondary" size="sm" onClick={exportCsv}>
           <ShareIcon aria-hidden className="size-3" />
           Exportar

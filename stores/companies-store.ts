@@ -1,10 +1,12 @@
 import { create } from "zustand";
-import { COMPANIES, type Company, type SortKey } from "@/data/companies";
+import { COMPANIES, EMPTY_PROFILE, type Company, type CompanyProfile, type SortKey } from "@/data/companies";
+import { COMPANY_PROFILES } from "@/data/company-profiles";
 import { FOLLOW_UPS, type FollowUp } from "@/data/follow-ups";
 import { diffRecord } from "@/lib/audit";
 import { DEFAULT_FILTERS, type CompanyFilters } from "@/lib/companies";
 import { formatDateShort, formatMoney, formatPercent, nowLuandaLocal } from "@/lib/format";
 import { recordEvent } from "./audit-store";
+import { useSalesStore } from "./sales-store";
 
 export type CompanyPatch = Partial<
   Pick<Company, "name" | "owner" | "zone" | "tags" | "pipelineValue" | "openDeals" | "winProbability">
@@ -25,6 +27,32 @@ const COMPANY_FORMATTERS = {
   pipelineValue: (value: number) => formatMoney(value),
   winProbability: (value: number) => formatPercent(value),
 };
+
+const PROFILE_LABELS: Record<keyof CompanyProfile, string> = {
+  nif: "NIF",
+  card: "Cartão de cliente",
+  phone: "Telefone",
+  billingEmail: "E-mail de faturação",
+  address: "Morada",
+  municipality: "Município",
+  paymentTerms: "Condições de pagamento",
+  creditLimit: "Limite de crédito",
+  customerSince: "Cliente desde",
+};
+
+export function companyProfile(company: Company): CompanyProfile {
+  return company.profile ?? EMPTY_PROFILE;
+}
+
+function syncIdentifiers(entries: [string, CompanyProfile][]) {
+  useSalesStore.setState((state) => {
+    const identifiers = { ...state.identifiers };
+    for (const [id, profile] of entries) {
+      identifiers[id] = { card: profile.card, nif: profile.nif, phone: profile.phone };
+    }
+    return { identifiers };
+  });
+}
 
 export type CompaniesView = "lista" | "grelha";
 
@@ -49,6 +77,8 @@ type CompaniesState = CompanyFilters & {
   profileName: string | null;
   profileOpen: boolean;
   newCompanyOpen: boolean;
+  importOpen: boolean;
+  setImportOpen: (open: boolean) => void;
   setSortBy: (sortBy: SortKey) => void;
   setOwner: (owner: string) => void;
   setStage: (stage: string) => void;
@@ -70,6 +100,8 @@ type CompaniesState = CompanyFilters & {
   archiveCompanies: (ids: string[]) => void;
   scheduleFollowUp: (id: string, followUp: FollowUp | null, options?: { silent?: boolean }) => void;
   registerContact: (id: string, date: string, label: string) => void;
+  updateProfile: (id: string, profile: CompanyProfile) => void;
+  importCompanies: (created: Company[], updated: [string, CompanyProfile][]) => () => void;
 };
 
 export const useCompaniesStore = create<CompaniesState>((set, get) => {
@@ -82,7 +114,11 @@ export const useCompaniesStore = create<CompaniesState>((set, get) => {
   }
 
   return {
-    companies: COMPANIES.map((company) => ({ ...company, nextFollowUp: FOLLOW_UPS[company.id] })),
+    companies: COMPANIES.map((company) => ({
+      ...company,
+      nextFollowUp: FOLLOW_UPS[company.id],
+      profile: COMPANY_PROFILES[company.id],
+    })),
     view: "lista",
     setView: (view) => {
       set({ view });
@@ -97,6 +133,8 @@ export const useCompaniesStore = create<CompaniesState>((set, get) => {
     profileName: null,
     profileOpen: false,
     newCompanyOpen: false,
+    importOpen: false,
+    setImportOpen: (importOpen) => set({ importOpen }),
     setSortBy: (sortBy) => set({ sortBy }),
     setOwner: (owner) => set({ owner }),
     setStage: (stage) => set({ stage }),
@@ -241,6 +279,63 @@ export const useCompaniesStore = create<CompaniesState>((set, get) => {
               },
             },
       });
+    },
+
+    updateProfile: (id, profile) => {
+      const company = get().companies.find((item) => item.id === id);
+      if (!company) return;
+      const previous = companyProfile(company);
+      const changes = (Object.keys(PROFILE_LABELS) as (keyof CompanyProfile)[])
+        .filter((key) => previous[key] !== profile[key])
+        .map((key) => ({
+          field: PROFILE_LABELS[key],
+          from: key === "creditLimit" ? formatMoney(previous.creditLimit) : String(previous[key]) || undefined,
+          to: key === "creditLimit" ? formatMoney(profile.creditLimit) : String(profile[key]) || "—",
+        }));
+      if (changes.length === 0) return;
+      const apply = (next: CompanyProfile) => {
+        set((state) => ({
+          companies: state.companies.map((item) => (item.id === id ? { ...item, profile: next } : item)),
+        }));
+        syncIdentifiers([[id, next]]);
+      };
+      apply(profile);
+      recordEvent({
+        action: "atualizou os dados fiscais de",
+        target: { module: "Clientes", id, label: company.name },
+        companyId: id,
+        sensitive: true,
+        notify: false,
+        changes,
+        toast: {
+          title: "Dados fiscais atualizados",
+          description: `${changes.length === 1 ? "1 campo alterado" : `${changes.length} campos alterados`} em ${company.name}.`,
+          tone: "success",
+          action: { label: "Anular", run: () => apply(previous) },
+        },
+      });
+    },
+
+    importCompanies: (created, updated) => {
+      const before = get().companies;
+      const updates = new Map(updated);
+      set((state) => ({
+        companies: [
+          ...created,
+          ...state.companies.map((company) => {
+            const profile = updates.get(company.id);
+            return profile ? { ...company, profile } : company;
+          }),
+        ],
+      }));
+      syncIdentifiers([
+        ...created.filter((company) => company.profile).map((company) => [company.id, company.profile!] as [string, CompanyProfile]),
+        ...updated,
+      ]);
+      return () => {
+        set({ companies: before });
+        syncIdentifiers(before.filter((company) => company.profile).map((company) => [company.id, company.profile!]));
+      };
     },
 
     registerContact: (id, date, label) =>
