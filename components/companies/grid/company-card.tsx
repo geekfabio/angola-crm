@@ -47,12 +47,12 @@ export default function CompanyCard({
       data-active={active}
       className={cn(
         "group bg-card relative flex w-full cursor-pointer flex-col gap-4 rounded-xl p-4 transition-[background-color,box-shadow] duration-150 ease-power3-out",
-        "shadow-[0px_4px_4px_0px_rgba(42,42,42,0.32),0px_0px_0px_1px_#0e0e0e,inset_0px_1px_0px_0px_rgba(255,255,255,0.08),inset_0px_0px_0px_1px_rgba(255,255,255,0.08)] hover:bg-[#252525]",
-        "data-[active=true]:bg-[#252525] data-[selected=true]:shadow-[0px_0px_0px_1px_#0e0e0e,inset_0px_0px_0px_1px_rgba(255,255,255,0.28)]",
+        "shadow-[0px_4px_4px_0px_rgba(42,42,42,0.32),0px_0px_0px_1px_var(--edge),inset_0px_1px_0px_0px_rgba(255,255,255,0.08),inset_0px_0px_0px_1px_rgba(255,255,255,0.08)] hover:bg-[var(--edge-soft)]",
+        "data-[active=true]:bg-[var(--edge-soft)] data-[selected=true]:shadow-[0px_0px_0px_1px_var(--edge),inset_0px_0px_0px_1px_rgba(255,255,255,0.28)]",
       )}
     >
       <div className="flex items-start gap-3">
-        <span className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-[10px] shadow-[0px_0px_0px_1px_#232323]">
+        <span className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-[10px] shadow-[0px_0px_0px_1px_var(--border)]">
           {company.logo ? (
             <Asset
               type="image"

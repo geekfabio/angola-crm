@@ -32,7 +32,7 @@ function ToastCard({ toast }: { toast: Toast }) {
       onPointerLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
-      className="bg-popover pointer-events-auto flex items-start gap-3 rounded-xl p-3 pl-3.5 shadow-[0px_12px_32px_-8px_rgba(0,0,0,0.6),0px_0px_0px_1px_#2a2a2a,inset_0px_1px_0px_0px_rgba(255,255,255,0.06)]"
+      className="bg-popover pointer-events-auto flex items-start gap-3 rounded-xl p-3 pl-3.5 shadow-[0px_12px_32px_-8px_rgba(0,0,0,0.6),0px_0px_0px_1px_var(--muted),inset_0px_1px_0px_0px_rgba(255,255,255,0.06)]"
     >
       {toast.tone === "danger" && <AlertIcon aria-hidden className="text-danger mt-px size-4 shrink-0" />}
       {toast.tone === "success" && (

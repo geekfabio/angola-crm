@@ -110,7 +110,7 @@ export default function CompanyDetail() {
         {company && owner && !editing && (
           <ScrollArea className="min-h-0 flex-1">
             <div className="flex items-start gap-3 p-5 shadow-[inset_0_-1px_0_var(--line-strong)]">
-              <span className="bg-muted flex size-[50px] shrink-0 items-center justify-center rounded-[12.5px] shadow-[0px_6.25px_6.25px_0px_rgba(15,15,15,0.24),0px_0px_0px_1.563px_#232323]">
+              <span className="bg-muted flex size-[50px] shrink-0 items-center justify-center rounded-[12.5px] shadow-[0px_6.25px_6.25px_0px_rgba(15,15,15,0.24),0px_0px_0px_1.563px_var(--border)]">
                 {company.logo ? (
                   <Asset
                     type="image"

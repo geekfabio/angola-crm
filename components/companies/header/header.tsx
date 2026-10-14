@@ -21,7 +21,7 @@ export default function CompaniesHeader() {
     <ModuleHeader
       title="Clientes"
       badge={
-        <span className="caption-style bg-muted hidden shrink-0 items-center gap-0.5 rounded-full border border-[#363636] py-[3px] pr-[5px] pl-[3px] sm:inline-flex">
+        <span className="caption-style bg-muted hidden shrink-0 items-center gap-0.5 rounded-full border border-(--tag-neutral-border) py-[3px] pr-[5px] pl-[3px] sm:inline-flex">
           <ActiveDot aria-hidden className="size-3" />
           Ativo
         </span>

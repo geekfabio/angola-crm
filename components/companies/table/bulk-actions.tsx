@@ -36,7 +36,7 @@ export default function BulkActions({ selected }: { selected: Company[] }) {
           animate={{ opacity: 1, y: 0 }}
           exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 6 }}
           transition={{ duration: 0.2, ease: ease.power3Out }}
-          className="bg-popover pointer-events-auto absolute inset-x-4 bottom-16 z-20 mx-auto flex max-w-max flex-wrap items-center gap-1 rounded-xl p-1.5 shadow-[0px_12px_32px_-8px_rgba(0,0,0,0.6),0px_0px_0px_1px_#2a2a2a]"
+          className="bg-popover pointer-events-auto absolute inset-x-4 bottom-16 z-20 mx-auto flex max-w-max flex-wrap items-center gap-1 rounded-xl p-1.5 shadow-[0px_12px_32px_-8px_rgba(0,0,0,0.6),0px_0px_0px_1px_var(--muted)]"
         >
           <span className="caption-style text-foreground px-2 tabular-nums">
             {selected.length === 1 ? "1 selecionado" : `${selected.length} selecionados`}

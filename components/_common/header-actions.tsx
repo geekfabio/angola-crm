@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import Button from "@/components/_ui/button";
 import { Kbd } from "@/components/_ui/command";
 import Notifications from "@/components/_common/notifications/notifications";
+import ThemeToggle from "@/components/_common/theme-toggle";
 import { useModifierKey } from "@/hooks/use-modifier-key";
 import { useUiStore } from "@/stores/ui-store";
 import SearchIcon from "@/public/assets/images/_common/search.svg";
@@ -34,6 +35,7 @@ export default function HeaderActions({ children }: HeaderActionsProps) {
           {modifier} K
         </Kbd>
       </Button>
+      <ThemeToggle />
       <Notifications />
       {children}
     </div>

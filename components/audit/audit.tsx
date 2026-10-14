@@ -52,7 +52,7 @@ function AuditRow({ event }: { event: AuditEvent }) {
       {event.actor === SYSTEM_ACTOR ? (
         <span
           aria-hidden
-          className="bg-muted caption-style text-soft mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full shadow-[0px_0px_0px_1px_#232323]"
+          className="bg-muted caption-style text-soft mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full shadow-[0px_0px_0px_1px_var(--border)]"
         >
           A
         </span>

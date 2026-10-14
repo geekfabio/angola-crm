@@ -1,4 +1,4 @@
-# Roteiro de UI — 29 fases
+# Roteiro de UI — 30 fases
 
 Enquanto o `ROADMAP.md` ordena o produto por fases de negócio (fundação, dados reais, Supabase), este ficheiro ordena a **construção da interface** dos módulos que já têm rota mas ainda são esqueleto visual — tabela de leitura, sem store, sem diálogos, sem painel de detalhe.
 
@@ -327,6 +327,14 @@ Pedido do utilizador: quando um cliente fica X dias sem comprar, o CRM apresenta
 - **Gatilhos**: novo gatilho "Cliente muda de fase" (à mão ou pelo passo "Mudar fase do cliente" de outra automação). A simulação do construtor funciona para todos: dívidas vencidas, aniversários dos próximos 30 dias e acontecimentos dos últimos 30 dias. Ficam ativas como exemplo: aniversário do cliente, seguimento de proposta, reativação e pós-venda de oportunidade ganha.
 
 **Fica para depois:** OAuth real (credenciais Google e Microsoft em Supabase secrets), webhooks/assinaturas de alterações dos calendários, CalDAV para iCloud.
+
+---
+
+## Fase 30 — Tema claro e escuro `✅`
+
+- Botão sol/lua no cabeçalho de todas as páginas (e "Mudar tema" na paleta ⌘K). A troca faz-se com um círculo que cresce a partir do botão (View Transitions) e o ícone roda; com "reduzir movimento" a troca é imediata.
+- A escolha fica guardada no browser e é aplicada antes de a página desenhar, sem piscar. O tema escuro continua a ser o de origem.
+- Paleta clara completa em `app/globals.css` (`:root[data-theme="light"]`), incluindo as etiquetas; as cores fixas que estavam nos componentes passaram a tokens (`--edge`, `--edge-soft`, `--edge-strong`, `--edge-shadow`, `--card-raised`, `--primary-hover`).
 
 ---
 

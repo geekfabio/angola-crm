@@ -24,6 +24,7 @@ import ClockIcon from "@/public/assets/images/companies/detail/clock.svg";
 import SettingsIcon from "@/public/assets/images/_common/filter.svg";
 import WalletIcon from "@/public/assets/images/companies/sidebar/wallet.svg";
 import PlusIcon from "@/public/assets/images/_common/plus.svg";
+import { switchTheme } from "@/components/_common/theme-toggle";
 import TargetIcon from "@/public/assets/images/companies/sidebar/target-05.svg";
 import ChatIcon from "@/public/assets/images/companies/detail/phone-call.svg";
 
@@ -150,6 +151,17 @@ export const CREATE_COMMANDS: CreateCommand[] = [
     open: () => useAutomationsStore.getState().createAutomation(),
   },
   {
+    id: "mudar-tema",
+    label: "Mudar tema (claro / escuro)",
+    icon: SettingsIcon,
+    href: "",
+    keywords: ["tema", "claro", "escuro", "branco", "preto", "aparência", "modo"],
+    open: () => {
+      const current = document.documentElement.dataset.theme === "light" ? "light" : "dark";
+      switchTheme(current === "light" ? "dark" : "light");
+    },
+  },
+  {
     id: "convidar",
     label: "Convidar pessoa",
     icon: UserPlusIcon,
@@ -186,7 +198,7 @@ export function useRunCommand() {
     },
     create: (command: CreateCommand) => {
       command.open();
-      if (command.href !== pathname) router.push(command.href);
+      if (command.href && command.href !== pathname) router.push(command.href);
     },
   };
 }

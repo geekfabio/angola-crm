@@ -33,7 +33,7 @@ export default function ViewToggle() {
     <div
       role="group"
       aria-label="Vista"
-      className="bg-secondary mr-1 flex items-center gap-0.5 rounded-full p-0.5 shadow-[0px_0px_0px_1px_rgba(0,0,0,0.4),inset_0px_1px_0px_0px_rgba(255,255,255,0.1),inset_0px_0px_0px_1px_rgba(255,255,255,0.06)]"
+      className="bg-secondary mr-1 flex items-center gap-0.5 rounded-full p-0.5 shadow-[0px_0px_0px_1px_var(--edge-shadow),inset_0px_1px_0px_0px_rgba(255,255,255,0.1),inset_0px_0px_0px_1px_rgba(255,255,255,0.06)]"
     >
       {VIEWS.map((item) => {
         const active = view === item.key;

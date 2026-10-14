@@ -48,7 +48,7 @@ function matchScore(value: string, search: string, keywords: string[] = []) {
 
 function IconBox({ icon: Icon }: { icon: Icon }) {
   return (
-    <span className="bg-muted flex size-6 shrink-0 items-center justify-center rounded-md shadow-[0px_0px_0px_1px_#232323]">
+    <span className="bg-muted flex size-6 shrink-0 items-center justify-center rounded-md shadow-[0px_0px_0px_1px_var(--border)]">
       <Icon aria-hidden className="text-soft size-3" />
     </span>
   );

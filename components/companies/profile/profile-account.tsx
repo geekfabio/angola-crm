@@ -19,7 +19,7 @@ export default function ProfileAccount({ company, onOpen }: ProfileAccountProps)
         aria-label={`Abrir detalhe de ${company.name}`}
         className="items-center px-2 py-2"
       >
-        <span className="bg-muted flex size-8 shrink-0 items-center justify-center rounded-lg shadow-[0px_0px_0px_1px_#232323]">
+        <span className="bg-muted flex size-8 shrink-0 items-center justify-center rounded-lg shadow-[0px_0px_0px_1px_var(--border)]">
           {company.logo ? (
             <Asset
               type="image"

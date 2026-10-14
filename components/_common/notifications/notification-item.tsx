@@ -25,7 +25,7 @@ function CompanyMark({
   return (
     <span
       className={cn(
-        "bg-muted flex shrink-0 items-center justify-center overflow-hidden shadow-[0px_0px_0px_1px_#232323]",
+        "bg-muted flex shrink-0 items-center justify-center overflow-hidden shadow-[0px_0px_0px_1px_var(--border)]",
         className,
       )}
     >
