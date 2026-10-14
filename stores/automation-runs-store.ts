@@ -12,6 +12,7 @@ import {
   offerDiscountValue,
   offerScopeLabel,
   renderTemplate,
+  campaignAutomationEvents,
   type AutomationEvent,
   type AutomationEventType,
   type DueStep,
@@ -144,22 +145,7 @@ export const useAutomationRunsStore = create<AutomationRunsState>((set, get) => 
     const sales = useSalesStore.getState().sales;
     const contacts = useContactsStore.getState().contacts;
     const { emailTemplates, smsTemplates } = useSettingsStore.getState();
-    const campaignEvents: AutomationEvent[] = CAMPAIGN_EVENTS.filter(
-      (event) => event.type === "Aberto" || event.type === "Clicou",
-    ).flatMap((event) => {
-      const contact = contacts.find((item) => item.id === event.contactId);
-      return contact
-        ? [
-            {
-              id: event.id,
-              type: "campanha-aberta" as const,
-              companyId: contact.companyId,
-              date: event.date.slice(0, 10),
-              engagement: event.type as "Aberto" | "Clicou",
-            },
-          ]
-        : [];
-    });
+    const campaignEvents = campaignAutomationEvents(CAMPAIGN_EVENTS, contacts);
     const due = dueSteps({
       automations,
       companies,
@@ -333,12 +319,16 @@ export const useAutomationRunsStore = create<AutomationRunsState>((set, get) => 
       useActivitiesStore.setState((state) => ({ tasks: [...tasks, ...state.tasks] }));
     }
     if (stageChanges.size > 0) {
+      const before = new Map(useCompaniesStore.getState().companies.map((company) => [company.id, currentStage(company)]));
       useCompaniesStore.setState((state) => ({
         companies: state.companies.map((company) => {
           const stage = stageChanges.get(company.id);
           return stage ? { ...company, tags: replaceStage(company, stage) } : company;
         }),
       }));
+      for (const [companyId, stage] of stageChanges) {
+        if (before.get(companyId) !== stage) get().emit("cliente-muda-fase", companyId, { stage });
+      }
     }
 
     const audit = useAuditStore.getState();

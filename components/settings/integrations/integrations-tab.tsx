@@ -4,6 +4,7 @@ import Button from "@/components/_ui/button";
 import { Checkbox } from "@/components/_ui/checkbox";
 import Tag from "@/components/_ui/tag";
 import SettingsPanel from "../settings-panel";
+import CalendarsPanel from "./calendars-panel";
 import { IDENTIFIER_TYPES } from "@/data/sales";
 import { useNow } from "@/hooks/use-now";
 import { formatDateTimeShort, formatMoney, formatRelative } from "@/lib/format";
@@ -151,6 +152,7 @@ export default function IntegrationsTab() {
           </ul>
         )}
       </SettingsPanel>
+      <CalendarsPanel />
     </div>
   );
 }

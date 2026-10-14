@@ -10,9 +10,7 @@ import {
 } from "@/data/automations";
 import type { CampaignTemplate, SmsTemplate } from "@/data/campaigns";
 import type { Company } from "@/data/companies";
-import type { Sale } from "@/data/sales";
 import { formatPercent } from "./format";
-import { abcBySales, purchaseStats } from "./sales";
 
 export type AutomationFilters = {
   status: string;
@@ -50,6 +48,8 @@ export function triggerSummary(trigger: Trigger) {
         : "Quando um contacto abre uma campanha";
     case "cliente-criado":
       return "Quando um cliente novo é criado";
+    case "cliente-muda-fase":
+      return `Quando um cliente passa à fase “${trigger.clientStage}”`;
     case "oportunidade-ganha":
       return "Quando uma oportunidade é ganha";
     case "oportunidade-perdida":
@@ -166,29 +166,4 @@ export function matchesConditions(
     return false;
   if (conditions.abc !== ANY_CONDITION && abc.get(company.id) !== conditions.abc) return false;
   return true;
-}
-
-export type SimulatedEntry = { company: Company; days: number };
-
-export function simulateEntries(
-  automation: Automation,
-  companies: Company[],
-  sales: Sale[],
-  today: string,
-): { entries: SimulatedEntry[]; withoutHistory: number } | null {
-  if (automation.trigger.type !== "dias-sem-comprar") return null;
-  const active = companies.filter((company) => !company.archived);
-  const abc = abcBySales(active, sales, today);
-  const entries: SimulatedEntry[] = [];
-  let withoutHistory = 0;
-  for (const company of active) {
-    if (!matchesConditions(company, automation.conditions, abc)) continue;
-    const { daysSincePurchase } = purchaseStats(sales, company.id, today);
-    if (daysSincePurchase === undefined) {
-      withoutHistory += 1;
-      continue;
-    }
-    if (daysSincePurchase >= automation.trigger.days) entries.push({ company, days: daysSincePurchase });
-  }
-  return { entries: entries.sort((a, b) => b.days - a.days), withoutHistory };
 }

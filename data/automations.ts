@@ -16,6 +16,7 @@ export const AUTOMATION_STATUS_TONES: Record<
 
 export const TRIGGER_TYPES = [
   "cliente-criado",
+  "cliente-muda-fase",
   "fase-alterada",
   "oportunidade-ganha",
   "oportunidade-perdida",
@@ -29,6 +30,7 @@ export type TriggerType = (typeof TRIGGER_TYPES)[number];
 
 export const TRIGGER_LABELS: Record<TriggerType, string> = {
   "cliente-criado": "Cliente criado",
+  "cliente-muda-fase": "Cliente muda de fase",
   "fase-alterada": "Oportunidade muda de fase",
   "oportunidade-ganha": "Oportunidade ganha",
   "oportunidade-perdida": "Oportunidade perdida",
@@ -46,6 +48,7 @@ export type Trigger = {
   type: TriggerType;
   days: number;
   stage: OpportunityStage;
+  clientStage: Stage;
   engagement: CampaignEngagement;
 };
 
@@ -53,6 +56,7 @@ export const DEFAULT_TRIGGER: Trigger = {
   type: "dias-sem-comprar",
   days: 30,
   stage: OPPORTUNITY_STAGES[1],
+  clientStage: "Reactivação",
   engagement: "Clicou",
 };
 
@@ -240,7 +244,7 @@ export const AUTOMATIONS: Automation[] = [
   {
     id: "aut-3",
     name: "Seguimento de proposta sem resposta",
-    status: "Pausada",
+    status: "Ativa",
     trigger: { ...DEFAULT_TRIGGER, type: "fase-alterada", stage: "Proposta" },
     conditions: { ...DEFAULT_CONDITIONS },
     steps: [
@@ -256,18 +260,54 @@ export const AUTOMATIONS: Automation[] = [
     enrolled: 9,
     completed: 6,
     lastRunAt: "2026-10-04T10:00",
+    activatedAt: "2026-10-04",
     updatedAt: "2026-10-04",
   },
   {
     id: "aut-4",
     name: "Aniversário do cliente",
-    status: "Rascunho",
+    status: "Ativa",
     trigger: { ...DEFAULT_TRIGGER, type: "aniversario" },
-    conditions: { ...DEFAULT_CONDITIONS, abc: "A" },
-    steps: [step("aut-4-s1", "enviar-email", { emailTemplateId: "aniversario" })],
+    conditions: { ...DEFAULT_CONDITIONS },
+    steps: [
+      step("aut-4-s1", "criar-tarefa", { taskTitle: "Ligar a agradecer mais um ano como cliente" }),
+      step("aut-4-s2", "enviar-email", { emailTemplateId: "aniversario" }),
+      step("aut-4-s3", "propor-desconto", { discountPercent: 5, discountValidDays: 10, discountScope: "Toda a encomenda" }),
+    ],
     enrolled: 0,
     completed: 0,
-    updatedAt: "2026-10-09",
+    activatedAt: "2026-10-01",
+    updatedAt: "2026-10-01",
+  },
+  {
+    id: "aut-7",
+    name: "Acompanhar cliente em reativação",
+    status: "Ativa",
+    trigger: { ...DEFAULT_TRIGGER, type: "cliente-muda-fase", clientStage: "Reactivação" },
+    conditions: { ...DEFAULT_CONDITIONS },
+    steps: [
+      step("aut-7-s1", "criar-tarefa", { taskTitle: "Visitar o cliente para perceber porque deixou de comprar" }),
+      step("aut-7-s2", "notificar-gestor", { waitDays: 14, message: "Cliente em reativação há 2 semanas — rever o resultado da visita." }),
+    ],
+    enrolled: 0,
+    completed: 0,
+    activatedAt: "2026-10-01",
+    updatedAt: "2026-10-01",
+  },
+  {
+    id: "aut-8",
+    name: "Pós-venda de oportunidade ganha",
+    status: "Ativa",
+    trigger: { ...DEFAULT_TRIGGER, type: "oportunidade-ganha" },
+    conditions: { ...DEFAULT_CONDITIONS },
+    steps: [
+      step("aut-8-s1", "notificar-gestor", { message: "Oportunidade ganha — confirmar a primeira entrega." }),
+      step("aut-8-s2", "criar-tarefa", { waitDays: 3, taskTitle: "Confirmar a satisfação com a primeira entrega" }),
+    ],
+    enrolled: 0,
+    completed: 0,
+    activatedAt: "2026-10-01",
+    updatedAt: "2026-10-01",
   },
 ];
 

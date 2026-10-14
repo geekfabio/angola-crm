@@ -25,6 +25,9 @@ import { formatDateLong } from "@/lib/format";
 import { addDays, followUpDueLabel } from "@/lib/follow-up";
 import { useActivitiesStore } from "@/stores/activities-store";
 import { useCompaniesStore } from "@/stores/companies-store";
+import { useCalendarSyncStore } from "@/stores/calendar-sync-store";
+import { CALENDAR_PROVIDERS } from "@/data/calendar-sync";
+import Asset from "@/components/_ui/asset";
 import ChevronIcon from "@/public/assets/images/_common/chevron-down.svg";
 
 export default function NextFollowUp({ company }: { company: Company }) {
@@ -37,6 +40,10 @@ export default function NextFollowUp({ company }: { company: Company }) {
   const [note, setNote] = useState("");
   const [error, setError] = useState<string>();
   const followUp = company.nextFollowUp;
+  const synced = useCalendarSyncStore((state) => state.synced);
+  const syncedProviders = CALENDAR_PROVIDERS.filter((provider) =>
+    synced.some((event) => event.uid === `followup-${company.id}` && event.provider === provider.id),
+  );
 
   function openForm() {
     setDate(followUp?.date ?? addDays(today, 1));
@@ -138,7 +145,17 @@ export default function NextFollowUp({ company }: { company: Company }) {
         </span>
       </div>
       {followUp.note && <p className="lead-style text-soft">{followUp.note}</p>}
-      <span className="caption-style text-subtle">Responsável: {followUp.owner}</span>
+      <span className="caption-style text-subtle flex flex-wrap items-center gap-1.5">
+        Responsável: {followUp.owner}
+        {syncedProviders.length > 0 && (
+          <>
+            {" · no calendário"}
+            {syncedProviders.map((provider) => (
+              <Asset key={provider.id} type="image" src={provider.logo} alt={provider.name} width={1} height={1} fit="contain" className="size-3.5" />
+            ))}
+          </>
+        )}
+      </span>
       <div className="flex flex-wrap items-center gap-1">
         <Button
           variant="primary"

@@ -7,6 +7,7 @@ import SalesSimulator from "@/components/_common/sales-simulator";
 import AutomationRunner from "@/components/_common/automation-runner";
 import ConnectionStatus from "@/components/_common/connection-status";
 import ServiceWorker from "@/components/_common/service-worker";
+import CalendarSyncRunner from "@/components/_common/calendar-sync-runner";
 import AssociateDialog from "@/components/sales/associate-dialog";
 import NewActivityDialog from "@/components/activities/new-activity/new-activity-dialog";
 import FollowUpNotifier from "@/components/follow-up/follow-up-notifier";
@@ -35,6 +36,7 @@ export default function AppLayout({
       <AutomationRunner />
       <ConnectionStatus />
       <ServiceWorker />
+      <CalendarSyncRunner />
       <AssociateDialog />
       <NewActivityDialog />
       <FollowUpNotifier />

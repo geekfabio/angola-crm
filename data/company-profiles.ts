@@ -30,6 +30,12 @@ const STREETS = [
   "Estrada de Catete",
 ];
 
+const CUSTOMER_SINCE: Record<string, string> = {
+  "boa-esperanca": "2019-10-08",
+  "talatona-plaza": "2021-10-12",
+  kilamba: "2020-10-27",
+};
+
 export const COMPANY_PROFILES: Record<string, CompanyProfile> = Object.fromEntries(
   COMPANIES.map((company, index) => {
     const ids = CUSTOMER_IDENTIFIERS[company.id];
@@ -50,7 +56,7 @@ export const COMPANY_PROFILES: Record<string, CompanyProfile> = Object.fromEntri
           const base = MUNICIPALITY_GEO[municipalities[index % municipalities.length]];
           return base ? { lat: base.lat + ((index % 5) - 2) * 0.004, lng: base.lng + ((index % 3) - 1) * 0.004 } : undefined;
         })(),
-        customerSince: `${2018 + (index % 7)}-${String((index % 12) + 1).padStart(2, "0")}-${String(((index * 5) % 27) + 1).padStart(2, "0")}`,
+        customerSince: CUSTOMER_SINCE[company.id] ?? `${2018 + (index % 7)}-${String((index % 12) + 1).padStart(2, "0")}-${String(((index * 5) % 27) + 1).padStart(2, "0")}`,
       },
     ];
   }),

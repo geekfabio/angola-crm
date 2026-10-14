@@ -34,13 +34,12 @@ import {
   type TriggerType,
 } from "@/data/automations";
 import { ABC_CLASSES } from "@/data/campaigns";
-import { SEGMENTS } from "@/data/companies";
+import { SEGMENTS, STAGES, type Stage } from "@/data/companies";
 import { OPPORTUNITY_STAGES, type OpportunityStage } from "@/data/opportunities";
 import {
   automationIssues,
   conditionsSummary,
   maxMessagesInWeek,
-  simulateEntries,
   stepDays,
   stepSummary,
   triggerSummary,
@@ -51,6 +50,10 @@ import { useCompaniesStore } from "@/stores/companies-store";
 import { useSalesStore } from "@/stores/sales-store";
 import { useToday } from "@/hooks/use-today";
 import AutomationResults from "./automation-results";
+import { campaignAutomationEvents, simulateTrigger } from "@/lib/automation-engine";
+import { CAMPAIGN_EVENTS } from "@/data/campaign-events";
+import { useAutomationRunsStore } from "@/stores/automation-runs-store";
+import { useContactsStore } from "@/stores/contacts-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { useUiStore } from "@/stores/ui-store";
 import ChevronIcon from "@/public/assets/images/_common/chevron-down.svg";
@@ -77,6 +80,8 @@ const TRIGGER_NOTES: Record<TriggerType, string> = {
     "Conta a partir da compra a crédito mais antiga por pagar em Vendas. Quando é paga, a sequência seguinte só começa com uma nova dívida.",
   aniversario: "Usa a data «Cliente desde» dos dados fiscais do cliente; corre uma vez por ano.",
   "cliente-criado": "Corre para cada cliente criado ou importado depois de a automação ser ativada.",
+  "cliente-muda-fase":
+    "Corre quando a fase do cliente muda — à mão na ficha ou pelo passo «Mudar fase do cliente» de outra automação.",
   "fase-alterada": "Corre quando uma oportunidade do cliente passa para esta fase.",
   "oportunidade-ganha": "Corre quando uma oportunidade do cliente é marcada como ganha.",
   "oportunidade-perdida": "Corre quando uma oportunidade do cliente é marcada como perdida.",
@@ -138,11 +143,32 @@ export default function AutomationBuilder({ automation }: AutomationBuilderProps
   const days = stepDays(steps);
   const issues = automationIssues(automation);
   const weeklyMessages = maxMessagesInWeek(steps);
+  const recordedEvents = useAutomationRunsStore((state) => state.events);
+  const contacts = useContactsStore((state) => state.contacts);
   const simulation = useMemo(
-    () => simulateEntries(automation, companies, sales, today),
-    [automation, companies, sales, today],
+    () =>
+      simulateTrigger(
+        automation,
+        companies,
+        sales,
+        [...campaignAutomationEvents(CAMPAIGN_EVENTS, contacts), ...recordedEvents],
+        today,
+      ),
+    [automation, companies, sales, recordedEvents, contacts, today],
   );
-  const entries = simulation?.entries ?? null;
+  const entries = simulation.entries;
+  const simulationTitle =
+    simulation.mode === "aniversario"
+      ? entries.length === 1
+        ? "1 aniversário nos próximos 30 dias"
+        : `${entries.length} aniversários nos próximos 30 dias`
+      : simulation.mode === "acontecimento"
+        ? entries.length === 1
+          ? "1 acontecimento nos últimos 30 dias"
+          : `${entries.length} acontecimentos nos últimos 30 dias`
+        : entries.length === 1
+          ? "1 cliente cumpre hoje o gatilho"
+          : `${entries.length} clientes cumprem hoje o gatilho`;
 
   return (
     <section className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -243,6 +269,26 @@ export default function AutomationBuilder({ automation }: AutomationBuilderProps
                       </SelectTrigger>
                       <SelectContent>
                         {OPPORTUNITY_STAGES.map((stage) => (
+                          <SelectItem key={stage} value={stage}>
+                            {stage}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                )}
+                {trigger.type === "cliente-muda-fase" && (
+                  <Field label="Nova fase do cliente" htmlFor="trigger-client-stage">
+                    <Select
+                      value={trigger.clientStage}
+                      disabled={readOnly}
+                      onValueChange={(value) => updateTrigger(automation.id, { clientStage: value as Stage })}
+                    >
+                      <SelectTrigger id="trigger-client-stage">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STAGES.map((stage) => (
                           <SelectItem key={stage} value={stage}>
                             {stage}
                           </SelectItem>
@@ -388,44 +434,37 @@ export default function AutomationBuilder({ automation }: AutomationBuilderProps
 
             <section className="border-border flex flex-col gap-3 rounded-xl border p-5">
               <h2 className="eyebrow-style text-faint font-normal">Simulação</h2>
-              {entries === null ? (
+              <span className="lead-style">{simulationTitle}</span>
+              {entries.length === 0 ? (
                 <span className="caption-style text-subtle">
-                  Este gatilho corre quando o acontecimento ocorrer. As execuções
-                  aparecem abaixo e no separador Execuções.
+                  {simulation.mode === "acontecimento"
+                    ? "Ainda nada. Faça o acontecimento no CRM (por exemplo, criar um cliente ou mudar uma fase) e volte aqui."
+                    : "Nenhum cliente nesta situação neste momento."}
                 </span>
               ) : (
-                <>
-                  <span className="lead-style">
-                    {entries.length === 1
-                      ? "1 cliente cumpre hoje o gatilho"
-                      : `${entries.length} clientes cumprem hoje o gatilho`}
-                  </span>
-                  <ul className="divide-border flex flex-col divide-y">
-                    {entries.slice(0, 6).map(({ company, days }) => (
-                      <li
-                        key={company.id}
-                        className="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0"
-                      >
-                        <span className="caption-style text-soft truncate">{company.name}</span>
-                        <span className="caption-style text-subtle shrink-0 tabular-nums">
-                          {days} dias sem comprar
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                  {entries.length > 6 && (
-                    <span className="caption-style text-subtle">
-                      e mais {entries.length - 6}.
-                    </span>
-                  )}
-                  {simulation && simulation.withoutHistory > 0 && (
-                    <span className="caption-style text-subtle">
-                      {simulation.withoutHistory === 1
-                        ? "1 cliente sem compras registadas fica de fora."
-                        : `${simulation.withoutHistory} clientes sem compras registadas ficam de fora.`}
-                    </span>
-                  )}
-                </>
+                <ul className="divide-border flex flex-col divide-y">
+                  {entries.slice(0, 6).map(({ company, label }, index) => (
+                    <li
+                      key={`${company.id}-${index}`}
+                      className="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0"
+                    >
+                      <span className="caption-style text-soft truncate">{company.name}</span>
+                      <span className="caption-style text-subtle shrink-0 tabular-nums">{label}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {entries.length > 6 && (
+                <span className="caption-style text-subtle">e mais {entries.length - 6}.</span>
+              )}
+              {simulation.withoutHistory > 0 && (
+                <span className="caption-style text-subtle">
+                  {simulation.mode === "aniversario"
+                    ? `${simulation.withoutHistory} sem data «Cliente desde» ficam de fora.`
+                    : simulation.withoutHistory === 1
+                      ? "1 cliente sem compras registadas fica de fora."
+                      : `${simulation.withoutHistory} clientes sem compras registadas ficam de fora.`}
+                </span>
               )}
             </section>
 

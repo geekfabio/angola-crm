@@ -4,10 +4,14 @@ import { OPEN_OFFER_STATUSES, type DiscountOffer, type OfferStatus } from "@/dat
 import type { ProductCategory, Sale } from "@/data/sales";
 import { matchesConditions, stepDays } from "./automations";
 import { addDays } from "./follow-up";
+import { formatDateShort } from "./format";
+import type { CampaignEvent } from "@/data/campaign-events";
+import type { Contact } from "@/data/contacts";
 import { abcBySales, purchaseStats } from "./sales";
 
 export type AutomationEventType =
   | "cliente-criado"
+  | "cliente-muda-fase"
   | "fase-alterada"
   | "oportunidade-ganha"
   | "oportunidade-perdida"
@@ -50,6 +54,7 @@ function eventMatches(automation: Automation, event: AutomationEvent) {
   const { trigger } = automation;
   if (trigger.type !== event.type) return false;
   if (trigger.type === "fase-alterada") return event.stage === trigger.stage;
+  if (trigger.type === "cliente-muda-fase") return event.stage === trigger.clientStage;
   if (trigger.type === "campanha-aberta") return trigger.engagement === "Aberto" || event.engagement === "Clicou";
   return true;
 }
@@ -169,4 +174,116 @@ export function daysSince(dateTime: string, today: string) {
   return Math.round(
     (Date.parse(`${today}T00:00:00Z`) - Date.parse(`${dateTime.slice(0, 10)}T00:00:00Z`)) / (24 * 60 * 60 * 1000),
   );
+}
+
+export function campaignAutomationEvents(events: CampaignEvent[], contacts: Contact[]): AutomationEvent[] {
+  return events
+    .filter((event) => event.type === "Aberto" || event.type === "Clicou")
+    .flatMap((event) => {
+      const contact = contacts.find((item) => item.id === event.contactId);
+      return contact
+        ? [
+            {
+              id: event.id,
+              type: "campanha-aberta" as const,
+              companyId: contact.companyId,
+              date: event.date.slice(0, 10),
+              engagement: event.type as "Aberto" | "Clicou",
+            },
+          ]
+        : [];
+    });
+}
+
+export type SimulatedEntry = { company: Company; label: string; sortKey: number };
+
+export type Simulation = {
+  mode: "estado" | "aniversario" | "acontecimento";
+  entries: SimulatedEntry[];
+  withoutHistory: number;
+};
+
+const EVENT_LABELS: Record<AutomationEventType, string> = {
+  "cliente-criado": "Cliente criado",
+  "cliente-muda-fase": "Passou a",
+  "fase-alterada": "Oportunidade passou a",
+  "oportunidade-ganha": "Oportunidade ganha",
+  "oportunidade-perdida": "Oportunidade perdida",
+  "campanha-aberta": "Interagiu com campanha",
+};
+
+function daysApart(from: string, to: string) {
+  return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
+}
+
+export function simulateTrigger(
+  automation: Automation,
+  companies: Company[],
+  sales: Sale[],
+  events: AutomationEvent[],
+  today: string,
+): Simulation {
+  const active = companies.filter((company) => !company.archived);
+  const abc = abcBySales(active, sales, today);
+  const eligible = active.filter((company) => matchesConditions(company, automation.conditions, abc));
+  const { trigger } = automation;
+  const entries: SimulatedEntry[] = [];
+  let withoutHistory = 0;
+
+  if (trigger.type === "dias-sem-comprar") {
+    for (const company of eligible) {
+      const { daysSincePurchase } = purchaseStats(sales, company.id, today);
+      if (daysSincePurchase === undefined) withoutHistory += 1;
+      else if (daysSincePurchase >= trigger.days) {
+        entries.push({ company, label: `${daysSincePurchase} dias sem comprar`, sortKey: -daysSincePurchase });
+      }
+    }
+    return { mode: "estado", entries: entries.sort((a, b) => a.sortKey - b.sortKey), withoutHistory };
+  }
+
+  if (trigger.type === "divida-vencida") {
+    for (const company of eligible) {
+      const oldest = sales
+        .filter((sale) => sale.companyId === company.id && sale.payment === "Crédito" && !sale.paid)
+        .sort((a, b) => a.at.localeCompare(b.at))[0];
+      if (!oldest) continue;
+      const age = daysApart(oldest.at.slice(0, 10), today);
+      if (age >= trigger.days) {
+        entries.push({ company, label: `${oldest.document} por pagar há ${age} dias`, sortKey: -age });
+      }
+    }
+    return { mode: "estado", entries: entries.sort((a, b) => a.sortKey - b.sortKey), withoutHistory };
+  }
+
+  if (trigger.type === "aniversario") {
+    for (const company of eligible) {
+      const since = company.profile?.customerSince;
+      if (!since) {
+        withoutHistory += 1;
+        continue;
+      }
+      let date = `${today.slice(0, 4)}${since.slice(4)}`;
+      if (date < today) date = `${Number(today.slice(0, 4)) + 1}${since.slice(4)}`;
+      const inDays = daysApart(today, date);
+      if (inDays > 30 || Number(date.slice(0, 4)) <= Number(since.slice(0, 4))) continue;
+      const years = Number(date.slice(0, 4)) - Number(since.slice(0, 4));
+      entries.push({
+        company,
+        label: `${years} ${years === 1 ? "ano" : "anos"} ${inDays === 0 ? "hoje" : `a ${formatDateShort(date)}`}`,
+        sortKey: inDays,
+      });
+    }
+    return { mode: "aniversario", entries: entries.sort((a, b) => a.sortKey - b.sortKey), withoutHistory };
+  }
+
+  const recent = events
+    .filter((event) => daysApart(event.date, today) <= 30 && eventMatches(automation, event))
+    .sort((a, b) => b.date.localeCompare(a.date));
+  for (const event of recent) {
+    const company = eligible.find((item) => item.id === event.companyId);
+    if (!company) continue;
+    const detail = event.stage ? ` ${event.stage}` : event.engagement ? ` (${event.engagement === "Clicou" ? "clicou" : "abriu"})` : "";
+    entries.push({ company, label: `${EVENT_LABELS[event.type]}${detail} · ${formatDateShort(event.date)}`, sortKey: 0 });
+  }
+  return { mode: "acontecimento", entries, withoutHistory };
 }

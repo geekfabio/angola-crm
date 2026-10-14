@@ -1,4 +1,4 @@
-# Roteiro de UI — 28 fases
+# Roteiro de UI — 29 fases
 
 Enquanto o `ROADMAP.md` ordena o produto por fases de negócio (fundação, dados reais, Supabase), este ficheiro ordena a **construção da interface** dos módulos que já têm rota mas ainda são esqueleto visual — tabela de leitura, sem store, sem diálogos, sem painel de detalhe.
 
@@ -318,6 +318,15 @@ Pedido do utilizador: quando um cliente fica X dias sem comprar, o CRM apresenta
 ## Fase 28 — Testes automáticos `✅`
 
 - `npm test` corre os testes da lógica de negócio com o `node:test` do próprio Node (sem bibliotecas novas): NIF, telefones, SMS, importação CSV, cotações e IVA, identificação nas vendas, estatísticas de compra, motor de automações, descontos, comissões, calendário e retenção. Entra na verificação de `AGENTS.md`.
+
+---
+
+## Fase 29 — Sincronização com calendários e gatilhos visíveis `✅`
+
+- **Calendários** (Definições → Integrações), simulados: Google Calendar, Outlook e Calendário Apple (iCloud), com os logótipos de cada um. "Ligar" abre um ecrã de autorização simulado (conta e permissões pedidas). Visitas e reuniões agendadas (e, se escolhido, chamadas e tarefas) passam para um calendário próprio «CRM — Alimenta Angola»: criar, atualizar e remover acontecem sozinhos quando o agendamento muda no CRM. Nos dois sentidos (Google e Outlook), "Simular alteração no calendário" muda a data no calendário e o Follow-up acompanha. Registo das últimas sincronizações; Follow-up e a ficha do cliente mostram o que está no calendário. A exportação .ics continua.
+- **Gatilhos**: novo gatilho "Cliente muda de fase" (à mão ou pelo passo "Mudar fase do cliente" de outra automação). A simulação do construtor funciona para todos: dívidas vencidas, aniversários dos próximos 30 dias e acontecimentos dos últimos 30 dias. Ficam ativas como exemplo: aniversário do cliente, seguimento de proposta, reativação e pós-venda de oportunidade ganha.
+
+**Fica para depois:** OAuth real (credenciais Google e Microsoft em Supabase secrets), webhooks/assinaturas de alterações dos calendários, CalDAV para iCloud.
 
 ---
 

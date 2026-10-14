@@ -30,6 +30,11 @@ import {
 import { cn, slugify } from "@/lib/utils";
 import { buildIcs, downloadIcs } from "@/lib/ics";
 import { useActivitiesStore } from "@/stores/activities-store";
+import { useCalendarSyncStore } from "@/stores/calendar-sync-store";
+import { useSettingsStore } from "@/stores/settings-store";
+import { CALENDAR_PROVIDERS } from "@/data/calendar-sync";
+import Asset from "@/components/_ui/asset";
+import { useRouter } from "next/navigation";
 import { useAutomationRunsStore } from "@/stores/automation-runs-store";
 import { useCompaniesStore } from "@/stores/companies-store";
 import { useFollowUps } from "./use-follow-ups";
@@ -194,6 +199,9 @@ function FollowUpRow({ item, today }: { item: FollowUpItem; today: string }) {
 export default function FollowUp() {
   const { items, today } = useFollowUps();
   const companies = useCompaniesStore((state) => state.companies);
+  const connections = useCalendarSyncStore((state) => state.connections);
+  const connectedCalendars = CALENDAR_PROVIDERS.filter((provider) => connections[provider.id]);
+  const router = useRouter();
   const [owner, setOwner] = useState<string>(ALL);
   const [bucket, setBucket] = useState<FollowUpBucket | null>(null);
 
@@ -239,9 +247,31 @@ export default function FollowUp() {
         title="Follow-up"
         count={count("atrasado") + count("hoje")}
         actions={
-          <Button variant="secondary" size="sm" onClick={exportCalendar} disabled={mine.every((item) => !item.due)}>
-            Exportar calendário
-          </Button>
+          <div className="flex items-center gap-2">
+            {connectedCalendars.length > 0 ? (
+              <span className="caption-style text-soft hidden items-center gap-1.5 sm:flex">
+                {connectedCalendars.map((provider) => (
+                  <Asset key={provider.id} type="image" src={provider.logo} alt="" width={1} height={1} fit="contain" className="size-4" />
+                ))}
+                Sincronizado
+              </span>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="hidden sm:inline-flex"
+                onClick={() => {
+                  useSettingsStore.getState().setTab("integracoes");
+                  router.push("/definicoes");
+                }}
+              >
+                Ligar calendário
+              </Button>
+            )}
+            <Button variant="secondary" size="sm" onClick={exportCalendar} disabled={mine.every((item) => !item.due)}>
+              Exportar .ics
+            </Button>
+          </div>
         }
       />
       <TotalsBar

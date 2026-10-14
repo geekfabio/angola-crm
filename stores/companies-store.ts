@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { COMPANIES, EMPTY_PROFILE, type Company, type CompanyProfile, type SortKey } from "@/data/companies";
+import { COMPANIES, EMPTY_PROFILE, STAGES, type Company, type CompanyProfile, type SortKey } from "@/data/companies";
 import { COMPANY_PROFILES } from "@/data/company-profiles";
 import { FOLLOW_UPS, type FollowUp } from "@/data/follow-ups";
 import { diffRecord } from "@/lib/audit";
@@ -192,6 +192,10 @@ export const useCompaniesStore = create<CompaniesState>((set, get) => {
       set((state) => ({
         companies: state.companies.map((company) => (company.id === id ? next : company)),
       }));
+      const stageOf = (company: Company) => company.tags.find((tag) => (STAGES as readonly string[]).includes(tag));
+      if (stageOf(next) && stageOf(next) !== stageOf(previous)) {
+        useAutomationRunsStore.getState().emit("cliente-muda-fase", id, { stage: stageOf(next) });
+      }
       recordEvent({
         action: "atualizou o cliente",
         target: { module: "Clientes", id, label: next.name },
