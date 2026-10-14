@@ -221,13 +221,13 @@ export default function TotalsBar({ id, items, summary }: TotalsBarProps) {
                       className={cn(
                         TILE_CLASS,
                         "focus-visible:ring-ring/60 w-full cursor-pointer outline-none focus-visible:ring-2 motion-safe:active:scale-[0.98]",
-                        item.pressed ? "border-foreground/40 bg-white/5" : "border-border hover:bg-white/3",
+                        item.pressed ? "border-foreground/40 bg-white/5" : "border-border bg-tile shadow-tile hover:bg-white/3",
                       )}
                     >
                       <TileContent item={item} />
                     </button>
                   ) : (
-                    <div className={cn(TILE_CLASS, "border-border w-full")}>
+                    <div className={cn(TILE_CLASS, "border-border bg-tile shadow-tile w-full")}>
                       <TileContent item={item} />
                     </div>
                   )}

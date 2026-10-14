@@ -31,7 +31,7 @@ export default function HeroFigure({
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: prefersReducedMotion ? 0 : 0.6, ease: ease.power3Out }}
-      className="border-border relative flex flex-col gap-4 overflow-hidden rounded-xl border p-6"
+      className="border-border bg-tile shadow-tile relative flex flex-col gap-4 overflow-hidden rounded-xl border p-6"
     >
       <motion.div
         aria-hidden

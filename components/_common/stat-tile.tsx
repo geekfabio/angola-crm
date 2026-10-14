@@ -55,7 +55,7 @@ export default function StatTile({
         ease: ease.power3Out,
       }}
       whileHover={prefersReducedMotion ? undefined : { y: -3 }}
-      className="border-border ease-power3-out flex flex-col gap-3 rounded-xl border p-5 transition-colors duration-150 hover:border-line-strong"
+      className="border-border bg-tile shadow-tile ease-power3-out flex flex-col gap-3 rounded-xl border p-5 transition-colors duration-150 hover:border-line-strong"
     >
       <span className="caption-style text-subtle">{label}</span>
 
