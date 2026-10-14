@@ -12,7 +12,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/_ui/sheet";
-import DetailSection from "../detail/detail-section";
+import DetailSection from "@/components/_common/detail-section";
 import ProfileAccount from "./profile-account";
 import { CURRENT_USER, profileByName } from "@/data/companies";
 import { ALL_OWNERS, formatMoney } from "@/lib/companies";
@@ -51,10 +51,10 @@ export default function Profile() {
     : 0;
 
   const stats = [
-    { label: "Accounts", value: String(accounts.length) },
-    { label: "Open deals", value: String(openDeals) },
-    { label: "Pipeline", value: `$${formatMoney(pipeline)}` },
-    { label: "Avg. win", value: `${avgWin}%` },
+    { label: "Clientes", value: String(accounts.length) },
+    { label: "Oportunidades abertas", value: String(openDeals) },
+    { label: "Carteira", value: formatMoney(pipeline) },
+    { label: "Fecho médio", value: `${avgWin}%` },
   ];
 
   function showAccounts() {
@@ -71,17 +71,19 @@ export default function Profile() {
         <SheetHeader>
           <div className="flex items-center gap-2">
             <UsersIcon aria-hidden className="text-icon size-3.5" />
-            <SheetTitle>{isCurrentUser ? "My Profile" : "Owner Profile"}</SheetTitle>
+            <SheetTitle>
+              {isCurrentUser ? "O Meu Perfil" : "Perfil do Gestor"}
+            </SheetTitle>
           </div>
           <SheetDescription className="sr-only">
-            Contact details, pipeline summary and assigned accounts
+            Dados de contacto, resumo da carteira e clientes atribuídos
           </SheetDescription>
           <SheetClose asChild>
             <Button
               variant="ghost"
               size="icon-sm"
               className="-mr-1"
-              aria-label="Close profile"
+              aria-label="Fechar perfil"
             >
               <XIcon aria-hidden className="text-foreground size-4" />
             </Button>
@@ -94,7 +96,7 @@ export default function Profile() {
               <Avatar
                 src={person.avatar}
                 alt=""
-                className="size-[50px] shadow-[0px_6.25px_6.25px_0px_rgba(15,15,15,0.24),0px_0px_0px_1.563px_#232323]"
+                className="size-[50px] shadow-[0px_6.25px_6.25px_0px_rgba(15,15,15,0.24),0px_0px_0px_1.563px_var(--border)]"
               />
               <div className="flex min-w-0 flex-col gap-2">
                 <h2 className="truncate">{person.name}</h2>
@@ -104,7 +106,7 @@ export default function Profile() {
               </div>
             </div>
 
-            <DetailSection title="Contact">
+            <DetailSection title="Contacto">
               <div className="lead-style flex flex-wrap items-center gap-x-4 gap-y-3">
                 <a
                   href={`mailto:${person.email}`}
@@ -123,7 +125,9 @@ export default function Profile() {
               </div>
             </DetailSection>
 
-            <DetailSection title={isCurrentUser ? "Team pipeline" : "Pipeline"}>
+            <DetailSection
+              title={isCurrentUser ? "Carteira da equipa" : "Carteira"}
+            >
               <div className="grid grid-cols-2 gap-2">
                 {stats.map((stat) => (
                   <div
@@ -142,7 +146,7 @@ export default function Profile() {
             </DetailSection>
 
             <DetailSection
-              title={isCurrentUser ? "Team accounts" : "Accounts"}
+              title={isCurrentUser ? "Clientes da equipa" : "Clientes"}
               className="shadow-none"
             >
               {accounts.length > 0 ? (
@@ -157,7 +161,7 @@ export default function Profile() {
                 </ul>
               ) : (
                 <span className="caption-style text-subtle block">
-                  No accounts assigned yet.
+                  Ainda sem clientes atribuídos.
                 </span>
               )}
             </DetailSection>
@@ -167,7 +171,7 @@ export default function Profile() {
         <SheetFooter>
           <SheetClose asChild>
             <Button variant="subtle" size="sm">
-              Close
+              Fechar
             </Button>
           </SheetClose>
           <Button
@@ -176,7 +180,9 @@ export default function Profile() {
             onClick={showAccounts}
             disabled={accounts.length === 0}
           >
-            {isCurrentUser ? "Show all accounts" : "Filter table by owner"}
+            {isCurrentUser
+              ? "Ver todos os clientes"
+              : "Filtrar tabela por gestor"}
           </Button>
         </SheetFooter>
       </SheetContent>

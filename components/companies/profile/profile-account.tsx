@@ -16,10 +16,10 @@ export default function ProfileAccount({ company, onOpen }: ProfileAccountProps)
         variant="item"
         size="md"
         onClick={onOpen}
-        aria-label={`Open ${company.name} details`}
+        aria-label={`Abrir detalhe de ${company.name}`}
         className="items-center px-2 py-2"
       >
-        <span className="bg-muted flex size-8 shrink-0 items-center justify-center rounded-lg shadow-[0px_0px_0px_1px_#232323]">
+        <span className="bg-muted flex size-8 shrink-0 items-center justify-center rounded-lg shadow-[0px_0px_0px_1px_var(--border)]">
           {company.logo ? (
             <Asset
               type="image"
@@ -39,12 +39,11 @@ export default function ProfileAccount({ company, onOpen }: ProfileAccountProps)
         <span className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="truncate">{company.name}</span>
           <span className="caption-style text-subtle truncate">
-            {company.openDeals} open deals · {company.tags.join(", ")}
+            {company.openDeals} oportunidades abertas · {company.tags.join(", ")}
           </span>
         </span>
         <span className="flex shrink-0 flex-col items-end gap-1.5 tabular-nums">
           <span className="flex items-center gap-1">
-            <span className="text-muted-foreground">$</span>
             {formatMoney(company.pipelineValue)}
           </span>
           <SegmentBar percent={company.winProbability} className="w-[60px]" />

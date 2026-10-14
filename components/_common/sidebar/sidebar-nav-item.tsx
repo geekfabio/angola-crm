@@ -2,29 +2,39 @@ import type { ComponentType, SVGProps } from "react";
 import Button from "@/components/_ui/button";
 import CountBadge from "@/components/_ui/count-badge";
 import { cn } from "@/lib/utils";
+import { useUiStore } from "@/stores/ui-store";
 
 type SidebarNavItemProps = {
   icon: ComponentType<SVGProps<SVGSVGElement>>;
   label: string;
+  href?: string;
   count?: number;
   active?: boolean;
   tone?: "default" | "quiet";
   iconClassName?: string;
+  onClick?: () => void;
 };
 
 export default function SidebarNavItem({
   icon: Icon,
   label,
+  href,
   count,
   active = false,
   tone = "default",
   iconClassName,
+  onClick,
 }: SidebarNavItemProps) {
   return (
     <li className={cn(active && "mb-0.75")}>
       <Button
         variant="nav"
         size="md"
+        href={href}
+        onClick={() => {
+          onClick?.();
+          useUiStore.getState().setSidebarOpen(false);
+        }}
         data-active={active}
         aria-current={active ? "page" : undefined}
         className={cn(

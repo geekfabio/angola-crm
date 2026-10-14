@@ -4,6 +4,25 @@ Especificação funcional por módulo. O que cada módulo faz, que dados tem, e 
 
 Estado: `✅ existe` · `🔨 parcial` · `⬜ por construir`
 
+## Estado atual — 13 de outubro de 2026
+
+Todos os módulos têm a interface completa e funcional **com dados fictícios em memória** (Zustand). O que falta em todos é o mesmo: base de dados Supabase com RLS, autenticação real e os fornecedores externos. Por isso nenhum módulo está ✅ — estão 🔨 até a Fase 1 do `ROADMAP.md` ligar os dados. O detalhe de cada fase de interface está em `UI_ROADMAP.md`.
+
+| Módulo | Interface | Falta para produção |
+| ------ | --------- | ------------------- |
+| Clientes | Lista e grelha, filtros, edição, arquivo, ações em grupo, ficha fiscal (NIF, crédito, condições), documentos, importação CSV | Supabase, RLS por gestor/zona, Storage para documentos |
+| Contactos | Ficha, consentimento por canal, fusão, chamadas, exportação e anonimização (Lei n.º 22/11) | Supabase |
+| Oportunidades | Kanban, tabela, motivos de perda, cotação a partir da oportunidade | Supabase |
+| Atividades | Lista, calendário, tarefas, rota do dia com check-in GPS, registo sem rede | Supabase, sincronização real da fila offline |
+| Follow-up | Contactos agendados, tarefas, sugestões, propostas de desconto, exportação .ics | Supabase |
+| Vendas | Compras recebidas, por associar, em dívida, identificação por cartão/NIF/telefone | Integração com o sistema de vendas (por decidir) |
+| Cotações e encomendas | Catálogo, tabela de preços por segmento, IVA, impressão/PDF, encomenda → fatura | Integração com o sistema de vendas e stock |
+| Conversas | WhatsApp e SMS, janela de 24 h, «PARAR» | WhatsApp Business API, agregador de SMS |
+| Campanhas | E-mail e SMS: editor, segmentos, revisão, agendamento com saldo, medição | Fornecedores de envio, `MESSAGING_LIVE=true` |
+| Automações | Todos os gatilhos executam; propostas de desconto; caixa de saída | Motor no servidor (cron/Edge Function) |
+| Relatórios | Desempenho, clientes em risco, objetivos e comissões | Supabase |
+| Definições | Empresa, remetentes, modelos, equipas, zonas, acessos, integrações, catálogo, mensagens e saldo, proteção de dados | Aplicação real dos perfis (RLS) |
+
 ---
 
 ## Glossário — do template para o negócio
@@ -48,20 +67,25 @@ O módulo de referência. Já funciona com dados fictícios; falta traduzir, ada
 - Exportação para CSV — `lib/csv.ts`
 - Sidebar redimensionável com largura persistida em `localStorage` — `_common/sidebar/`
 
+**Feito depois 🔨** (com dados fictícios)
+
+- Tradução integral para pt-AO e vocabulário do glossário
+- NIF (validado e único), morada, município, limite de crédito, condições de pagamento, cliente desde; alvará e contratos como documentos com validade
+- Classificação ABC por volume de compras e risco (fora do ritmo de compra, dívida vencida)
+- Importação por CSV com mapeamento de colunas, pré-visualização e deteção de duplicados por NIF e nome
+- Histórico de compras, propostas de desconto e documentos no painel de detalhe
+
 **Por fazer ⬜**
 
-- Tradução integral para pt-AO e substituição do vocabulário pelo glossário acima
-- Campos do negócio: NIF, alvará, morada, zona, província, limite de crédito, condições de pagamento, canal de entrega (levantamento / entrega própria / transportadora)
-- Classificação ABC por volume de compras e indicador de risco (dívida vencida, quebra de recorrência)
-- Importação em massa por CSV/Excel, com pré-visualização e deteção de duplicados por NIF e telefone
-- Histórico de compras do cliente no painel de detalhe
+- Canal de entrega preferido (levantamento / entrega própria / transportadora) como campo da ficha
+- Importação direta de `.xlsx` (hoje: guardar como CSV no Excel)
 - Persistência em Supabase com RLS por gestor de conta e por zona
 
 **Pronto quando:** um comercial consegue criar, filtrar, abrir e editar um cliente real, tudo em português, com os dados a sobreviver a um refresh.
 
 ---
 
-## 2. Contactos ⬜
+## 2. Contactos 🔨
 
 Pessoas. Um cliente tem vários; uma pessoa pode mudar de cliente.
 
@@ -75,7 +99,7 @@ Pessoas. Um cliente tem vários; uma pessoa pode mudar de cliente.
 
 ---
 
-## 3. Oportunidades e Funil ⬜
+## 3. Oportunidades e Funil 🔨
 
 - Quadro Kanban por fase, com arrastar entre colunas, e vista em tabela alternativa
 - Campos: cliente, contacto, valor em Kz, fase, probabilidade, data prevista de fecho, gestor, produtos/categorias envolvidos
@@ -87,7 +111,7 @@ Pessoas. Um cliente tem vários; uma pessoa pode mudar de cliente.
 
 ---
 
-## 4. Atividades e Agenda ⬜
+## 4. Atividades e Agenda 🔨
 
 - Registo de visita, chamada, e-mail, reunião, entrega, reclamação
 - Tarefas com responsável, prazo e lembrete
@@ -99,7 +123,7 @@ Pessoas. Um cliente tem vários; uma pessoa pode mudar de cliente.
 
 ---
 
-## 5. Email Marketing ⬜
+## 5. Email Marketing 🔨
 
 Módulo central do pedido. Enviar campanhas a listas segmentadas de clientes e contactos, a partir do próprio CRM.
 
@@ -134,11 +158,12 @@ Módulo central do pedido. Enviar campanhas a listas segmentadas de clientes e c
 
 ---
 
-## 6. SMS ⬜
+## 6. SMS 🔨
 
 Em Angola o SMS chega onde o e-mail não chega. Tratado como canal de primeira classe, não como extra.
 
-- Composição com contagem de caracteres e de segmentos (GSM-7 vs Unicode — acentos custam dinheiro, o editor avisa)
+- Composição com contagem de unidades e de mensagens (120 unidades por mensagem; letras com acento contam 2 — custam dinheiro, o editor avisa)
+- Saldo pré-pago e carregamento de crédito (Umoja Global / MIMOSMS, 20 Kz por mensagem)
 - Mesmo motor de segmentos e de variáveis do Email Marketing
 - Remetente alfanumérico (sender ID) configurável, com nota sobre o registo necessário junto da operadora
 - Normalização de números para E.164 e deteção de operadora (Unitel / Africell / Movicel) — `lib/phone.ts`
@@ -152,7 +177,7 @@ Em Angola o SMS chega onde o e-mail não chega. Tratado como canal de primeira c
 
 ---
 
-## 7. Automações ⬜
+## 7. Automações 🔨
 
 Regras simples, do tipo gatilho → condição → ação. Não é um motor de workflows genérico.
 
@@ -165,7 +190,7 @@ Ações: enviar e-mail, enviar SMS, criar tarefa, mudar fase, notificar gestor, 
 
 ---
 
-## 8. Relatórios ⬜
+## 8. Relatórios 🔨
 
 - Painel de direção: vendas do período, carteira, taxa de conversão, clientes activos vs inactivos, ticket médio
 - Desempenho por gestor de conta, por zona e por equipa
@@ -177,7 +202,7 @@ Gráficos reaproveitam `components/_common/sparkline.tsx` e `components/_common/
 
 ---
 
-## 9. Acessos e definições ⬜
+## 9. Acessos e definições 🔨
 
 - Autenticação Supabase (e-mail/palavra-passe e link mágico), sessão persistida
 - Perfis: **Administrador** (tudo), **Gestor comercial** (a sua equipa e zona), **Comercial** (os seus clientes), **Marketing** (campanhas e segmentos, sem dados financeiros), **Leitura** (consulta)
@@ -203,4 +228,4 @@ Gráficos reaproveitam `components/_common/sparkline.tsx` e `components/_common/
 
 ## Fora de âmbito, por agora
 
-Facturação e emissão de documentos fiscais certificados (AGT), gestão de stock e armazém, contabilidade, app móvel nativa e loja online para o cliente final. O CRM integra com estes sistemas quando existirem, mas não os substitui.
+Facturação e emissão de documentos fiscais certificados (AGT) — as cotações e guias de encomenda do CRM dizem "documento sem valor fiscal", gestão de stock e armazém, contabilidade, app móvel nativa e loja online para o cliente final. O CRM integra com estes sistemas quando existirem, mas não os substitui.

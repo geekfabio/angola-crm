@@ -8,11 +8,11 @@ import {
 } from "@/components/_ui/sheet";
 import SidebarContent from "./sidebar-content";
 import SidebarResizer from "./sidebar-resizer";
-import { useCompaniesStore } from "@/stores/companies-store";
+import { useUiStore } from "@/stores/ui-store";
 
 export default function Sidebar() {
-  const sidebarOpen = useCompaniesStore((state) => state.sidebarOpen);
-  const setSidebarOpen = useCompaniesStore((state) => state.setSidebarOpen);
+  const sidebarOpen = useUiStore((state) => state.sidebarOpen);
+  const setSidebarOpen = useUiStore((state) => state.setSidebarOpen);
 
   return (
     <>
@@ -26,9 +26,9 @@ export default function Sidebar() {
           side="left"
           className="w-[254px] max-w-[85vw] border-sidebar-border bg-sidebar"
         >
-          <SheetTitle className="sr-only">Navigation</SheetTitle>
+          <SheetTitle className="sr-only">Navegação</SheetTitle>
           <SheetDescription className="sr-only">
-            Sales CRM sections and pipelines
+            Secções do CRM da Alimenta Angola
           </SheetDescription>
           <SidebarContent />
         </SheetContent>

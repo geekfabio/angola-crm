@@ -36,10 +36,11 @@ Estes módulos enviam para pessoas reais e custam dinheiro por mensagem.
 
 ```bash
 npm run lint
+npm test
 npm run build
 ```
 
-Ambos têm de passar. Se não passarem, diz-se que não passaram e mostra-se o output — não se entrega como concluído.
+Os três têm de passar. Se não passarem, diz-se que não passaram e mostra-se o output — não se entrega como concluído.
 
 Para mudanças de UI, confirma em ecrã estreito (360px) e largo: a sidebar é redimensionável e colapsa em mobile (`hooks/use-mobile-breakpoints.ts`, `lib/sidebar.ts`).
 

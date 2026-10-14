@@ -1,3 +1,5 @@
+import type { EntityRef } from "./audit";
+
 export type NotificationKind =
   | "mention"
   | "stage"
@@ -9,10 +11,12 @@ export type Notification = {
   id: string;
   kind: NotificationKind;
   actor?: string;
-  companyId: string;
+  companyId?: string;
   message: string;
   quote?: string;
-  time: string;
+  at: string;
+  target?: EntityRef;
+  href?: string;
   unread: boolean;
 };
 
@@ -20,64 +24,71 @@ export const NOTIFICATIONS: Notification[] = [
   {
     id: "n1",
     kind: "mention",
-    actor: "Mark Darnalds",
-    companyId: "microsoft",
-    message: "mentioned you on Microsoft",
+    actor: "Marcos Domingos",
+    companyId: "nova-vida",
+    message: "mencionou-te no Supermercado Nova Vida",
     quote:
-      "Can you join the pilot review on Friday? Procurement wants a security walkthrough.",
-    time: "2m ago",
+      "Podes juntar-te à revisão do piloto na sexta? A direção quer uma avaliação de segurança.",
+    at: "2026-10-11T09:05",
+    target: { module: "Clientes", id: "nova-vida", label: "Supermercado Nova Vida" },
     unread: true,
   },
   {
     id: "n2",
     kind: "stage",
-    actor: "Sarah Nguyen",
-    companyId: "lvmh",
-    message: "moved LVMH to Renewal",
-    time: "18m ago",
+    actor: "Sara Neto",
+    companyId: "boa-esperanca",
+    message: "moveu a Mercearia Boa Esperança para Negociação",
+    at: "2026-10-11T08:42",
+    target: { module: "Oportunidades", id: "op-1", label: "Mercearia Boa Esperança" },
     unread: true,
   },
   {
     id: "n3",
     kind: "alert",
-    companyId: "slack",
-    message: "Win probability for Slack dropped to 23%",
-    time: "1h ago",
+    companyId: "marisqueira-ilha",
+    message: "A probabilidade de fecho da Marisqueira da Ilha desceu para 23%",
+    at: "2026-10-11T07:30",
+    target: { module: "Clientes", id: "marisqueira-ilha", label: "Marisqueira da Ilha" },
     unread: true,
   },
   {
     id: "n4",
     kind: "update",
-    actor: "Emma Green",
-    companyId: "shopify",
-    message: "updated the Business fit score card for Shopify",
-    time: "3h ago",
+    actor: "Emília Garcia",
+    companyId: "zango",
+    message: "atualizou a adequação ao negócio da Revenda Zango",
+    at: "2026-10-10T16:10",
+    target: { module: "Clientes", id: "zango", label: "Revenda Zango" },
     unread: false,
   },
   {
     id: "n5",
     kind: "update",
-    actor: "Noah Lee",
-    companyId: "stripe",
-    message: "logged a demo with Stripe",
-    time: "Yesterday",
+    actor: "Nelson Lemos",
+    companyId: "mussulo-bay",
+    message: "registou uma demonstração com o Hotel Mussulo Bay",
+    at: "2026-10-10T11:00",
+    target: { module: "Clientes", id: "mussulo-bay", label: "Hotel Mussulo Bay" },
     unread: false,
   },
   {
     id: "n6",
     kind: "alert",
-    companyId: "snowflake",
-    message: "Pipeline value for Snowflake increased to $520,000",
-    time: "2d ago",
+    companyId: "sao-paulo",
+    message: "O valor em carteira da Mercearia São Paulo subiu para 44.000.000 Kz",
+    at: "2026-10-09T14:20",
+    target: { module: "Clientes", id: "sao-paulo", label: "Mercearia São Paulo" },
     unread: false,
   },
   {
     id: "n7",
     kind: "invite",
-    actor: "Grace Miller",
-    companyId: "hubspot",
-    message: "added you to the Hubspot account team",
-    time: "3d ago",
+    actor: "Graça Miguel",
+    companyId: "cantina-kilamba",
+    message: "adicionou-te à equipa da Cantina Universitária do Kilamba",
+    at: "2026-10-08T10:45",
+    target: { module: "Clientes", id: "cantina-kilamba", label: "Cantina Universitária do Kilamba" },
     unread: false,
   },
 ];

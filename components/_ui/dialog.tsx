@@ -59,7 +59,7 @@ function DialogContent({
             variant="ghost"
             size="icon-sm"
             className="absolute top-4 right-4"
-            aria-label="Close"
+            aria-label="Fechar"
           >
             <XIcon className="size-4" />
           </Button>

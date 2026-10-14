@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import { Checkbox } from "@/components/_ui/checkbox";
 import { ScrollArea } from "@/components/_ui/scroll-area";
 import {
@@ -11,23 +10,21 @@ import {
   TableRow,
 } from "@/components/_ui/table";
 import CompanyRow from "./company-row";
+import CompanyCard from "../grid/company-card";
 import TableFooter from "./table-footer";
+import BulkActions from "./bulk-actions";
+import Button from "@/components/_ui/button";
 import {
   TABLE_CELL_CLASS,
   TABLE_COLUMNS,
   TABLE_GRID_CLASS,
   TABLE_ROW_CLASS,
 } from "./table-columns";
-import { filterCompanies } from "@/lib/companies";
+import { useVisibleCompanies } from "../use-visible-companies";
 import { cn } from "@/lib/utils";
 import { useCompaniesStore } from "@/stores/companies-store";
 
 export default function CompaniesTable() {
-  const companies = useCompaniesStore((state) => state.companies);
-  const sortBy = useCompaniesStore((state) => state.sortBy);
-  const owner = useCompaniesStore((state) => state.owner);
-  const stage = useCompaniesStore((state) => state.stage);
-  const activityWindow = useCompaniesStore((state) => state.activityWindow);
   const selectedIds = useCompaniesStore((state) => state.selectedIds);
   const detailId = useCompaniesStore((state) => state.detailId);
   const detailOpen = useCompaniesStore((state) => state.detailOpen);
@@ -35,11 +32,10 @@ export default function CompaniesTable() {
   const setSelected = useCompaniesStore((state) => state.setSelected);
   const openDetail = useCompaniesStore((state) => state.openDetail);
   const openProfile = useCompaniesStore((state) => state.openProfile);
+  const resetFilters = useCompaniesStore((state) => state.resetFilters);
+  const view = useCompaniesStore((state) => state.view);
 
-  const visible = useMemo(
-    () => filterCompanies(companies, { sortBy, owner, stage, activityWindow }),
-    [companies, sortBy, owner, stage, activityWindow],
-  );
+  const visible = useVisibleCompanies();
 
   const selectedVisible = visible.filter((company) =>
     selectedIds.includes(company.id),
@@ -53,7 +49,46 @@ export default function CompaniesTable() {
   }
 
   return (
-    <div className="border-border flex min-h-0 flex-1 flex-col border-t">
+    <div className="border-border relative flex min-h-0 flex-1 flex-col border-t">
+      {view === "grelha" ? (
+        <ScrollArea className="min-h-0 flex-1">
+          <div className="caption-style text-subtle flex items-center gap-3 px-4 pt-4">
+            <Checkbox
+              checked={allSelected ? true : someSelected ? "indeterminate" : false}
+              onCheckedChange={toggleAll}
+              aria-label="Selecionar todos os clientes"
+              disabled={visible.length === 0}
+            />
+            Selecionar todos
+          </div>
+          {visible.length > 0 ? (
+            <ul
+              aria-label="Clientes"
+              className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,260px),1fr))] gap-3 p-4 pb-24"
+            >
+              {visible.map((company) => (
+                <li key={company.id} className="flex">
+                  <CompanyCard
+                    company={company}
+                    selected={selectedIds.includes(company.id)}
+                    active={detailOpen && detailId === company.id}
+                    onToggle={() => toggleSelected(company.id)}
+                    onOpen={() => openDetail(company.id)}
+                    onOpenOwner={() => openProfile(company.owner)}
+                  />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="caption-style text-muted-foreground flex h-[160px] flex-col items-center justify-center gap-2">
+              Nenhum cliente corresponde aos filtros atuais.
+              <Button variant="secondary" size="sm" onClick={resetFilters}>
+                Limpar filtros
+              </Button>
+            </div>
+          )}
+        </ScrollArea>
+      ) : (
       <ScrollArea orientation="both" className="min-h-0 flex-1">
         <Table role="table" className={cn(TABLE_GRID_CLASS, "w-full")}>
           <TableHeader role="rowgroup" className="contents">
@@ -75,7 +110,7 @@ export default function CompaniesTable() {
                               : false
                         }
                         onCheckedChange={toggleAll}
-                        aria-label="Select all companies"
+                        aria-label="Selecionar todos os clientes"
                       />
                       {column.label}
                     </span>
@@ -104,14 +139,24 @@ export default function CompaniesTable() {
                   role="cell"
                   className="caption-style text-muted-foreground col-span-full flex h-[120px] items-center justify-center"
                 >
-                  No companies match the current filters.
+                  <span className="flex flex-col items-center gap-2">
+                    Nenhum cliente corresponde aos filtros atuais.
+                    <Button variant="secondary" size="sm" onClick={resetFilters}>
+                      Limpar filtros
+                    </Button>
+                  </span>
                 </td>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </ScrollArea>
-      <TableFooter count={visible.length} />
+      )}
+      <TableFooter
+        companies={selectedVisible.length > 0 ? selectedVisible : visible}
+        selectedCount={selectedVisible.length}
+      />
+      <BulkActions selected={selectedVisible} />
     </div>
   );
 }

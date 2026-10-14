@@ -9,9 +9,9 @@ type PipelineHealthProps = {
 export default function PipelineHealth({ company }: PipelineHealthProps) {
   const health = companyHealth(company);
   const stages = [
-    { label: "Discovery", value: health.discovery, tone: "danger" as const },
-    { label: "Evaluation", value: health.evaluation, tone: "warning" as const },
-    { label: "Procurement", value: health.procurement, tone: "success" as const },
+    { label: "Descoberta", value: health.discovery, tone: "danger" as const },
+    { label: "Avaliação", value: health.evaluation, tone: "warning" as const },
+    { label: "Compra", value: health.procurement, tone: "success" as const },
   ];
 
   return (
@@ -21,7 +21,7 @@ export default function PipelineHealth({ company }: PipelineHealthProps) {
           {company.winProbability}%
         </span>
         <span className="caption-style block text-soft">
-          Win probability across all open deals
+          Probabilidade de fecho em todas as oportunidades abertas
         </span>
       </div>
       <div className="flex flex-col gap-3">

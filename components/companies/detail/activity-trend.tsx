@@ -1,14 +1,16 @@
 import type { ComponentType, SVGProps } from "react";
 import Sparkline from "@/components/_common/sparkline";
-import type { Company } from "@/data/companies";
-import { companyActivity } from "@/lib/companies";
+import { activitySummary } from "@/lib/company-insights";
+import { nowLuandaLocal } from "@/lib/format";
+import { useActivitiesStore } from "@/stores/activities-store";
 import CursorClickIcon from "@/public/assets/images/companies/detail/cursor-click.svg";
 import MailIcon from "@/public/assets/images/companies/detail/mail-03.svg";
 import CalendarIcon from "@/public/assets/images/companies/detail/calendar.svg";
 import PhoneCallIcon from "@/public/assets/images/companies/detail/phone-call.svg";
 
 type ActivityTrendProps = {
-  company: Company;
+  companyId: string;
+  days: number;
 };
 
 type Stat = {
@@ -17,13 +19,14 @@ type Stat = {
   value: number;
 };
 
-export default function ActivityTrend({ company }: ActivityTrendProps) {
-  const activity = companyActivity(company);
+export default function ActivityTrend({ companyId, days }: ActivityTrendProps) {
+  const activities = useActivitiesStore((state) => state.activities);
+  const activity = activitySummary(activities, companyId, days, nowLuandaLocal().slice(0, 10));
   const stats: Stat[] = [
-    { icon: CursorClickIcon, label: "Total touches", value: activity.touches },
-    { icon: MailIcon, label: "Emails", value: activity.emails },
-    { icon: CalendarIcon, label: "Meetings", value: activity.meetings },
-    { icon: PhoneCallIcon, label: "Calls & notes", value: activity.calls },
+    { icon: CursorClickIcon, label: "Visitas e entregas", value: activity.visits },
+    { icon: MailIcon, label: "E-mails", value: activity.emails },
+    { icon: CalendarIcon, label: "Reuniões", value: activity.meetings },
+    { icon: PhoneCallIcon, label: "Chamadas e reclamações", value: activity.calls },
   ];
 
   return (
@@ -31,10 +34,12 @@ export default function ActivityTrend({ company }: ActivityTrendProps) {
       <div className="flex flex-col gap-1">
         <div className="flex items-baseline gap-[3px]">
           <span className="block text-[24px] leading-none">{activity.total}</span>
-          <Sparkline values={company.trend} className="h-[22px]" />
+          {activity.total > 0 && <Sparkline values={activity.trend.map((value) => Math.max(1, Math.round((value / Math.max(...activity.trend)) * 14)))} className="h-[22px]" />}
         </div>
         <span className="caption-style block text-soft">
-          Spikes around QBR prep and renewal review
+          {activity.total === 0
+            ? `Sem atividades registadas nos últimos ${days} dias.`
+            : `${activity.total === 1 ? "Atividade registada" : "Atividades registadas"} nos últimos ${days} dias.`}
         </span>
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">

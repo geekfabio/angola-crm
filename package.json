@@ -10,7 +10,8 @@
     "lint": "eslint",
     "extract:avif": "bash scripts/extract_webm_frames.sh",
     "to:avif": "node scripts/to-avif.mjs",
-    "frame:rive": "node scripts/rive-frame.mjs"
+    "frame:rive": "node scripts/rive-frame.mjs",
+    "test": "node --import ./tests/register.mjs --test tests/*.test.ts"
   },
   "dependencies": {
     "@rive-app/canvas": "^2.31.0",

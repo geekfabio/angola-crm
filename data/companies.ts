@@ -1,13 +1,14 @@
-export const SEGMENTS = ["Enterprise", "Mid-Market", "SMB", "Strategic"] as const;
+import type { FollowUp } from "./follow-ups";
+export const SEGMENTS = ["Grossista", "Retalho", "HORECA", "Revendedor"] as const;
 
 export const STAGES = [
-  "New Logo",
-  "Upsell",
-  "Expansion",
-  "Renewal",
-  "Pilot",
-  "Co-Sell",
-  "Land & Expand",
+  "Novo cliente",
+  "Venda adicional",
+  "Expansão",
+  "Renovação",
+  "Piloto",
+  "Parceria",
+  "Reactivação",
 ] as const;
 
 export type Segment = (typeof SEGMENTS)[number];
@@ -27,18 +28,22 @@ export type TagTone =
   | "neutral";
 
 export const TAG_TONES: Record<Tag, TagTone> = {
-  Enterprise: "blue",
-  "Mid-Market": "moss",
-  SMB: "yellow",
-  Strategic: "red",
-  "New Logo": "green",
-  Upsell: "purple",
-  Expansion: "green",
-  Renewal: "green",
-  Pilot: "orange",
-  "Co-Sell": "amber",
-  "Land & Expand": "teal",
+  Grossista: "blue",
+  Retalho: "moss",
+  HORECA: "yellow",
+  Revendedor: "red",
+  "Novo cliente": "green",
+  "Venda adicional": "purple",
+  Expansão: "green",
+  Renovação: "green",
+  Piloto: "orange",
+  Parceria: "amber",
+  Reactivação: "teal",
 };
+
+export const TEAMS = ["Grandes Contas", "Televendas", "Equipa de Rua"] as const;
+
+export type Team = (typeof TEAMS)[number];
 
 export type Owner = {
   name: string;
@@ -46,6 +51,7 @@ export type Owner = {
   email: string;
   phone: string;
   role: string;
+  team: Team;
 };
 
 const AVATARS = Array.from(
@@ -54,40 +60,55 @@ const AVATARS = Array.from(
 );
 
 const OWNER_NAMES = [
-  "Sarah Nguyen",
-  "James Taylor",
-  "Maria Keller",
-  "Nia Jameson",
-  "Alex Santos",
-  "Mark Darnalds",
-  "Drew Nash",
-  "Lina Wong",
-  "Jamie Fox",
-  "Kate Chen",
-  "Ricky Brown",
-  "Hannah Mills",
-  "Emma Green",
-  "Oliver Chan",
-  "Ava Brooks",
-  "Noah Lee",
-  "Grace Miller",
-  "Chloe Park",
+  "Sara Neto",
+  "Jaime Teixeira",
+  "Mariana Capitão",
+  "Nádia Jamba",
+  "Alexandre Santos",
+  "Marcos Domingos",
+  "André Kiala",
+  "Lina Wamba",
+  "Jamile Fonseca",
+  "Catarina Sacramento",
+  "Ricardo Baptista",
+  "Ana Milagre",
+  "Emília Garcia",
+  "Olívio Chico",
+  "Avelina Brito",
+  "Nelson Lemos",
+  "Graça Miguel",
+  "Cloé Pascoal",
 ];
+
+function emailSlug(name: string) {
+  return name
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, ".");
+}
+
+function phoneFor(i: number) {
+  const number = String(920000000 + i * 37123).padStart(9, "9");
+  return `+244 ${number.slice(0, 3)} ${number.slice(3, 6)} ${number.slice(6, 9)}`;
+}
 
 export const OWNERS: Owner[] = OWNER_NAMES.map((name, i) => ({
   name,
   avatar: AVATARS[i % AVATARS.length],
-  email: `${name.toLowerCase().replace(" ", ".")}@crm.com`,
-  phone: `+1 (202) ${String(199 + i).padStart(3, "0")}-${String(5520 + i * 37).slice(-4)}`,
-  role: i % 3 === 0 ? "Senior Account Executive" : "Account Executive",
+  email: `${emailSlug(name)}@alimentaangola.co.ao`,
+  phone: phoneFor(i),
+  role: i % 3 === 0 ? "Gestor de Conta Sénior" : "Gestor de Conta",
+  team: TEAMS[i % TEAMS.length],
 }));
 
 export const CURRENT_USER: Owner = {
-  name: "Jensen Ackles",
+  name: "Tiago Fernandes",
   avatar: "/assets/images/_common/avatars/jensen.png",
-  email: "jensen.ackles@crm.com",
-  phone: "+1 (202) 184-5501",
-  role: "Head of Sales",
+  email: "tiago.fernandes@alimentaangola.co.ao",
+  phone: "+244 923 000 000",
+  role: "Diretor Comercial",
+  team: "Grandes Contas",
 };
 
 export function ownerByName(name: string): Owner {
@@ -98,11 +119,46 @@ export function profileByName(name: string): Owner {
   return name === CURRENT_USER.name ? CURRENT_USER : ownerByName(name);
 }
 
+export const PAYMENT_TERMS = [
+  "Pronto pagamento",
+  "Crédito a 15 dias",
+  "Crédito a 30 dias",
+  "Crédito a 60 dias",
+] as const;
+
+export type PaymentTerm = (typeof PAYMENT_TERMS)[number];
+
+export type CompanyProfile = {
+  nif: string;
+  card: string;
+  phone: string;
+  billingEmail: string;
+  address: string;
+  municipality: string;
+  paymentTerms: PaymentTerm;
+  creditLimit: number;
+  customerSince: string;
+  geo?: { lat: number; lng: number };
+};
+
+export const EMPTY_PROFILE: CompanyProfile = {
+  nif: "",
+  card: "",
+  phone: "",
+  billingEmail: "",
+  address: "",
+  municipality: "",
+  paymentTerms: "Pronto pagamento",
+  creditLimit: 0,
+  customerSince: "",
+};
+
 export type Company = {
   id: string;
   name: string;
   tags: Tag[];
   owner: string;
+  zone: Zone;
   openDeals: number;
   pipelineValue: number;
   winProbability: number;
@@ -110,6 +166,9 @@ export type Company = {
   lastInteraction: { date: string; label: string };
   activityDays: number;
   logo?: string;
+  archived?: boolean;
+  nextFollowUp?: FollowUp;
+  profile?: CompanyProfile;
 };
 
 export const TREND_PATTERN = [
@@ -136,260 +195,283 @@ const TREND_B = [4, 4, 5, 5, 2, 7, 11, 7, 5, 7, 5, 3, 7, 14];
 const TREND_C = [4, 4, 10, 5, 2, 7, 11, 7, 11, 7, 11, 7, 7, 14];
 const TREND_D = [4, 4, 5, 12, 5, 7, 11, 3, 11, 3, 11, 3, 7, 14];
 
-const COMPANY_RECORDS: Omit<Company, "logo">[] = [
+export const COMPANIES: Company[] = [
   {
-    id: "lvmh",
-    name: "LVMH",
-    tags: ["Enterprise", "Upsell", "Expansion", "Renewal"],
-    owner: "Sarah Nguyen",
+    id: "boa-esperanca",
+    name: "Mercearia Boa Esperança",
+    tags: ["Grossista", "Venda adicional", "Expansão", "Renovação"],
+    owner: "Sara Neto",
+    zone: "Luanda",
     openDeals: 7,
-    pipelineValue: 420000,
+    pipelineValue: 48_000_000,
     winProbability: 70,
     trend: TREND_A,
-    lastInteraction: { date: "2026-02-21", label: "QBR Call" },
+    lastInteraction: { date: "2026-02-21", label: "Reunião trimestral" },
     activityDays: 88,
   },
   {
-    id: "disney",
-    name: "Disney",
-    tags: ["Enterprise", "New Logo"],
-    owner: "James Taylor",
+    id: "ilha-cabo",
+    name: "Restaurante Ilha do Cabo",
+    tags: ["HORECA", "Novo cliente"],
+    owner: "Jaime Teixeira",
+    zone: "Benguela",
     openDeals: 4,
-    pipelineValue: 311242,
+    pipelineValue: 21_500_000,
     winProbability: 51,
     trend: TREND_B,
-    lastInteraction: { date: "2026-02-22", label: "Demo" },
+    lastInteraction: { date: "2026-02-22", label: "Demonstração" },
     activityDays: 87,
   },
   {
-    id: "paypal",
-    name: "Paypal",
-    tags: ["Enterprise"],
-    owner: "Maria Keller",
+    id: "baia-azul",
+    name: "Hotel Baía Azul",
+    tags: ["Grossista"],
+    owner: "Mariana Capitão",
+    zone: "Huíla",
     openDeals: 5,
-    pipelineValue: 124232,
+    pipelineValue: 12_400_000,
     winProbability: 22,
     trend: TREND_C,
-    lastInteraction: { date: "2026-03-12", label: "Security" },
+    lastInteraction: { date: "2026-03-12", label: "Segurança" },
     activityDays: 84,
   },
   {
-    id: "united-airlines",
-    name: "United Airlines",
-    tags: ["Renewal"],
-    owner: "Nia Jameson",
+    id: "girassol",
+    name: "Cantina Girassol",
+    tags: ["Renovação"],
+    owner: "Nádia Jamba",
+    zone: "Huambo",
     openDeals: 2,
-    pipelineValue: 221231,
+    pipelineValue: 18_600_000,
     winProbability: 77,
     trend: TREND_D,
-    lastInteraction: { date: "2026-03-17", label: "Legal" },
+    lastInteraction: { date: "2026-03-17", label: "Jurídico" },
     activityDays: 81,
   },
   {
-    id: "apple",
-    name: "Apple",
-    tags: ["Pilot"],
-    owner: "Alex Santos",
+    id: "tchissola",
+    name: "Padaria Tchissola",
+    tags: ["Piloto"],
+    owner: "Alexandre Santos",
+    zone: "Luanda",
     openDeals: 6,
-    pipelineValue: 530111,
+    pipelineValue: 31_000_000,
     winProbability: 82,
     trend: TREND_C,
-    lastInteraction: { date: "2026-03-12", label: "Exec" },
+    lastInteraction: { date: "2026-03-12", label: "Direção" },
     activityDays: 83,
   },
   {
-    id: "microsoft",
-    name: "Microsoft",
-    tags: ["Strategic", "Expansion"],
-    owner: "Mark Darnalds",
+    id: "nova-vida",
+    name: "Supermercado Nova Vida",
+    tags: ["Revendedor", "Expansão"],
+    owner: "Marcos Domingos",
+    zone: "Luanda",
     openDeals: 8,
-    pipelineValue: 320222,
+    pipelineValue: 27_700_000,
     winProbability: 86,
     trend: TREND_C,
-    lastInteraction: { date: "2026-03-15", label: "Pilot" },
+    lastInteraction: { date: "2026-03-15", label: "Piloto" },
     activityDays: 79,
   },
   {
-    id: "airbnb",
-    name: "Airbnb",
-    tags: ["Upsell", "Expansion", "SMB", "Pilot"],
-    owner: "Drew Nash",
+    id: "miramar",
+    name: "Pensão Miramar",
+    tags: ["Venda adicional", "Expansão", "HORECA", "Piloto"],
+    owner: "André Kiala",
+    zone: "Luanda",
     openDeals: 3,
-    pipelineValue: 122230,
+    pipelineValue: 9_900_000,
     winProbability: 51,
     trend: TREND_B,
-    lastInteraction: { date: "2026-03-18", label: "Pricing" },
+    lastInteraction: { date: "2026-03-18", label: "Preços" },
     activityDays: 78,
   },
   {
-    id: "intercom",
-    name: "Intercom",
-    tags: ["Enterprise", "Mid-Market"],
-    owner: "Lina Wong",
+    id: "kilamba",
+    name: "Mercearia Kilamba",
+    tags: ["Grossista", "Retalho"],
+    owner: "Lina Wamba",
+    zone: "Luanda",
     openDeals: 5,
-    pipelineValue: 230112,
+    pipelineValue: 19_800_000,
     winProbability: 61,
     trend: TREND_C,
-    lastInteraction: { date: "2026-03-28", label: "Product" },
+    lastInteraction: { date: "2026-03-28", label: "Produto" },
     activityDays: 74,
   },
   {
-    id: "attio",
-    name: "Attio",
-    tags: ["Mid-Market", "Upsell", "Renewal", "Co-Sell"],
-    owner: "Jamie Fox",
+    id: "sabores-luanda",
+    name: "Restaurante Sabores de Luanda",
+    tags: ["Retalho", "Venda adicional", "Renovação", "Parceria"],
+    owner: "Jamile Fonseca",
+    zone: "Luanda",
     openDeals: 2,
-    pipelineValue: 420222,
+    pipelineValue: 35_900_000,
     winProbability: 38,
     trend: TREND_C,
-    lastInteraction: { date: "2026-06-14", label: "Pricing" },
+    lastInteraction: { date: "2026-06-14", label: "Preços" },
     activityDays: 58,
   },
   {
-    id: "google",
-    name: "Google",
-    tags: ["SMB", "Enterprise", "Expansion", "Pilot"],
-    owner: "Kate Chen",
+    id: "talatona-plaza",
+    name: "Hotel Talatona Plaza",
+    tags: ["HORECA", "Grossista", "Expansão", "Piloto"],
+    owner: "Catarina Sacramento",
+    zone: "Luanda",
     openDeals: 8,
-    pipelineValue: 112277,
+    pipelineValue: 9_600_000,
     winProbability: 24,
     trend: TREND_B,
-    lastInteraction: { date: "2026-06-07", label: "Renewal" },
+    lastInteraction: { date: "2026-06-07", label: "Renovação" },
     activityDays: 62,
   },
   {
-    id: "netflix",
-    name: "Netflix",
-    tags: ["Mid-Market"],
-    owner: "Ricky Brown",
+    id: "esperanca",
+    name: "Cantina Esperança",
+    tags: ["Retalho"],
+    owner: "Ricardo Baptista",
+    zone: "Resto do país",
     openDeals: 3,
-    pipelineValue: 221221,
+    pipelineValue: 18_900_000,
     winProbability: 72,
     trend: TREND_C,
-    lastInteraction: { date: "2026-06-18", label: "Pilot" },
+    lastInteraction: { date: "2026-06-18", label: "Piloto" },
     activityDays: 55,
   },
   {
-    id: "spotify",
-    name: "Spotify",
-    tags: ["Land & Expand", "Expansion", "Strategic"],
-    owner: "Hannah Mills",
+    id: "benfica",
+    name: "Mercearia Benfica",
+    tags: ["Reactivação", "Expansão", "Revendedor"],
+    owner: "Ana Milagre",
+    zone: "Luanda",
     openDeals: 5,
-    pipelineValue: 170991,
+    pipelineValue: 14_700_000,
     winProbability: 55,
     trend: TREND_C,
-    lastInteraction: { date: "2026-07-01", label: "Expansion" },
+    lastInteraction: { date: "2026-07-01", label: "Expansão" },
     activityDays: 48,
   },
   {
-    id: "shopify",
-    name: "Shopify",
-    tags: ["Co-Sell", "Expansion"],
-    owner: "Emma Green",
+    id: "zango",
+    name: "Revenda Zango",
+    tags: ["Parceria", "Expansão"],
+    owner: "Emília Garcia",
+    zone: "Luanda",
     openDeals: 9,
-    pipelineValue: 139007,
+    pipelineValue: 11_900_000,
     winProbability: 45,
     trend: TREND_C,
-    lastInteraction: { date: "2026-07-18", label: "Renewal" },
+    lastInteraction: { date: "2026-07-18", label: "Renovação" },
     activityDays: 40,
   },
   {
-    id: "zoom",
-    name: "Zoom",
-    tags: ["Expansion", "Land & Expand", "Renewal"],
-    owner: "Oliver Chan",
+    id: "lobito",
+    name: "Instituto Técnico do Lobito",
+    tags: ["Expansão", "Reactivação", "Renovação"],
+    owner: "Olívio Chico",
+    zone: "Benguela",
     openDeals: 8,
-    pipelineValue: 289921,
+    pipelineValue: 24_600_000,
     winProbability: 38,
     trend: TREND_D,
-    lastInteraction: { date: "2026-08-08", label: "Partner" },
+    lastInteraction: { date: "2026-08-08", label: "Parceiro" },
     activityDays: 27,
   },
   {
-    id: "slack",
-    name: "Slack",
-    tags: ["Mid-Market", "Co-Sell"],
-    owner: "Ava Brooks",
+    id: "marisqueira-ilha",
+    name: "Marisqueira da Ilha",
+    tags: ["Retalho", "Parceria"],
+    owner: "Avelina Brito",
+    zone: "Resto do país",
     openDeals: 4,
-    pipelineValue: 333221,
+    pipelineValue: 28_300_000,
     winProbability: 23,
     trend: TREND_C,
-    lastInteraction: { date: "2026-08-12", label: "Discovery" },
+    lastInteraction: { date: "2026-08-12", label: "Descoberta" },
     activityDays: 24,
   },
   {
-    id: "stripe",
-    name: "Stripe",
-    tags: ["Expansion", "SMB", "Upsell", "Pilot"],
-    owner: "Noah Lee",
+    id: "mussulo-bay",
+    name: "Hotel Mussulo Bay",
+    tags: ["Expansão", "HORECA", "Venda adicional", "Piloto"],
+    owner: "Nelson Lemos",
+    zone: "Luanda",
     openDeals: 3,
-    pipelineValue: 442231,
+    pipelineValue: 37_500_000,
     winProbability: 44,
     trend: TREND_C,
-    lastInteraction: { date: "2026-09-09", label: "Demo" },
+    lastInteraction: { date: "2026-09-09", label: "Demonstração" },
     activityDays: 8,
   },
   {
-    id: "snowflake",
-    name: "Snowflake",
-    tags: ["Enterprise", "Mid-Market"],
-    owner: "Grace Miller",
+    id: "sao-paulo",
+    name: "Mercearia São Paulo",
+    tags: ["Grossista", "Retalho"],
+    owner: "Graça Miguel",
+    zone: "Luanda",
     openDeals: 6,
-    pipelineValue: 520000,
+    pipelineValue: 44_000_000,
     winProbability: 24,
     trend: TREND_C,
-    lastInteraction: { date: "2026-09-11", label: "Pricing" },
+    lastInteraction: { date: "2026-09-11", label: "Preços" },
     activityDays: 6,
   },
   {
-    id: "hubspot",
-    name: "Hubspot",
-    tags: ["Expansion", "Co-Sell", "Renewal", "Pilot"],
-    owner: "Chloe Park",
+    id: "cantina-kilamba",
+    name: "Cantina Universitária do Kilamba",
+    tags: ["Expansão", "Parceria", "Renovação", "Piloto"],
+    owner: "Cloé Pascoal",
+    zone: "Luanda",
     openDeals: 2,
-    pipelineValue: 210123,
+    pipelineValue: 17_800_000,
     winProbability: 52,
     trend: TREND_C,
-    lastInteraction: { date: "2026-09-18", label: "QBR Call" },
+    lastInteraction: { date: "2026-09-18", label: "Reunião trimestral" },
     activityDays: 2,
   },
 ];
 
-export const COMPANIES: Company[] = COMPANY_RECORDS.map((company) => ({
-  ...company,
-  logo: `/assets/images/companies/logos/${company.id}.svg`,
-}));
-
 export const SORT_OPTIONS = [
-  { value: "pipelineValue", label: "Pipeline Value" },
-  { value: "winProbability", label: "Win Probability" },
-  { value: "openDeals", label: "Open Deals" },
-  { value: "lastInteraction", label: "Last Interaction" },
-  { value: "name", label: "Company Name" },
+  { value: "pipelineValue", label: "Valor em carteira" },
+  { value: "winProbability", label: "Probabilidade de fecho" },
+  { value: "openDeals", label: "Oportunidades abertas" },
+  { value: "lastInteraction", label: "Último contacto" },
+  { value: "name", label: "Nome do cliente" },
 ] as const;
 
 export type SortKey = (typeof SORT_OPTIONS)[number]["value"];
 
 export const INTERACTION_TYPES = [
-  "Discovery",
-  "Demo",
-  "Pricing",
-  "Security",
-  "Legal",
-  "Product",
-  "Pilot",
-  "Exec",
-  "QBR Call",
-  "Partner",
-  "Renewal",
-  "Expansion",
+  "Descoberta",
+  "Demonstração",
+  "Preços",
+  "Segurança",
+  "Jurídico",
+  "Produto",
+  "Piloto",
+  "Direção",
+  "Reunião trimestral",
+  "Parceiro",
+  "Renovação",
+  "Expansão",
 ] as const;
 
 export const ACTIVITY_WINDOWS = [7, 30, 60, 90] as const;
 
 export type ActivityWindow = (typeof ACTIVITY_WINDOWS)[number];
 
-export const TREND_WINDOWS = ["Last 7 Days", "Last 30 Days", "Last 90 Days"];
+export const ZONES = [
+  "Luanda",
+  "Benguela",
+  "Huíla",
+  "Huambo",
+  "Resto do país",
+] as const;
+
+export type Zone = string;
+
+export const TREND_WINDOWS = ["Últimos 7 dias", "Últimos 30 dias", "Últimos 90 dias"];
 
 export type ScoreCard = {
   title: string;
@@ -401,35 +483,3 @@ export type ScoreCard = {
   stars: number;
 };
 
-export const SCORE_CARDS: ScoreCard[] = [
-  {
-    title: "Business fit",
-    description:
-      "Evaluates how well the company aligns with our ideal customer profile.",
-    reviewer: "Emma Green",
-    reviewerAvatar: "/assets/images/_common/avatars/detail-2.png",
-    updated: "Updated 2h ago",
-    verdict: "High potential SN",
-    stars: 4,
-  },
-  {
-    title: "Technical fit",
-    description:
-      "Evaluates technical compatibility, security requirements, and integration readiness.",
-    reviewer: "Ricky Brown",
-    reviewerAvatar: "/assets/images/_common/avatars/detail-3.png",
-    updated: "Updated 2h ago",
-    verdict: "High potential SN",
-    stars: 4,
-  },
-  {
-    title: "Technical fit",
-    description:
-      "Evaluates technical compatibility, security requirements, and integration readiness.",
-    reviewer: "Taylor Leroy",
-    reviewerAvatar: "/assets/images/_common/avatars/detail-1.png",
-    updated: "Updated 2h ago",
-    verdict: "High potential SN",
-    stars: 4,
-  },
-];

@@ -34,11 +34,11 @@ export default function LogoUpload({
   function readFile(file: File | undefined) {
     if (!file) return;
     if (!ACCEPTED.includes(file.type)) {
-      setError("Use a PNG, JPG, WebP or SVG image.");
+      setError("Use uma imagem PNG, JPG, WebP ou SVG.");
       return;
     }
     if (file.size > MAX_BYTES) {
-      setError("Keep the image under 2 MB.");
+      setError("Mantenha a imagem até 2 MB.");
       return;
     }
     const reader = new FileReader();
@@ -73,12 +73,12 @@ export default function LogoUpload({
       data-dragging={dragging}
       className="ease-power3-out data-[dragging=true]:border-line-strong flex items-center gap-4 rounded-xl border border-dashed border-transparent transition-[border-color,background-color] duration-150 data-[dragging=true]:bg-white/3"
     >
-      <span className="bg-muted flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-[14px] shadow-[0px_6px_6px_0px_rgba(15,15,15,0.24),0px_0px_0px_1.5px_#232323]">
+      <span className="bg-muted flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-[14px] shadow-[0px_6px_6px_0px_rgba(15,15,15,0.24),0px_0px_0px_1.5px_var(--border)]">
         {value ? (
           <Asset
             type="image"
             src={value}
-            alt="Company logo preview"
+            alt="Pré-visualização do logótipo"
             width={1}
             height={1}
             fit="contain"
@@ -99,7 +99,7 @@ export default function LogoUpload({
             onClick={() => inputRef.current?.click()}
             aria-describedby={hintId}
           >
-            {value ? "Replace logo" : "Upload logo"}
+            {value ? "Substituir logótipo" : "Carregar logótipo"}
           </Button>
           {value && (
             <Button
@@ -110,7 +110,7 @@ export default function LogoUpload({
                 onChange(null);
               }}
             >
-              Remove
+              Remover
             </Button>
           )}
         </div>
@@ -123,7 +123,7 @@ export default function LogoUpload({
           )}
         >
           {error ??
-            "PNG, JPG, WebP or SVG up to 2 MB. You can also drop a file here."}
+            "PNG, JPG, WebP ou SVG até 2 MB. Também pode arrastar um ficheiro para aqui."}
         </span>
       </div>
 

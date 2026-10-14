@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Avatar from "@/components/_ui/avatar";
 import Button from "@/components/_ui/button";
 import CountBadge from "@/components/_ui/count-badge";
@@ -29,11 +29,8 @@ import {
   STAGE_OPTIONS,
 } from "./filter-options";
 import { ownerByName, type SortKey } from "@/data/companies";
-import {
-  ALL_OWNERS,
-  activeFilterCount,
-  filterCompanies,
-} from "@/lib/companies";
+import { ALL_OWNERS, activeFilterCount } from "@/lib/companies";
+import { useCompanyFilters, useVisibleCompanies } from "../use-visible-companies";
 import { cn } from "@/lib/utils";
 import { useCompaniesStore } from "@/stores/companies-store";
 import FilterIcon from "@/public/assets/images/_common/filter.svg";
@@ -45,7 +42,6 @@ type MobileFiltersProps = {
 
 export default function MobileFilters({ className }: MobileFiltersProps) {
   const [open, setOpen] = useState(false);
-  const companies = useCompaniesStore((state) => state.companies);
   const sortBy = useCompaniesStore((state) => state.sortBy);
   const owner = useCompaniesStore((state) => state.owner);
   const stage = useCompaniesStore((state) => state.stage);
@@ -58,14 +54,9 @@ export default function MobileFilters({ className }: MobileFiltersProps) {
   );
   const resetFilters = useCompaniesStore((state) => state.resetFilters);
 
-  const filters = { sortBy, owner, stage, activityWindow };
+  const filters = useCompanyFilters();
   const activeCount = activeFilterCount(filters);
-  const resultCount = useMemo(
-    () =>
-      filterCompanies(companies, { sortBy, owner, stage, activityWindow })
-        .length,
-    [companies, sortBy, owner, stage, activityWindow],
-  );
+  const resultCount = useVisibleCompanies().length;
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -74,28 +65,30 @@ export default function MobileFilters({ className }: MobileFiltersProps) {
         size="sm"
         onClick={() => setOpen(true)}
         aria-label={
-          activeCount > 0 ? `Filters, ${activeCount} active` : "Filters"
+          activeCount > 0
+            ? `Filtros, ${activeCount} ativo(s)`
+            : "Filtros"
         }
         className={cn("data-[active=true]:bg-muted", className)}
         data-active={activeCount > 0}
       >
         <FilterIcon aria-hidden className="size-3" />
-        Filters
+        Filtros
         {activeCount > 0 && <CountBadge>{activeCount}</CountBadge>}
       </Button>
 
       <SheetContent side="bottom">
         <SheetHeader className="px-4">
-          <SheetTitle>Filters</SheetTitle>
+          <SheetTitle>Filtros</SheetTitle>
           <SheetDescription className="sr-only">
-            Sort and filter the companies table
+            Ordenar e filtrar a tabela de clientes
           </SheetDescription>
           <SheetClose asChild>
             <Button
               variant="ghost"
               size="icon-sm"
               className="-mr-1"
-              aria-label="Close filters"
+              aria-label="Fechar filtros"
             >
               <XIcon aria-hidden className="text-foreground size-4" />
             </Button>
@@ -104,7 +97,7 @@ export default function MobileFilters({ className }: MobileFiltersProps) {
 
         <ScrollArea viewportClassName="max-h-[calc(85dvh-118px)]">
           <div className="flex flex-col gap-4 p-4">
-            <Field label="Sort by" htmlFor="mobile-sort">
+            <Field label="Ordenar por" htmlFor="mobile-sort">
               <Select
                 value={sortBy}
                 onValueChange={(value) => setSortBy(value as SortKey)}
@@ -122,7 +115,7 @@ export default function MobileFilters({ className }: MobileFiltersProps) {
               </Select>
             </Field>
 
-            <Field label="Account owner" htmlFor="mobile-owner">
+            <Field label="Gestor de conta" htmlFor="mobile-owner">
               <Select value={owner} onValueChange={setOwner}>
                 <SelectTrigger id="mobile-owner">
                   <SelectValue />
@@ -147,7 +140,7 @@ export default function MobileFilters({ className }: MobileFiltersProps) {
               </Select>
             </Field>
 
-            <Field label="Stage" htmlFor="mobile-stage">
+            <Field label="Fase" htmlFor="mobile-stage">
               <Select value={stage} onValueChange={setStage}>
                 <SelectTrigger id="mobile-stage">
                   <SelectValue />
@@ -162,7 +155,7 @@ export default function MobileFilters({ className }: MobileFiltersProps) {
               </Select>
             </Field>
 
-            <Field label="Last activity" htmlFor="mobile-activity">
+            <Field label="Última atividade" htmlFor="mobile-activity">
               <Select
                 value={String(activityWindow)}
                 onValueChange={(value) => setActivityWindow(Number(value))}
@@ -190,11 +183,12 @@ export default function MobileFilters({ className }: MobileFiltersProps) {
             disabled={activeCount === 0 && sortBy === "pipelineValue"}
             className="-ml-1.5"
           >
-            Reset
+            Repor
           </Button>
           <SheetClose asChild>
             <Button variant="primary" size="sm">
-              Show {resultCount} {resultCount === 1 ? "company" : "companies"}
+              Ver {resultCount}{" "}
+              {resultCount === 1 ? "cliente" : "clientes"}
             </Button>
           </SheetClose>
         </SheetFooter>
