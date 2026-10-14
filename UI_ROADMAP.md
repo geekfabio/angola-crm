@@ -1,4 +1,4 @@
-# Roteiro de UI — 30 fases
+# Roteiro de UI — 31 fases
 
 Enquanto o `ROADMAP.md` ordena o produto por fases de negócio (fundação, dados reais, Supabase), este ficheiro ordena a **construção da interface** dos módulos que já têm rota mas ainda são esqueleto visual — tabela de leitura, sem store, sem diálogos, sem painel de detalhe.
 
@@ -335,6 +335,17 @@ Pedido do utilizador: quando um cliente fica X dias sem comprar, o CRM apresenta
 - Botão sol/lua no cabeçalho de todas as páginas (e "Mudar tema" na paleta ⌘K). A troca faz-se com um círculo que cresce a partir do botão (View Transitions) e o ícone roda; com "reduzir movimento" a troca é imediata.
 - A escolha fica guardada no browser e é aplicada antes de a página desenhar, sem piscar. O tema escuro continua a ser o de origem.
 - Paleta clara completa em `app/globals.css` (`:root[data-theme="light"]`), incluindo as etiquetas; as cores fixas que estavam nos componentes passaram a tokens (`--edge`, `--edge-soft`, `--edge-strong`, `--edge-shadow`, `--card-raised`, `--primary-hover`).
+
+---
+
+## Fase 31 — Painel de direção da Previsão `✅`
+
+- `/previsao` passa a ser um painel de direção calculado a partir das vendas reais do store (`lib/analytics.ts`, com testes), com uma linha de filtros no topo — Período (30/60/90 dias), Zona e Segmento — que afeta todos os gráficos de vendas e compara sempre com o período anterior.
+- Topo: vendas do mês contra o objetivo da equipa e seis indicadores com variação (vendas, nº de compras, ticket médio, clientes compradores, dívida com mais de 30 dias, carteira ponderada).
+- Vendas: colunas diárias com média móvel de 7 dias, colunas empilhadas por semana e canal, donut dos meios de pagamento, mapa de calor dia × hora (com o pico indicado) e receita por categoria.
+- Clientes: matriz de dispersão (dias sem comprar × volume de 90 dias, tamanho = nº de compras, cor = classe ABC) com quadrantes e clique para abrir a ficha, e barras divergentes da variação por zona.
+- Equipa: barras de objetivo por gestor (vendido, projeção, objetivo) e funil cotações → encomendas → entregas. Carteira e cobranças: funil de oportunidades, antiguidade da dívida, oportunidades recentes e clientes em risco.
+- Todos os gráficos têm tooltip, legenda quando há mais de uma série, alternador Gráfico/Tabela e paleta categórica própria (`--chart-1..4`, validada para daltonismo nos dois temas).
 
 ---
 
